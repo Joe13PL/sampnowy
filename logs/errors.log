@@ -1,0 +1,2 @@
+[22.12.2025 23:51:46] [plugins/mysql] mysql_format: invalid connection handle '0'
+[22.12.2025 23:51:46] [plugins/mysql] mysql_tquery: invalid connection handle '0'

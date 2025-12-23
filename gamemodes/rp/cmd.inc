@@ -897,7 +897,13 @@ COMMAND:silnik(playerid, params[])
     if(vid == INVALID_VEHICLE_ID) return SendGuiInformation(playerid, "Informacja", "Nie znajdujesz si� w �adnym poje�dzie.");
     if(GetPlayerState(playerid) != PLAYER_STATE_DRIVER) return SendGuiInformation(playerid, "Informacja", "Nie jeste� kierowc� pojazdu");
     if( !CanPlayerUseVehicle(playerid, vid) ) return SendGuiInformation(playerid, "Informacja", "Nie posiadasz uprawnie� do odpalenia tego pojazdu.");
-    if( Vehicle[vid][vehicle_engine] )
+    // Prefer native engine state to avoid desync: read actual native engine param
+    new nativeEngine, lights, alarm, doors, bonnet, boot, objective;
+    GetVehicleParamsEx(vid, nativeEngine, lights, alarm, doors, bonnet, boot, objective);
+
+    printf("[VDBG_RP] /silnik by %d vehicle=%d nativeEngine=%d cachedEngine=%d\n", playerid, vid, nativeEngine, Vehicle[vid][vehicle_engine]);
+
+    if( nativeEngine == 1 )
     {
         new model = GetVehicleModel(vid);
         if(model == 509 || model == 510 || model == 481)
@@ -905,8 +911,9 @@ COMMAND:silnik(playerid, params[])
             return 1;
         }
 
-        // Gaszenie silnika
+        // Gaszenie silnika (ensure native state is set)
         if( CanPlayerUseVehicle(playerid, vid) ) TextDrawShowForPlayer(playerid, vehicleInfo);
+        SetVehicleParamsEx(vid, 0, lights, alarm, doors, bonnet, boot, objective);
         Vehicle[vid][vehicle_engine] = false;
         SaveVehicle(vid);
         UpdateVehicleVisuals(vid);

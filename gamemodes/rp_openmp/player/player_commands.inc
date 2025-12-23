@@ -1001,16 +1001,43 @@ YCMD:v(playerid, params[], help)
 
         new vehicleid = GetPlayerVehicleID(playerid);
 
-        new engine, lights, alarm, doors, bonnet, boot, objective;
-        GetVehicleParamsEx(vehicleid, engine, lights, alarm, doors, bonnet, boot, objective);
+        new nativeEngine, lights, alarm, doors, bonnet, boot, objective;
+        GetVehicleParamsEx(vehicleid, nativeEngine, lights, alarm, doors, bonnet, boot, objective);
 
-        engine = !engine;
-        SetVehicleParamsEx(vehicleid, engine, lights, alarm, doors, bonnet, boot, objective);
+        new slot = Vehicle_GetSlot(vehicleid);
+        new cachedEngine = slot != -1 ? vInfo[slot][veh_engine] : -1;
+        printf("[VDBG] /v engine request by %d for vehicle=%d slot=%d nativeEngine=%d vInfoEngine=%d\n", playerid, vehicleid, slot, nativeEngine, cachedEngine);
 
-        new message[128];
-        format(message, sizeof(message), "* %s %s silnik pojazdu.",
-            Player_RPName(playerid), engine ? "wlacza" : "wylacza");
-        SendLocalMessage(playerid, COLOR_ME, message, 15.0);
+        // Normalize engine value: prefer native (0/1), fallback to cached, else assume off
+        new currentEngine;
+        if(nativeEngine == 0 || nativeEngine == 1)
+        {
+            currentEngine = nativeEngine;
+        }
+        else if(cachedEngine == 0 || cachedEngine == 1)
+        {
+            currentEngine = cachedEngine;
+        }
+        else
+        {
+            currentEngine = 0;
+        }
+
+        // Toggle and apply
+        new engineState = !currentEngine;
+        new rv = Vehicle_SetEngine(vehicleid, engineState);
+        printf("[VDBG] /v engine completed for vehicle=%d requested=%d result=%d current=%d\n", vehicleid, engineState, rv, currentEngine);
+
+        if(!rv && engineState == 1)
+        {
+            SendGuiInformation(playerid, "Informacja", "Nie mozna uruchomic silnika (brak paliwa lub ograniczenie).");
+        }
+        else
+        {
+            new message[128];
+            format(message, sizeof(message), "* %s %s silnik pojazdu.", Player_RPName(playerid), engineState ? "wlacza" : "wylacza");
+            SendLocalMessage(playerid, COLOR_ME, message, 15.0);
+        }
 
         return 1;
     }
@@ -1022,14 +1049,35 @@ YCMD:v(playerid, params[], help)
 
         new vehicleid = GetPlayerVehicleID(playerid);
 
-        new engine, lights, alarm, doors, bonnet, boot, objective;
-        GetVehicleParamsEx(vehicleid, engine, lights, alarm, doors, bonnet, boot, objective);
+        new nativeEngine, nativeLights, alarm, doors, bonnet, boot, objective;
+        GetVehicleParamsEx(vehicleid, nativeEngine, nativeLights, alarm, doors, bonnet, boot, objective);
 
-        lights = !lights;
-        SetVehicleParamsEx(vehicleid, engine, lights, alarm, doors, bonnet, boot, objective);
+        new slot = Vehicle_GetSlot(vehicleid);
+        new cachedLights = slot != -1 ? vInfo[slot][veh_lights] : -1;
+        printf("[VDBG] /v lights request by %d for vehicle=%d slot=%d nativeLights=%d vInfoLights=%d\n", playerid, vehicleid, slot, nativeLights, cachedLights);
+
+        // Normalize lights value: prefer native (0/1), fallback to cached, else assume off
+        new currentLights;
+        if(nativeLights == 0 || nativeLights == 1)
+        {
+            currentLights = nativeLights;
+        }
+        else if(cachedLights == 0 || cachedLights == 1)
+        {
+            currentLights = cachedLights;
+        }
+        else
+        {
+            currentLights = 0;
+        }
+
+        // Toggle and apply
+        new lightsState = !currentLights;
+        new rv = Vehicle_SetLights(vehicleid, lightsState);
+        printf("[VDBG] /v lights completed for vehicle=%d requested=%d result=%d current=%d\n", vehicleid, lightsState, rv, currentLights);
 
         new message[64];
-        format(message, sizeof(message), "??wiat??a: %s", lights ? "W????CZONE" : "WY????CZONE");
+        format(message, sizeof(message), "??wiat??a: %s", lightsState ? "W????CZONE" : "WY????CZONE");
         SendClientMessage(playerid, COLOR_INFO, message);
 
         return 1;

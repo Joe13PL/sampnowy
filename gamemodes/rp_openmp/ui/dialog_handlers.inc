@@ -424,13 +424,15 @@ Dialog_HandlePhoneDial(playerid, response, const inputtext[])
 
     if(isnull(inputtext))
     {
+        printf("[DBG] Dialog_HandlePhoneDial: isnull input for player=%d\n", playerid);
         SendClientMessage(playerid, COLOR_GRAY, "Użycie: wpisz ID gracza");
         return 1;
     }
 
     new num;
-    if(sscanf(inputtext, "%d", num) != 1)
+    if(!Phone_ParseNumberString(inputtext, num))
     {
+        printf("[DBG] Dialog_HandlePhoneDial: parse failed for player=%d input='%s' len=%d\n", playerid, inputtext, strlen(inputtext));
         SendClientMessage(playerid, COLOR_GRAY, "Użycie: wpisz numer telefonu (np. 12345 lub 012345)");
         return 1;
     }

@@ -73,10 +73,11 @@ YCMD:phone(playerid, params[], help)
 YCMD:zadzwon(playerid, params[], help)
 {
     CMD_GUARDS();
-    if(isnull(params)) return SendClientMessage(playerid, COLOR_GRAY, "Uzycie: /zadzwon <numer|id>");
+    if(isnull(params)) { printf("[DBG] YCMD:zadzwon called with null params by player=%d\n", playerid); return SendClientMessage(playerid, COLOR_GRAY, "Uzycie: /zadzwon <numer|id>"); }
+    printf("[DBG] YCMD:zadzwon params raw='%s' len=%d\n", params, strlen(params));
 
     new num;
-    if(sscanf(params, "%d", num) != 1) return SendClientMessage(playerid, COLOR_ERROR, "Provide a phone number (e.g. 12345 or 012345).");
+    if(!Phone_ParseNumberString(params, num)) { printf("[DBG] YCMD:zadzwon parse failed player=%d params='%s' len=%d\n", playerid, params, strlen(params)); return SendClientMessage(playerid, COLOR_ERROR, "Provide a phone number (e.g. 12345 or 012345)."); }
 
     if(num < PHONE_MIN_NUMBER || num > PHONE_MAX_NUMBER) return SendClientMessage(playerid, COLOR_ERROR, "Invalid phone number (use numbers 1000-99999).");
 
@@ -99,10 +100,11 @@ YCMD:zadzwon(playerid, params[], help)
 YCMD:call(playerid, params[], help)
 {
     CMD_GUARDS();
-    if(isnull(params)) return SendClientMessage(playerid, COLOR_GRAY, "Usage: /call <number|id>");
+    if(isnull(params)) { printf("[DBG] YCMD:call called with null params by player=%d\n", playerid); return SendClientMessage(playerid, COLOR_GRAY, "Usage: /call <number|id>"); }
+    printf("[DBG] YCMD:call params raw='%s' len=%d\n", params, strlen(params));
 
     new num;
-    if(sscanf(params, "%d", num) != 1) return SendClientMessage(playerid, COLOR_ERROR, "Provide a phone number (e.g. 12345 or 012345).");
+    if(!Phone_ParseNumberString(params, num)) { printf("[DBG] YCMD:call parse failed player=%d params='%s' len=%d\n", playerid, params, strlen(params)); return SendClientMessage(playerid, COLOR_ERROR, "Provide a phone number (e.g. 12345 or 012345)."); }
 
     if(num < PHONE_MIN_NUMBER || num > PHONE_MAX_NUMBER) return SendClientMessage(playerid, COLOR_ERROR, "Invalid phone number (use numbers 1000-99999).");
 

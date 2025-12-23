@@ -25,6 +25,7 @@ forward Phone_OnGetPlayerNumber(playerid, str[]);
 forward Phone_OnFindOwnerForNumber(number);
 forward Phone_OnStartCallCheck(callerPid, number);
 forward Phone_Dial(playerid, target);
+forward Phone_ParseNumberString(const s[], &out);
 forward Phone_GenerateFreeNumber(owner_uid);
 forward Phone_Hangup(playerid);
 forward Phone_OnPhoneColumnsChecked(playerid);
@@ -208,6 +209,43 @@ public Phone_OnFindOwnerForNumber(number)
     new owner_uid_str[32]; cache_get_value(0, "owner_uid", owner_uid_str, sizeof(owner_uid_str));
     new owner_uid = 0; if(sscanf(owner_uid_str, "%d", owner_uid) != 1) return 1;
     if(number >= PHONE_MIN_NUMBER && number <= PHONE_MAX_NUMBER) gPhoneOwnerUidByNumber[number] = owner_uid;
+    return 1;
+}
+
+// Robust parser for phone numbers from string inputs (accepts digits and whitespace). Returns 1 on success and sets out.
+stock Phone_ParseNumberString(const s[], &out)
+{
+    if(isnull(s)) return 0;
+    new len = strlen(s);
+    new p = 0;
+    // skip leading whitespace
+    while(p < len && (s[p] == ' ' || s[p] == '\t' || s[p] == '\r' || s[p] == '\n')) p++;
+    if(p >= len) return 0;
+
+    new val = 0; new any = 0;
+    for(new i = p; i < len; i++)
+    {
+        if(s[i] >= '0' && s[i] <= '9')
+        {
+            any = 1;
+            val = val * 10 + (s[i] - '0');
+            if(val > PHONE_MAX_NUMBER) break;
+        }
+        else if(s[i] == ' ' || s[i] == '\t' || s[i] == '\r' || s[i] == '\n')
+        {
+            // allow trailing whitespace but ensure the rest are whitespace
+            new j = i;
+            while(j < len) { if(s[j] != ' ' && s[j] != '\t' && s[j] != '\r' && s[j] != '\n') return 0; j++; }
+            break;
+        }
+        else
+        {
+            return 0; // invalid char
+        }
+    }
+    if(!any) return 0;
+    if(val < PHONE_MIN_NUMBER || val > PHONE_MAX_NUMBER) return 0;
+    out = val;
     return 1;
 }
 

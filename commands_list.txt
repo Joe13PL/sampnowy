@@ -1,0 +1,104 @@
+Commands list for this gamemode (generated: 2025-12-23)
+
+-- Player commands (file: gamemodes/rp_openmp/player/player_commands.inc)
+cmdtest
+phone
+zadzwon
+call
+sms
+me
+opis
+s
+w
+k
+sz
+l
+kill
+b
+pm
+re
+stats
+hangup
+id
+time
+pos
+tpm
+tpc
+skins
+inv
+eq
+grupy
+pojazdy
+v
+tempomat
+wejdz
+wyjdz
+help
+pomoc
+
+-- Admin commands (file: gamemodes/rp_openmp/admin/admin_commands.inc)
+myadmin
+phone_test
+ahelp
+a
+aduty
+kick
+ban
+goto
+gethere
+spec
+freeze
+announce
+giveweapon
+givemoney
+sethealth
+setskin
+veh
+destroyveh
+fixveh
+flipveh
+gotoxyz
+setint
+setvw
+tpall
+slap
+mute
+unmute
+jail
+unjail
+warn
+clearwarns
+check
+admins
+players
+getpos
+setarmour
+setmoney
+clearchat
+disarm
+revive
+akill
+explode
+setadmin
+unban
+settime
+setweather
+invisible
+god
+fly
+acmds
+agroups
+ag
+ap
+av
+adoors
+ad
+
+-- Other in-game commands
+gameplay/offers.inc: akceptuj, odrzuc, podajreke
+player/player_stranger.inc: poznaj, zapomnij
+gameplay/works.inc: praca
+
+-- Notes
+- This file lists YCMD handlers found in the gamemode (rp_openmp). Third-party dependencies (YSI etc.) also define commands which are not exhaustively listed here.
+- If you want a more detailed file (include usage/first help string for each command), I can parse each handler and extract the usage/help text.

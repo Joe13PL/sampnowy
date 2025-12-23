@@ -661,6 +661,22 @@ stock Item_SaveToDatabase(playerid, slot)
         new escapedName[65];
         mysql_escape_string(pItem[playerid][slot][item_name], escapedName, mySQLconnection, sizeof(escapedName));
 
+        // If this is a phone and it has no number yet, generate one and assign to the item
+        if(pItem[playerid][slot][item_type] == ITEM_TYPE_PHONE && pItem[playerid][slot][item_value2] == 0)
+        {
+            new owner_uid = pInfo[playerid][player_uid];
+            new phone = Phone_GenerateFreeNumber(owner_uid);
+            if(phone != 0)
+            {
+                pItem[playerid][slot][item_value2] = phone;
+                printf("[PHONE] Generated phone number %d for player uid=%d slot=%d\n", phone, owner_uid, slot);
+            }
+            else
+            {
+                printf("[PHONE] Failed to generate phone number for player uid=%d slot=%d\n", owner_uid, slot);
+            }
+        }
+
         mysql_format(mySQLconnection, query, sizeof(query),
             "INSERT INTO `items` (`item_owner`, `item_owner_type`, `item_type`, `item_value`, `item_value2`, `item_phone`, `item_name`) VALUES (%d, 0, %d, %d, %d, %d, '%s')",
             pInfo[playerid][player_id],
@@ -702,6 +718,7 @@ stock Item_SaveToDatabase(playerid, slot)
 
 forward Item_OnInsert(playerid, slot);
 forward Phone_CreateOrUpdateDeviceForItem(p_item_id, phone_number, owner_uid, owner_type);
+forward Phone_GenerateFreeNumber(owner_uid);
 public Item_OnInsert(playerid, slot)
 {
     if(IsPlayerConnected(playerid) && slot >= 0 && slot < MAX_PLAYER_ITEMS)

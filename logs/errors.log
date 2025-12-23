@@ -1,0 +1,11 @@
+[23.12.2025 03:49:47] [plugins/mysql] mysql_format: invalid connection handle '0'
+[23.12.2025 03:49:47] [plugins/mysql] mysql_tquery: invalid connection handle '0'
+[23.12.2025 03:49:47] [plugins/mysql] mysql_format: invalid connection handle '0'
+[23.12.2025 03:49:47] [plugins/mysql] mysql_tquery: invalid connection handle '0'
+[23.12.2025 03:50:19] [plugins/mysql] mysql_escape_string: invalid connection handle '65'
+[23.12.2025 03:50:19] [plugins/mysql] mysql_escape_string: invalid connection handle '65'
+[23.12.2025 03:50:19] [plugins/mysql] mysql_escape_string: invalid connection handle '65'
+[23.12.2025 03:50:19] [plugins/mysql] mysql_escape_string: invalid connection handle '65'
+[23.12.2025 03:50:19] [plugins/mysql] mysql_escape_string: invalid connection handle '65'
+[23.12.2025 03:50:19] [plugins/mysql] mysql_escape_string: invalid connection handle '65'
+[23.12.2025 03:51:32] [log-core] exception 0XC0000005 (ACCESS_VIOLATION) from Vectored Exception Handler catched; shutting log-core down

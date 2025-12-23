@@ -30,6 +30,8 @@ forward Phone_GenerateFreeNumber(owner_uid);
 forward Phone_Hangup(playerid);
 forward Phone_OnPhoneColumnsChecked(playerid);
 forward Phone_BackfillPhoneDevices(playerid);
+forward Phone_ReassignDuplicateNumbers(playerid);
+forward Phone_OnDuplicatesLoaded(playerid);
 forward Phone_QueueDelete(smsId);
 forward Phone_FlushQueuedDeletes();
 forward Phone_OnContactDetailLoaded(playerid);
@@ -41,7 +43,7 @@ forward Phone_DeleteSMS(playerid, smsId);
 forward Phone_OnContactsLoaded(playerid);
 forward Phone_OnSMSListLoaded(playerid);
 forward Phone_OnCallHistoryLoaded_GUI(playerid);
-forward Phone_OnSettingsLoaded(playerid);
+forward Phone_OnSettingsLoaded(playerid, phoneNumber);
 forward Phone_RunSelfTests(playerid);
 forward Phone_RunSelfTests_FlushDelete();
 
@@ -446,6 +448,73 @@ public Phone_BackfillPhoneDevices(playerid)
     mysql_format(mySQLconnection, q, sizeof(q), "INSERT INTO phone_devices (phone_number, item_id, owner_uid, owner_type, created_at, updated_at) SELECT item_phone, item_id, item_owner, item_owner_type, NOW(), NOW() FROM items WHERE item_type = %d ON DUPLICATE KEY UPDATE item_id = VALUES(item_id), owner_uid = VALUES(owner_uid), owner_type = VALUES(owner_type), updated_at = VALUES(updated_at)", ITEM_TYPE_PHONE);
     mysql_tquery(mySQLconnection, q);
     SendClientMessage(playerid, COLOR_INFO, "Phone devices backfill triggered.");
+    return 1;
+}
+
+public Phone_ReassignDuplicateNumbers(playerid)
+{
+    if(playerid >= 0 && !IsPlayerAdmin(playerid)) { SendClientMessage(playerid, COLOR_ERROR, "You do not have permission to run this command."); return 0; }
+
+    new q[512];
+    mysql_format(mySQLconnection, q, sizeof(q), "SELECT item_id, item_phone, item_owner FROM items WHERE item_type = %d ORDER BY item_phone ASC, item_id ASC", ITEM_TYPE_PHONE);
+    mysql_tquery(mySQLconnection, q, "Phone_OnDuplicatesLoaded", "i", playerid);
+    if(playerid >= 0) SendClientMessage(playerid, COLOR_INFO, "Phone duplicate scan started. This may take a moment.");
+    return 1;
+}
+
+public Phone_OnDuplicatesLoaded(playerid)
+{
+    new rows = cache_num_rows();
+    if(rows <= 0)
+    {
+        if(playerid >= 0) SendClientMessage(playerid, COLOR_SUCCESS, "No phone items found.");
+        return 1;
+    }
+
+    new lastPhone = -1;
+    for(new i = 0; i < rows; i++)
+    {
+        new itemIdStr[16]; new phoneStr[16]; new ownerStr[16];
+        cache_get_value(i, "item_id", itemIdStr, sizeof(itemIdStr));
+        cache_get_value(i, "item_phone", phoneStr, sizeof(phoneStr));
+        cache_get_value(i, "item_owner", ownerStr, sizeof(ownerStr));
+
+        new itemId = 0; if(sscanf(itemIdStr, "%d", itemId) != 1) continue;
+        new phone = 0; if(sscanf(phoneStr, "%d", phone) != 1) continue;
+        new ownerUid = 0; if(sscanf(ownerStr, "%d", ownerUid) != 1) ownerUid = 0;
+
+        if(phone == lastPhone)
+        {
+            // duplicate - assign new number to this item
+            new newNum = Phone_GenerateFreeNumber(ownerUid);
+            if(newNum == 0)
+            {
+                if(playerid >= 0)
+                {
+                    new buf[128];
+                    format(buf, sizeof(buf), "Failed to assign new number for item %d (no free numbers).", itemId);
+                    SendClientMessage(playerid, COLOR_ERROR, buf);
+                }
+                continue;
+            }
+
+            MySQL_ExecuteFormat("UPDATE `items` SET `item_phone` = %d WHERE `item_id` = %d", newNum, itemId);
+            // update phone_devices mapping
+            Phone_CreateOrUpdateDeviceForItem(itemId, newNum, ownerUid, 0);
+            if(playerid >= 0)
+            {
+                new buf2[128];
+                format(buf2, sizeof(buf2), "Reassigned item %d -> %d", itemId, newNum);
+                SendClientMessage(playerid, COLOR_INFO, buf2);
+            }
+        }
+        else
+        {
+            lastPhone = phone;
+        }
+    }
+
+    if(playerid >= 0) SendClientMessage(playerid, COLOR_SUCCESS, "Phone duplicate reassignment completed.");
     return 1;
 }
 
@@ -886,20 +955,30 @@ public Phone_OnCallHistoryLoaded_GUI(playerid)
 
 stock Dialog_ShowPhoneSettings(playerid)
 {
-    new mynum = Phone_GetPlayerNumberSync(playerid);
-    if(mynum == 0) { SendClientMessage(playerid, COLOR_ERROR, "You do not own a phone."); return 1; }
-    new q[256]; mysql_format(mySQLconnection, q, sizeof(q), "SELECT state FROM phone_numbers WHERE phone_number = %d LIMIT 1", mynum);
-    mysql_tquery(mySQLconnection, q, "Phone_OnSettingsLoaded", "i", playerid);
+    // Prefer the currently used/selected phone item when showing settings
+    new slot = pInfo[playerid][player_dialog_tmp1];
+    if(slot < 0 || slot >= MAX_PLAYER_ITEMS || pItem[playerid][slot][item_type] != ITEM_TYPE_PHONE)
+    {
+        slot = Item_FindByType(playerid, ITEM_TYPE_PHONE);
+        if(slot < 0) { SendClientMessage(playerid, COLOR_ERROR, "You do not own a phone."); return 1; }
+    }
+
+    new phoneNum = pItem[playerid][slot][item_value2];
+    if(phoneNum == 0) { SendClientMessage(playerid, COLOR_ERROR, "Ten telefon nie ma przypisanego numeru."); return 1; }
+
+    new q[256]; mysql_format(mySQLconnection, q, sizeof(q), "SELECT state FROM phone_numbers WHERE phone_number = %d LIMIT 1", phoneNum);
+    // pass both playerid and the specific phone number to the callback
+    mysql_tquery(mySQLconnection, q, "Phone_OnSettingsLoaded", "ii", playerid, phoneNum);
     return 1;
 }
 
-public Phone_OnSettingsLoaded(playerid)
+public Phone_OnSettingsLoaded(playerid, phoneNumber)
 {
     new rows = cache_num_rows();
     new stateStr[16] = "on";
     if(rows > 0) cache_get_value(0, "state", stateStr, sizeof(stateStr));
 
-    new dialog[256]; format(dialog, sizeof(dialog), "Phone number: %d\nState: %s", Phone_GetPlayerNumberSync(playerid), stateStr);
+    new dialog[256]; format(dialog, sizeof(dialog), "Phone number: %d\nState: %s", phoneNumber, stateStr);
     ShowPlayerDialog(playerid, DIALOG_PHONE_MENU, DIALOG_STYLE_MSGBOX, "Phone settings", dialog, "Toggle On/Off", "Close");
     return 1;
 }

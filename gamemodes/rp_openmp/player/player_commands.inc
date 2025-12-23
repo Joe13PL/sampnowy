@@ -61,6 +61,21 @@ YCMD:cmdtest(playerid, params[], help)
 YCMD:phone(playerid, params[], help)
 {
     CMD_GUARDS();
+
+    if(!isnull(params))
+    {
+        new token[32];
+        if(sscanf(params, "s", token) == 1)
+        {
+            if((strcmp(token, "fixnumbers", true) == 0 || strcmp(token, "fix", true) == 0))
+            {
+                if(!IsPlayerAdmin(playerid)) return SendClientMessage(playerid, COLOR_ERROR, "You do not have permission to run this command.");
+                Phone_ReassignDuplicateNumbers(playerid);
+                return 1;
+            }
+        }
+    }
+
     // Phone system is independent of having a phone item in inventory
     // Player can use phone GUI even without a phone item.
     Dialog_ShowPhoneMenu(playerid);
@@ -611,7 +626,7 @@ stock Player_ShowStats(playerid, targetid = INVALID_PLAYER_ID)
     format(tmp, sizeof(tmp), "{E74C3C}Stan zdrowia:\n");
     strcat(content, tmp, sizeof(content));
 
-    format(tmp, sizeof(tmp), "{FFFFFF}HP: %.0f | Glod: %d%% | Pragnienie: %d%%\n\n",
+    format(tmp, sizeof(tmp), "{FFFFFF}HP: %.0f | Głód: %d%% | Pragnienie: %d%%\n\n",
         pInfo[targetid][player_health], pInfo[targetid][player_hunger], pInfo[targetid][player_thirst]);
     strcat(content, tmp, sizeof(content));
 

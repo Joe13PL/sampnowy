@@ -205,7 +205,7 @@ stock HUD_Create(playerid)
     PlayerTextDrawSetOutline(playerid, g_PlayerHUD[playerid][HUD_SPEEDO_ENGINE], 1);
 
     // === PR??DKO??CIOMIERZ - ??WIAT??A ===
-    g_PlayerHUD[playerid][HUD_SPEEDO_LIGHTS] = CreatePlayerTextDraw(playerid, 510.0, 405.0, "Swiatla: ~r~OFF");
+    g_PlayerHUD[playerid][HUD_SPEEDO_LIGHTS] = CreatePlayerTextDraw(playerid, 510.0, 405.0, "Światła: ~r~OFF");
     PlayerTextDrawFont(playerid, g_PlayerHUD[playerid][HUD_SPEEDO_LIGHTS], 2);
     PlayerTextDrawLetterSize(playerid, g_PlayerHUD[playerid][HUD_SPEEDO_LIGHTS], 0.2, 0.8);
     PlayerTextDrawColour(playerid, g_PlayerHUD[playerid][HUD_SPEEDO_LIGHTS], 0xFFFFFFFF);
@@ -451,9 +451,11 @@ stock Speedo_Update(playerid, vehicleid)
     }
 
     format(text, sizeof(text), "Silnik: %s", engine ? "~g~ON" : "~r~OFF");
+    Polish_EncodeForClient(text, text, sizeof(text));
     PlayerTextDrawSetString(playerid, g_PlayerHUD[playerid][HUD_SPEEDO_ENGINE], text);
 
     format(text, sizeof(text), "Swiatla: %s", lights ? "~g~ON" : "~r~OFF");
+    Polish_EncodeForClient(text, text, sizeof(text));
     PlayerTextDrawSetString(playerid, g_PlayerHUD[playerid][HUD_SPEEDO_LIGHTS], text);
 
     return 1;

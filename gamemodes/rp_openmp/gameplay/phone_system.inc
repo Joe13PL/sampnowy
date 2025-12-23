@@ -25,6 +25,7 @@ forward Phone_OnGetPlayerNumber(playerid, str[]);
 forward Phone_OnFindOwnerForNumber(number);
 forward Phone_OnStartCallCheck(callerPid, number);
 forward Phone_Dial(playerid, target);
+forward Phone_GenerateFreeNumber(owner_uid);
 forward Phone_Hangup(playerid);
 forward Phone_OnPhoneColumnsChecked(playerid);
 forward Phone_BackfillPhoneDevices(playerid);
@@ -66,6 +67,11 @@ new g_PhoneHistoryCount[MAX_PLAYERS];
 
 // Feature flags / DB capabilities
 new g_PhoneDBHasContactCols = 1; // assume contacts supported by default
+// SMS column detection: DB may have `body` or legacy `message` column
+new g_PhoneSMSUsesBody = 0; // 1 = use `body`, 0 = use `message` (default until detected)
+// Whether phone_sms table has sender/receiver UID+name columns (legacy/alternate schema)
+new g_PhoneSMSHasUserCols = 0; // 1 = has columns like sender_uid/sender_name/receiver_uid/receiver_name
+
 
 
 forward Phone_Init();
@@ -75,6 +81,11 @@ public Phone_Init()
     new q[256];
     mysql_format(mySQLconnection, q, sizeof(q), "SELECT phone_number, state FROM phone_numbers");
     mysql_tquery(mySQLconnection, q, "Phone_OnNumbersLoaded");
+
+    // Detect schema variations: whether phone_sms has 'body' or legacy 'message' column, and other phone-related columns
+    new q2[512];
+    mysql_format(mySQLconnection, q2, sizeof(q2), "SELECT (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phone_sms' AND COLUMN_NAME = 'body') AS has_body, (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phone_sms' AND COLUMN_NAME = 'message') AS has_message, (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phone_sms' AND COLUMN_NAME = 'sender_uid') AS has_sender_uid, (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phone_sms' AND COLUMN_NAME = 'sender_name') AS has_sender_name, (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phone_sms' AND COLUMN_NAME = 'receiver_uid') AS has_receiver_uid, (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phone_sms' AND COLUMN_NAME = 'receiver_name') AS has_receiver_name, (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phone_calls' AND COLUMN_NAME = 'caller_number') AS calls, (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phone_contacts' AND COLUMN_NAME = 'contact_number') AS contacts");
+    mysql_tquery(mySQLconnection, q2, "Phone_OnPhoneColumnsChecked");
     return 1;
 }
 
@@ -125,6 +136,36 @@ stock Phone_AssignNumberToOwner(owner_uid, number)
     return 1;
 }
 
+// Generate and assign a free phone number for an owner. Returns number or 0 on failure.
+stock Phone_GenerateFreeNumber(owner_uid)
+{
+    // First try linear scan using local cache
+    new num;
+    for(num = PHONE_MIN_NUMBER; num <= PHONE_MAX_NUMBER; num++)
+    {
+        if(gPhoneOwnerUidByNumber[num] == 0)
+        {
+            Phone_EnsureNumberExists(num);
+            Phone_AssignNumberToOwner(owner_uid, num);
+            return num;
+        }
+    }
+
+    // If cache is full/unreliable, attempt a few random picks
+    for(new i = 0; i < 1000; i++)
+    {
+        num = PHONE_MIN_NUMBER + (random() % (PHONE_MAX_NUMBER - PHONE_MIN_NUMBER + 1));
+        if(gPhoneOwnerUidByNumber[num] == 0)
+        {
+            Phone_EnsureNumberExists(num);
+            Phone_AssignNumberToOwner(owner_uid, num);
+            return num;
+        }
+    }
+
+    return 0;
+}
+
 stock GetOrCreatePlayerPrimaryNumber(playerid, output[], size)
 {
     if(!IsValidPlayerId(playerid) || !pInfo[playerid][player_logged]) return 0;
@@ -136,7 +177,10 @@ stock GetOrCreatePlayerPrimaryNumber(playerid, output[], size)
 }
 public Phone_OnGetPlayerNumber(playerid, str[])
 {
-    // callback stub - not used synchronously in current GUI
+    new rows = cache_num_rows();
+    if(rows == 0) { str[0] = '\0'; return 1; }
+    new numStr[16]; cache_get_value(0, "phone_number", numStr, sizeof(numStr));
+    strcopy(str, numStr, sizeof(numStr));
     return 1;
 }
 
@@ -165,15 +209,30 @@ public Phone_OnFindOwnerForNumber(number)
     new owner_uid = 0; if(sscanf(owner_uid_str, "%d", owner_uid) != 1) return 1;
     if(number >= PHONE_MIN_NUMBER && number <= PHONE_MAX_NUMBER) gPhoneOwnerUidByNumber[number] = owner_uid;
     return 1;
-    return 1;
 }
 
 // Calls
 stock Phone_StartCallByNumber(callerPid, number)
 {
+    printf("[DBG] Phone_StartCallByNumber: caller=%d number=%d gPhoneState[%d]=%d owner_cached=%d\n", callerPid, number, number, gPhoneState[number], gPhoneOwnerUidByNumber[number]);
+
     if(number < PHONE_MIN_NUMBER || number > PHONE_MAX_NUMBER)
     {
         SendClientMessage(callerPid, COLOR_ERROR, "Invalid phone number.");
+        return 0;
+    }
+
+    // Caller must own a phone
+    new slot = Item_FindByType(callerPid, ITEM_TYPE_PHONE);
+    if(slot < 0)
+    {
+        SendClientMessage(callerPid, COLOR_ERROR, "You do not own a phone.");
+        return 0;
+    }
+    new callerNum = pItem[callerPid][slot][item_value2];
+    if(callerNum == 0)
+    {
+        SendClientMessage(callerPid, COLOR_ERROR, "Your phone has no number assigned.");
         return 0;
     }
 
@@ -194,15 +253,17 @@ stock Phone_StartCallByNumber(callerPid, number)
     new calleePid = Phone_FindOnlinePidByNumber(number);
     if(calleePid == -1)
     {
+        // If owner uid is not cached, Phone_FindOnlinePidByNumber already scheduled a DB lookup.
+        if(gPhoneOwnerUidByNumber[number] == 0)
+        {
+            SendClientMessage(callerPid, COLOR_INFO, "Looking up subscriber; please try again in a moment.");
+            return 1;
+        }
         SendClientMessage(callerPid, COLOR_ERROR, "Subscriber temporarily unavailable.");
         return 0;
     }
 
-    new callerNumBuf[16];
-    new callerNum = 0;
-    new slot = Item_FindByType(callerPid, ITEM_TYPE_PHONE);
-    if(slot >= 0) callerNum = pItem[callerPid][slot][item_value2];
-    if(callerNum == 0) { format(callerNumBuf, sizeof(callerNumBuf), "%d", callerPid); } else { format(callerNumBuf, sizeof(callerNumBuf), "%d", callerNum); }
+    new callerNumBuf[16]; format(callerNumBuf, sizeof(callerNumBuf), "%d", callerNum);
 
     new q[256];
     format(q, sizeof(q), "Incoming call from %s", callerNumBuf);
@@ -237,18 +298,36 @@ public Phone_OnStartCallCheck(callerPid, number)
         return 1;
     }
 
-    new callerNumBuf[16]; format(callerNumBuf, sizeof(callerNumBuf), "%d", callerPid);
+    // Determine caller's public phone number (use item value if present)
+    new callerNum = 0;
+    new slot = Item_FindByType(callerPid, ITEM_TYPE_PHONE);
+    if(slot >= 0) callerNum = pItem[callerPid][slot][item_value2];
+    if(callerNum == 0)
+    {
+        SendClientMessage(callerPid, COLOR_ERROR, "You do not own a phone.");
+        return 1;
+    }
+
+    new callerNumBuf[16]; format(callerNumBuf, sizeof(callerNumBuf), "%d", callerNum);
     new q[256]; format(q, sizeof(q), "Incoming call from %s", callerNumBuf);
     ShowPlayerDialog(calleePid, DIALOG_PHONE_INCOMING, DIALOG_STYLE_MSGBOX, "Incoming call", q, "Answer", "Reject");
-    SetPVarInt(calleePid, "Phone_IncomingCallerNumber", callerPid);
+    SetPVarInt(calleePid, "Phone_IncomingCallerNumber", callerNum);
     SetPVarInt(calleePid, "Phone_PendingCallerPid", callerPid);
     return 1;
 }
 
-public Phone_CreateOrUpdateDeviceForItem(item_id, phone_number, owner_uid, owner_type)
+public Phone_CreateOrUpdateDeviceForItem(p_item_id, phone_number, owner_uid, owner_type)
 {
+    // Ensure the phone number exists in phone_numbers synchronously to satisfy FK constraints
+    if(phone_number >= PHONE_MIN_NUMBER && phone_number <= PHONE_MAX_NUMBER)
+    {
+        new qcheck[256];
+        mysql_format(mySQLconnection, qcheck, sizeof(qcheck), "INSERT INTO phone_numbers (phone_number, state) VALUES (%d, 'on') ON DUPLICATE KEY UPDATE phone_number = phone_number", phone_number);
+        MySQL_ExecuteFormat(qcheck);
+    }
+
     new q[512];
-    mysql_format(mySQLconnection, q, sizeof(q), "INSERT INTO phone_devices (phone_number, item_id, owner_uid, owner_type) VALUES (%d, %d, %d, %d) ON DUPLICATE KEY UPDATE item_id = VALUES(item_id), owner_uid = VALUES(owner_uid), owner_type = VALUES(owner_type), updated_at = NOW()", phone_number, item_id, owner_uid, owner_type);
+    mysql_format(mySQLconnection, q, sizeof(q), "INSERT INTO phone_devices (phone_number, item_id, owner_uid, owner_type) VALUES (%d, %d, %d, %d) ON DUPLICATE KEY UPDATE item_id = VALUES(item_id), owner_uid = VALUES(owner_uid), owner_type = VALUES(owner_type), updated_at = NOW()", phone_number, p_item_id, owner_uid, owner_type);
     mysql_tquery(mySQLconnection, q);
     return 1;
 }
@@ -284,13 +363,41 @@ public Phone_Hangup(playerid)
 public Phone_OnPhoneColumnsChecked(playerid)
 {
     new rows = cache_num_rows();
-    if(rows == 0) { SendClientMessage(playerid, COLOR_ERROR, "Phone schema check returned no data."); return 1; }
-    new smsCols[8], callCols[8], contactCols[8];
-    cache_get_value(0, "sms", smsCols, sizeof(smsCols));
+    if(rows == 0) { /* if called at init without a player, silent no-op */ return 1; }
+
+    new has_body_str[8], has_message_str[8], has_sender_uid_str[8], has_sender_name_str[8], has_receiver_uid_str[8], has_receiver_name_str[8], callCols[8], contactCols[8];
+    cache_get_value(0, "has_body", has_body_str, sizeof(has_body_str));
+    cache_get_value(0, "has_message", has_message_str, sizeof(has_message_str));
+    cache_get_value(0, "has_sender_uid", has_sender_uid_str, sizeof(has_sender_uid_str));
+    cache_get_value(0, "has_sender_name", has_sender_name_str, sizeof(has_sender_name_str));
+    cache_get_value(0, "has_receiver_uid", has_receiver_uid_str, sizeof(has_receiver_uid_str));
+    cache_get_value(0, "has_receiver_name", has_receiver_name_str, sizeof(has_receiver_name_str));
     cache_get_value(0, "calls", callCols, sizeof(callCols));
     cache_get_value(0, "contacts", contactCols, sizeof(contactCols));
-    new msg[256]; format(msg, sizeof(msg), "phone_sms has sender_number: %s, phone_calls has caller_number: %s, phone_contacts has contact_number: %s", smsCols, callCols, contactCols);
-    SendClientMessage(playerid, COLOR_INFO, msg);
+
+    new has_body = 0; if(sscanf(has_body_str, "%d", has_body) != 1) has_body = 0;
+    new has_message = 0; if(sscanf(has_message_str, "%d", has_message) != 1) has_message = 0;
+    new has_sender_uid = 0; if(sscanf(has_sender_uid_str, "%d", has_sender_uid) != 1) has_sender_uid = 0;
+    new has_sender_name = 0; if(sscanf(has_sender_name_str, "%d", has_sender_name) != 1) has_sender_name = 0;
+    new has_receiver_uid = 0; if(sscanf(has_receiver_uid_str, "%d", has_receiver_uid) != 1) has_receiver_uid = 0;
+    new has_receiver_name = 0; if(sscanf(has_receiver_name_str, "%d", has_receiver_name) != 1) has_receiver_name = 0;
+
+    // choose message column preference: prefer 'body' if present, otherwise 'message'
+    g_PhoneSMSUsesBody = (has_body > 0) ? 1 : 0;
+
+    // detect if the DB expects sender/receiver uid/name columns (legacy schema variant)
+    g_PhoneSMSHasUserCols = (has_sender_uid > 0 || has_sender_name > 0 || has_receiver_uid > 0 || has_receiver_name > 0) ? 1 : 0;
+
+    // preserve contacts/calls capability flag
+    new contactFlag = 0; if(sscanf(contactCols, "%d", contactFlag) != 1) contactFlag = 0;
+    g_PhoneDBHasContactCols = (contactFlag > 0) ? 1 : 0;
+
+    // Inform player only when invoked interactively
+    if(playerid >= 0 && playerid < MAX_PLAYERS) {
+        new colname[8]; if(g_PhoneSMSUsesBody) strcopy(colname, "body", sizeof(colname)); else strcopy(colname, "message", sizeof(colname));
+        new msg[128]; format(msg, sizeof(msg), "Phone schema detected: SMS text column = %s", colname);
+        SendClientMessage(playerid, COLOR_INFO, msg);
+    }
     return 1;
 }
 
@@ -309,7 +416,7 @@ new g_PhoneQueuedDeletesCount = 0;
 
 public Phone_QueueDelete(smsId)
 {
-    if(g_PhoneQueuedDeletesCount < sizeof(g_PhoneQueuedDeletes))
+    if(g_PhoneQueuedDeletesCount < 256)
     {
         g_PhoneQueuedDeletes[g_PhoneQueuedDeletesCount++] = smsId;
     }
@@ -343,9 +450,13 @@ public Phone_RunSelfTests(playerid)
     Phone_EnsureNumberExists(9002);
 
     // Insert a test SMS and then request listing (callback populates player's SMS list)
-    MySQL_ExecuteFormat("INSERT INTO `phone_sms` (`sender_number`,`receiver_number`,`message`) VALUES (%d, %d, '%s')", 9001, 9002, "Automated test message");
-    new q[1024];
-    mysql_format(mySQLconnection, q, sizeof(q), "SELECT s.id, s.sender_number, s.receiver_number, s.message, s.timestamp, COALESCE(pc_sender.contact_name, s.sender_number) AS sender_display FROM phone_sms s LEFT JOIN phone_contacts pc_sender ON pc_sender.phone_number = %d AND pc_sender.contact_number = s.sender_number WHERE s.sender_number = %d OR s.receiver_number = %d ORDER BY s.timestamp DESC LIMIT 10", 9001, 9001, 9001);
+    new col[8]; if(g_PhoneSMSUsesBody) strcopy(col, "body", sizeof(col)); else strcopy(col, "message", sizeof(col));
+    new escTest[128]; mysql_escape_string("Automated test message", escTest, sizeof(escTest), mySQLconnection);
+    new qIns[1024]; format(qIns, sizeof(qIns), "INSERT INTO `phone_sms` (`sender_number`,`receiver_number`,`%s`) VALUES (%d, %d, '%s')", col, 9001, 9002, escTest);
+    mysql_tquery(mySQLconnection, qIns);
+    new msgCol[16]; if(g_PhoneSMSUsesBody) strcopy(msgCol, "s.body", sizeof(msgCol)); else strcopy(msgCol, "s.message", sizeof(msgCol));
+    new q[1024]; format(q, sizeof(q), "SELECT s.id, s.sender_number, s.receiver_number, %s AS message_col, s.timestamp, COALESCE(pc_sender.contact_name, s.sender_number) AS sender_display FROM phone_sms s LEFT JOIN phone_contacts pc_sender ON pc_sender.phone_number = %d AND pc_sender.contact_number = s.sender_number WHERE s.sender_number = %d OR s.receiver_number = %d ORDER BY s.timestamp DESC LIMIT 10", msgCol, 9001, 9001, 9001);
+    mysql_tquery(mySQLconnection, q, "Phone_OnSMSListLoaded", "i", playerid);
     mysql_tquery(mySQLconnection, q, "Phone_OnSMSListLoaded", "i", playerid);
 
     // Insert a test call and request history
@@ -394,12 +505,11 @@ stock Phone_AddContactForNumber(playerid, targetNumber, const contactName[])
 
     if(myNumber == 0)
     {
-        myNumber = 1000 + playerid;
-        Phone_EnsureNumberExists(myNumber);
-        Phone_AssignNumberToOwner(pInfo[playerid][player_uid], myNumber);
+        SendClientMessage(playerid, COLOR_ERROR, "You do not own a phone. Use /ap give to grant a phone or acquire one in-game.");
+        return 0;
     }
 
-    new esc[128]; mysql_escape_string(contactName, esc, mySQLconnection, sizeof(esc));
+    new esc[128]; mysql_escape_string(contactName, esc, sizeof(esc), mySQLconnection);
     new q[512];
     mysql_format(mySQLconnection, q, sizeof(q), "INSERT INTO phone_contacts (phone_number, contact_number, contact_name) VALUES (%d, %d, '%s')", myNumber, targetNumber, esc);
     mysql_tquery(mySQLconnection, q);
@@ -442,17 +552,41 @@ public Phone_SendSMS(senderPid, targetPid, const message[])
     new slot = Item_FindByType(senderPid, ITEM_TYPE_PHONE);
     new senderNum = 0;
     if(slot >= 0) senderNum = pItem[senderPid][slot][item_value2];
-    if(senderNum == 0) senderNum = 1000 + senderPid;
+    if(senderNum == 0) { SendClientMessage(senderPid, COLOR_ERROR, "You do not own a phone."); return 0; }
 
     new tslot = Item_FindByType(targetPid, ITEM_TYPE_PHONE);
     new receiverNum = 0;
     if(tslot >= 0) receiverNum = pItem[targetPid][tslot][item_value2];
-    if(receiverNum == 0) receiverNum = 1000 + targetPid;
+    if(receiverNum == 0) { SendClientMessage(senderPid, COLOR_ERROR, "Recipient is unavailable (no phone)."); return 0; }
 
-    new esc[512]; mysql_escape_string(message, esc, mySQLconnection, sizeof(esc));
-    new q[1024];
-    mysql_format(mySQLconnection, q, sizeof(q), "INSERT INTO phone_sms (sender_number, receiver_number, message) VALUES (%d, %d, '%s')", senderNum, receiverNum, esc);
-    mysql_tquery(mySQLconnection, q);
+    new col[8]; if(g_PhoneSMSUsesBody) strcopy(col, "body", sizeof(col)); else strcopy(col, "message", sizeof(col));
+    new esc[512]; mysql_escape_string(message, esc, sizeof(esc), mySQLconnection);
+
+    if(g_PhoneSMSHasUserCols)
+    {
+        // Insert using UID/name columns (server schema requires these)
+        new sUid = pInfo[senderPid][player_uid];
+        new rUid = pInfo[targetPid][player_uid];
+        new sName[128]; Player_GetRPName(senderPid, sName, sizeof(sName));
+        new rName[128]; Player_GetRPName(targetPid, rName, sizeof(rName));
+        new escS[256]; MySQL_EscapeString(sName, escS, sizeof(escS));
+        new escR[256]; MySQL_EscapeString(rName, escR, sizeof(escR));
+        new q[1024]; format(q, sizeof(q), "INSERT INTO phone_sms (sender_uid, sender_name, receiver_uid, receiver_name, %s) VALUES (%d, '%s', %d, '%s', '%s')", col, sUid, escS, rUid, escR, esc);
+        new rawLen = strlen(message); new escLen = strlen(esc);
+        printf("[DBG] Phone_SendSMS (usercols): sender=%d receiver=%d raw_len=%d esc_len=%d raw_prefix='%.16s'\n", senderPid, targetPid, rawLen, escLen, message);
+        if(escLen == 0 && rawLen > 0) printf("[WARN] Phone_SendSMS (usercols): escaped message empty (possible escape failure)\n");
+        printf("[DBG] Phone_SendSMS SQL: len=%d -> %s\n", escLen, q);
+        mysql_tquery(mySQLconnection, q);
+    }
+    else
+    {
+        new q[1024]; format(q, sizeof(q), "INSERT INTO phone_sms (sender_number, receiver_number, %s) VALUES (%d, %d, '%s')", col, senderNum, receiverNum, esc);
+        new rawLen = strlen(message); new escLen = strlen(esc);
+        printf("[DBG] Phone_SendSMS: sender=%d receiver=%d raw_len=%d esc_len=%d raw_prefix='%.16s'\n", senderPid, targetPid, rawLen, escLen, message);
+        if(escLen == 0 && rawLen > 0) printf("[WARN] Phone_SendSMS: escaped message empty (possible escape failure)\n");
+        printf("[DBG] Phone_SendSMS SQL: len=%d -> %s\n", escLen, q);
+        mysql_tquery(mySQLconnection, q);
+    }
 
     if(pInfo[targetPid][player_logged])
     {
@@ -472,12 +606,36 @@ public Phone_SendSMSToUID(senderPid, targetNumber, const unused[], const message
     new slot = Item_FindByType(senderPid, ITEM_TYPE_PHONE);
     new senderNum = 0;
     if(slot >= 0) senderNum = pItem[senderPid][slot][item_value2];
-    if(senderNum == 0) senderNum = 1000 + senderPid;
+    if(senderNum == 0) { SendClientMessage(senderPid, COLOR_ERROR, "You do not own a phone."); return 0; }
 
-    new esc[512]; mysql_escape_string(message, esc, mySQLconnection, sizeof(esc));
-    new q[1024];
-    mysql_format(mySQLconnection, q, sizeof(q), "INSERT INTO phone_sms (sender_number, receiver_number, message) VALUES (%d, %d, '%s')", senderNum, targetNumber, esc);
-    mysql_tquery(mySQLconnection, q);
+    new col[8]; if(g_PhoneSMSUsesBody) strcopy(col, "body", sizeof(col)); else strcopy(col, "message", sizeof(col));
+    new esc[512]; mysql_escape_string(message, esc, sizeof(esc), mySQLconnection);
+
+    if(g_PhoneSMSHasUserCols)
+    {
+        // Use sender uid/name and place the target number into receiver_uid (schema variant seen in some DBs)
+        new sUid = pInfo[senderPid][player_uid];
+        new sName[128]; Player_GetRPName(senderPid, sName, sizeof(sName));
+        new escS[256]; MySQL_EscapeString(sName, escS, sizeof(escS));
+        new rUid = targetNumber; // store number in receiver_uid column for compatibility
+        new rName[64]; format(rName, sizeof(rName), "%d", targetNumber);
+        new escR[256]; MySQL_EscapeString(rName, escR, sizeof(escR));
+        new q[1024]; format(q, sizeof(q), "INSERT INTO phone_sms (sender_uid, sender_name, receiver_uid, receiver_name, %s) VALUES (%d, '%s', %d, '%s', '%s')", col, sUid, escS, rUid, escR, esc);
+        new rawLen = strlen(message); new escLen = strlen(esc);
+        printf("[DBG] Phone_SendSMSToUID (usercols): sender=%d targetNumber=%d raw_len=%d esc_len=%d raw_prefix='%.16s'\n", senderPid, targetNumber, rawLen, escLen, message);
+        if(escLen == 0 && rawLen > 0) printf("[WARN] Phone_SendSMSToUID (usercols): escaped message empty (possible escape failure)\n");
+        printf("[DBG] Phone_SendSMSToUID SQL: len=%d -> %s\n", escLen, q);
+        mysql_tquery(mySQLconnection, q);
+    }
+    else
+    {
+        new q[1024]; format(q, sizeof(q), "INSERT INTO phone_sms (sender_number, receiver_number, %s) VALUES (%d, %d, '%s')", col, senderNum, targetNumber, esc);
+        new rawLen = strlen(message); new escLen = strlen(esc);
+        printf("[DBG] Phone_SendSMSToUID: sender=%d targetNumber=%d raw_len=%d esc_len=%d raw_prefix='%.16s'\n", senderPid, targetNumber, rawLen, escLen, message);
+        if(escLen == 0 && rawLen > 0) printf("[WARN] Phone_SendSMSToUID: escaped message empty (possible escape failure)\n");
+        printf("[DBG] Phone_SendSMSToUID SQL: len=%d -> %s\n", escLen, q);
+        mysql_tquery(mySQLconnection, q);
+    }
     SendClientMessage(senderPid, COLOR_SUCCESS, "SMS queued.");
     return 1;
 }
@@ -500,14 +658,21 @@ stock Phone_SendSMSByNumber(senderPid, targetNumber, const message[])
 public Phone_OnSMSViewLoaded(playerid)
 {
     new rows = cache_num_rows();
+    printf("[DBG] Phone_OnSMSViewLoaded invoked for player=%d rows=%d\n", playerid, rows);
     if(rows == 0) { SendClientMessage(playerid, COLOR_ERROR, "No message found."); return 1; }
+
+    new idStr[16]; cache_get_value(0, "id", idStr, sizeof(idStr));
     new sender[16], receiver[16], body[512], timestamp[32], senderDisplay[64], receiverDisplay[64];
     cache_get_value(0, "sender_number", sender, sizeof(sender));
     cache_get_value(0, "receiver_number", receiver, sizeof(receiver));
-    cache_get_value(0, "body", body, sizeof(body));
+    // message_col contains the SMS body regardless of column name
+    cache_get_value(0, "message_col", body, sizeof(body));
     cache_get_value(0, "timestamp", timestamp, sizeof(timestamp));
     cache_get_value(0, "sender_display", senderDisplay, sizeof(senderDisplay));
     cache_get_value(0, "receiver_display", receiverDisplay, sizeof(receiverDisplay));
+
+    new bodyLen = strlen(body);
+    printf("[DBG] Phone_OnSMSViewLoaded id=%s sender=%s receiver=%s msglen=%d timestamp=%s sender_display='%s' receiver_display='%s'\n", idStr, sender, receiver, bodyLen, timestamp, senderDisplay, receiverDisplay);
 
     new fromName[64];
     if(strlen(senderDisplay) > 0) strcopy(fromName, senderDisplay, sizeof(fromName)); else strcopy(fromName, sender, sizeof(fromName));
@@ -534,7 +699,8 @@ stock Phone_GetPlayerNumberSync(playerid)
     if(!IsValidPlayerId(playerid) || !pInfo[playerid][player_logged]) return 0;
     new slot = Item_FindByType(playerid, ITEM_TYPE_PHONE);
     if(slot >= 0) return pItem[playerid][slot][item_value2];
-    return 1000 + playerid;
+    // No phone owned
+    return 0;
 }
 
 stock Dialog_ShowPhoneMenu(playerid)
@@ -547,6 +713,7 @@ stock Dialog_ShowPhoneMenu(playerid)
 stock Dialog_ShowPhoneContacts(playerid)
 {
     new mynum = Phone_GetPlayerNumberSync(playerid);
+    if(mynum == 0) { SendClientMessage(playerid, COLOR_ERROR, "You do not own a phone."); return 1; }
     new q[256]; mysql_format(mySQLconnection, q, sizeof(q), "SELECT id, contact_number, contact_name FROM phone_contacts WHERE phone_number = %d ORDER BY contact_name ASC", mynum);
     mysql_tquery(mySQLconnection, q, "Phone_OnContactsLoaded", "i", playerid);
     return 1;
@@ -589,15 +756,19 @@ public Phone_OnContactsLoaded(playerid)
 stock Dialog_ShowPhoneSMS(playerid)
 {
     new mynum = Phone_GetPlayerNumberSync(playerid);
-    new q[1024];
-    mysql_format(mySQLconnection, q, sizeof(q), "SELECT s.id, s.sender_number, s.receiver_number, s.message, s.timestamp, COALESCE(pc_sender.contact_name, s.sender_number) AS sender_display FROM phone_sms s LEFT JOIN phone_contacts pc_sender ON pc_sender.phone_number = %d AND pc_sender.contact_number = s.sender_number WHERE s.sender_number = %d OR s.receiver_number = %d ORDER BY s.timestamp DESC LIMIT 100", mynum, mynum, mynum);
-    mysql_tquery(mySQLconnection, q, "Phone_OnSMSListLoaded", "i", playerid);
+    if(mynum == 0) { SendClientMessage(playerid, COLOR_ERROR, "You do not own a phone."); return 1; }
+    new q[1024]; new qfmt[1024];
+    new msgCol[16]; if(g_PhoneSMSUsesBody) strcopy(msgCol, "s.body", sizeof(msgCol)); else strcopy(msgCol, "s.message", sizeof(msgCol));
+    format(qfmt, sizeof(qfmt), "SELECT s.id, s.sender_number, s.receiver_number, %s AS message_col, s.timestamp, COALESCE(pc_sender.contact_name, s.sender_number) AS sender_display FROM phone_sms s LEFT JOIN phone_contacts pc_sender ON pc_sender.phone_number = %d AND pc_sender.contact_number = s.sender_number WHERE s.sender_number = %d OR s.receiver_number = %d ORDER BY s.timestamp DESC LIMIT 100", msgCol, mynum, mynum, mynum);
+    printf("[DBG] Phone_ShowSMS list query: %s\n", qfmt);
+    mysql_tquery(mySQLconnection, qfmt, "Phone_OnSMSListLoaded", "i", playerid);
     return 1;
 }
 
 public Phone_OnSMSListLoaded(playerid)
 {
     new rows = cache_num_rows();
+    printf("[DBG] Phone_OnSMSListLoaded invoked for player=%d rows=%d\n", playerid, rows);
     g_PhoneSMSCount[playerid] = 0;
     if(rows == 0) { g_PhoneSMSCount[playerid] = 0; SendClientMessage(playerid, COLOR_INFO, "No messages."); return 1; }
 
@@ -607,7 +778,13 @@ public Phone_OnSMSListLoaded(playerid)
         new idStr[16], sender[16], body[256], ts[32], senderDisplay[64];
         cache_get_value(i, "id", idStr, sizeof(idStr));
         cache_get_value(i, "sender_number", sender, sizeof(sender));
-        cache_get_value(i, "message", body, sizeof(body));
+        // message_col contains the SMS body regardless of column name
+        cache_get_value(i, "message_col", body, sizeof(body));
+        if(strlen(body) == 0) // fallback for older queries that may have used body/message literally
+        {
+            cache_get_value(i, "body", body, sizeof(body));
+            if(strlen(body) == 0) cache_get_value(i, "message", body, sizeof(body));
+        }
         cache_get_value(i, "timestamp", ts, sizeof(ts));
         // attempt to use sender display if available (DB query may include joins that provide display name)
         cache_get_value(i, "sender_display", senderDisplay, sizeof(senderDisplay));
@@ -620,10 +797,15 @@ public Phone_OnSMSListLoaded(playerid)
         if(strlen(senderDisplay) > 0) format(displayName, sizeof(displayName), "%s", senderDisplay);
         else format(displayName, sizeof(displayName), "%s", sender);
 
+        // Log row diagnostic
+        new bodyLen = strlen(body);
+        printf("[DBG] Phone_OnSMSListLoaded row idx=%d id=%s sender=%s sender_display=%s msglen=%d\n", i, idStr, sender, senderDisplay, bodyLen);
+
         new line[512]; format(line, sizeof(line), "%s: %s\n", displayName, body);
         strcat(list, line);
     }
 
+    printf("[DBG] Phone_OnSMSListLoaded compiled list player=%d count=%d listlen=%d\n", playerid, g_PhoneSMSCount[playerid], strlen(list));
     ShowListDialog(playerid, DIALOG_PHONE_SMS_LIST, "SMS Inbox", list);
     return 1;
 }
@@ -631,6 +813,7 @@ public Phone_OnSMSListLoaded(playerid)
 stock Dialog_ShowPhoneHistory(playerid)
 {
     new mynum = Phone_GetPlayerNumberSync(playerid);
+    if(mynum == 0) { SendClientMessage(playerid, COLOR_ERROR, "You do not own a phone."); return 1; }
     new q[512]; mysql_format(mySQLconnection, q, sizeof(q), "SELECT id, caller_number, callee_number, start_time, end_time, status FROM phone_calls WHERE caller_number = %d OR callee_number = %d ORDER BY start_time DESC LIMIT 100", mynum, mynum);
     mysql_tquery(mySQLconnection, q, "Phone_OnCallHistoryLoaded_GUI", "i", playerid);
     return 1;
@@ -666,6 +849,7 @@ public Phone_OnCallHistoryLoaded_GUI(playerid)
 stock Dialog_ShowPhoneSettings(playerid)
 {
     new mynum = Phone_GetPlayerNumberSync(playerid);
+    if(mynum == 0) { SendClientMessage(playerid, COLOR_ERROR, "You do not own a phone."); return 1; }
     new q[256]; mysql_format(mySQLconnection, q, sizeof(q), "SELECT state FROM phone_numbers WHERE phone_number = %d LIMIT 1", mynum);
     mysql_tquery(mySQLconnection, q, "Phone_OnSettingsLoaded", "i", playerid);
     return 1;

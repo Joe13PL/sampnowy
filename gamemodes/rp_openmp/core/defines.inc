@@ -109,16 +109,13 @@
 #define LOG_MYSQL                       "srp/logs/mysql.log"
 
 // Compatibility aliases for files/paths expected by rp/ modules
-#ifndef CONFIG_FILEPATH
-    #define CONFIG_FILEPATH             CONFIG_DEFAULT_PATH
-#endif
+#if !defined CONFIG_FILEPATH
+#define CONFIG_FILEPATH CONFIG_DEFAULT_PATH
+#endif // CONFIG_FILEPATH
 
-#ifndef LOG_PLAYER
-    #define LOG_PLAYER                  LOG_PLAYER
-#endif
-#ifndef LOG_VEHICLE
-    #define LOG_VEHICLE                 LOG_VEHICLE
-#endif
+// Note: LOG_* macros are defined above to the expected paths for this mode.
+// Do not redefine them here to avoid macro recursion or redefinition warnings.
+
 
 // ===========================================================================
 // OWNER TYPES

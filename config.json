@@ -97,7 +97,7 @@
     "pawn": {
         "legacy_plugins": ["crashdetect", "PawnPlus", "streamer", "mysql", "samp_bcrypt", "ColAndreas"],
         "main_scripts": [
-            "main 1"
+            "rp_openmp 1"
         ],
         "side_scripts": []
     },

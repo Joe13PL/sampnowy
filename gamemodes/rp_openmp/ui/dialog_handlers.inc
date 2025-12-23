@@ -2,7 +2,7 @@
  * =============================================================================
  *  DIALOG HANDLERS - Obs??uga odpowiedzi dialog??w
  * =============================================================================
- *  
+ *
  *  Modu??: ui/dialog_handlers.inc
  *  Opis: Centralna obs??uga odpowiedzi dialog??w
  *
@@ -32,37 +32,37 @@ hook OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
         strcopy(text, inputtext, sizeof(text));
         SanitizeString(text);
     }
-    
+
     switch(dialogid)
     {
         // =========================================================
         // DIALOGI AUTENTYKACJI
         // =========================================================
-        
+
         case DIALOG_LOGIN:
         {
             return Dialog_HandleLogin(playerid, response, text);
         }
-        
+
         // =========================================================
         // DIALOGI GRACZA
         // =========================================================
-        
+
         case DIALOG_INVENTORY:
         {
             return Dialog_HandleInventory(playerid, response, listitem);
         }
-        
+
         case DIALOG_ITEM_OPTIONS:
         {
             return Dialog_HandleItemOptions(playerid, response, listitem);
         }
-        
+
         case DIALOG_ITEM_USE:
         {
             return Dialog_HandleItemUse(playerid, response, listitem);
         }
-        
+
         case DIALOG_ITEM_GIVE:
         {
             // Debug to catch unexpected invocations during auth flow
@@ -127,49 +127,49 @@ hook OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
         {
             return Dialog_HandlePhoneItemOptions(playerid, response, listitem);
         }
-        
+
         // =========================================================
         // DIALOGI GRUP
         // =========================================================
-        
+
         case DIALOG_GROUPS:
         {
             return Dialog_HandleGroups(playerid, response, listitem);
         }
-        
+
         case DIALOG_GROUP_OPTIONS:
         {
             return Dialog_HandleGroupOptions(playerid, response, listitem);
         }
-        
+
         case DIALOG_GROUP_MEMBERS:
         {
             return Dialog_HandleGroupMembers(playerid, response, listitem);
         }
-        
+
         // =========================================================
         // DIALOGI POJAZD??W
         // =========================================================
-        
+
         case DIALOG_VEHICLES:
         {
             return Dialog_HandleVehicles(playerid, response, listitem);
         }
-        
+
         case DIALOG_VEHICLE_OPTIONS:
         {
             return Dialog_HandleVehicleOptions(playerid, response, listitem);
         }
-        
+
         // =========================================================
         // DIALOGI STATS MENU
         // =========================================================
-        
+
         case DIALOG_STATS_MENU:
         {
             return Dialog_HandleStatsMenu(playerid, response, listitem);
         }
-        
+
         case DIALOG_STATS:
         {
             if(response)
@@ -179,66 +179,66 @@ hook OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
             }
             return 1;
         }
-        
+
         case DIALOG_PREMIUM_SHOP:
         {
             return Dialog_HandlePremiumShop(playerid, response, listitem);
         }
-        
+
         case DIALOG_WALKING_STYLE:
         {
             return Dialog_HandleWalkingStyle(playerid, response, listitem);
         }
-        
+
         case DIALOG_CREATE_GANG:
         {
             return Dialog_HandleCreateGang(playerid, response, listitem, inputtext);
         }
-        
+
         case DIALOG_CREATE_GANG_CONFIRM:
         {
             return Dialog_HandleCreateGangConfirm(playerid, response);
         }
-        
+
         // =========================================================
         // DIALOGI ADMINISTRACYJNE
         // =========================================================
-        
+
         case DIALOG_AG_TYPES:
         {
             return Admin_HandleTypeDialog(playerid, response, listitem);
         }
-        
+
         case DIALOG_AG_ABILITIES:
         {
             return Admin_HandleAbilitiesDialog(playerid, response, listitem);
         }
-        
+
         // =========================================================
         // DIALOGI PRACY
         // =========================================================
-        
+
         case DIALOG_WORK:
         {
             return Dialog_HandleWork(playerid, response, listitem);
         }
-        
+
         // =========================================================
         // DIALOGI INFORMACYJNE
         // =========================================================
-        
+
         case DIALOG_INFO:
         {
             // Dialog informacyjny - tylko zamknij
             return 1;
         }
-        
+
         case DIALOG_CONFIRM:
         {
             return Dialog_HandleConfirm(playerid, response);
         }
     }
-    
+
     return 0;
 }
 
@@ -254,16 +254,16 @@ Dialog_HandleLogin(playerid, response, const inputtext[])
         Player_Kick(playerid, -1, "Anulowano logowanie");
         return 1;
     }
-    
+
     if(strlen(inputtext) < 4)
     {
         SendClientMessage(playerid, COLOR_ERROR, "Hasło musi mieć co najmniej 6 znaków!");
         Auth_ShowRegisterDialog(playerid); // usuń zbędne argumenty
         return 1;
     }
-    
+
     Auth_VerifyPassword(playerid, inputtext);
-    
+
     return 1;
 }
 
@@ -274,29 +274,29 @@ Dialog_HandleRegister(playerid, response, const inputtext[])
         Player_Kick(playerid, -1, "Anulowano rejestracj??");
         return 1;
     }
-    
+
     if(strlen(inputtext) < 6)
     {
         SendClientMessage(playerid, COLOR_ERROR, "Has??o musi mie?? co najmniej 6 znak??w!");
         Auth_ShowRegisterDialog(playerid);
         return 1;
     }
-    
+
     if(strlen(inputtext) > 32)
     {
         SendClientMessage(playerid, COLOR_ERROR, "Has??o mo??e mie?? maksymalnie 32 znaki!");
         Auth_ShowRegisterDialog(playerid);
         return 1;
     }
-    
+
     // Zapisz has??o tymczasowo
     SetPVarString(playerid, "TempPassword", inputtext);
-    
+
     // Popro?? o potwierdzenie
-    ShowInputDialog(playerid, DIALOG_REGISTER_CONFIRM, 
-        "Potwierdzenie has??a", 
+    ShowInputDialog(playerid, DIALOG_REGISTER_CONFIRM,
+        "Potwierdzenie has??a",
         "Wpisz has??o ponownie w celu potwierdzenia:", true);
-    
+
     return 1;
 }
 
@@ -308,10 +308,10 @@ Dialog_HandleRegisterConfirm(playerid, response, const inputtext[])
         Auth_ShowRegisterDialog(playerid);
         return 1;
     }
-    
+
     new savedPassword[64];
     GetPVarString(playerid, "TempPassword", savedPassword, sizeof(savedPassword));
-    
+
     if(strcmp(inputtext, savedPassword) != 0)
     {
         SendClientMessage(playerid, COLOR_ERROR, "Has??a nie s?? identyczne!");
@@ -320,11 +320,11 @@ Dialog_HandleRegisterConfirm(playerid, response, const inputtext[])
 
         return 1;
     }
-    
+
     // Utw??rz konto
     Auth_CreateAccount(playerid, savedPassword);
     DeletePVar(playerid, "TempPassword");
-    
+
     return 1;
 }
 
@@ -338,11 +338,11 @@ Dialog_HandleInventory(playerid, response, listitem)
     {
         return 1;
     }
-    
+
     // Znajd?? wybrany przedmiot
     new slot = -1;
     new count = 0;
-    
+
     for(new i = 0; i < MAX_PLAYER_ITEMS; i++)
     {
         if(pItem[playerid][i][item_id] > 0)
@@ -355,15 +355,15 @@ Dialog_HandleInventory(playerid, response, listitem)
             count++;
         }
     }
-    
+
     if(slot == -1)
     {
         SendClientMessage(playerid, COLOR_ERROR, "Nieprawid??owy przedmiot.");
         return 1;
     }
-    
+
     Dialog_ShowItemOptions(playerid, slot);
-    
+
     return 1;
 }
 
@@ -374,18 +374,18 @@ Dialog_HandleItemOptions(playerid, response, listitem)
         Dialog_ShowInventory(playerid);
         return 1;
     }
-    
+
     new data[16];
     Dialog_GetData(playerid, data);
     new slot = strval(data);
-    
+
     switch(listitem)
     {
         case 0: // U??yj
         {
             Item_Use(playerid, slot);
         }
-        
+
         case 1: // Oddaj graczowi
         {
             ShowInputDialog(playerid, DIALOG_ITEM_GIVE,
@@ -393,19 +393,19 @@ Dialog_HandleItemOptions(playerid, response, listitem)
                 "Wpisz ID gracza, kt??remu chcesz odda?? przedmiot:");
             Dialog_SetData(playerid, data);
         }
-        
+
         case 2: // Pod??????
         {
             Item_Drop(playerid, slot);
         }
-        
+
         case 3: // Wyrzu??
         {
             Item_Destroy(playerid, slot);
             SendClientMessage(playerid, COLOR_INFO, "Wyrzuci??e?? przedmiot.");
         }
     }
-    
+
     return 1;
 }
 
@@ -455,8 +455,9 @@ Dialog_HandlePhoneMenu(playerid, response, listitem)
     {
         case 0: { ShowPlayerDialog(playerid, DIALOG_PHONE_DIAL, DIALOG_STYLE_INPUT, "Phone", "Enter a phone number to call:", "Call", "Cancel"); return 1; }
         case 1: { Dialog_ShowPhoneContacts(playerid); return 1; }
-        case 2: { Dialog_ShowPhoneHistory(playerid); return 1; }
-        case 3: { Dialog_ShowPhoneSMS(playerid); return 1; }
+        case 2: { Dialog_ShowPhoneSMS(playerid); return 1; }
+        case 3: { Dialog_ShowPhoneHistory(playerid); return 1; }
+        case 4: { Dialog_ShowPhoneSettings(playerid); return 1; }
         default: { return 1; }
     }
 }
@@ -703,8 +704,10 @@ Dialog_HandlePhoneSMSList(playerid, response, listitem)
     if(slot < 0 || pItem[playerid][slot][item_type] != ITEM_TYPE_PHONE) slot = Item_FindByType(playerid, ITEM_TYPE_PHONE);
     new myphone = 0; if(slot >= 0) myphone = pItem[playerid][slot][item_value2];
     new query[1024];
-    format(query, sizeof(query), "SELECT s.id, s.sender_number, s.receiver_number, s.body, s.timestamp, s.is_read, COALESCE(pc_sender.contact_name, s.sender_number) AS sender_display, COALESCE(pc_receiver.contact_name, s.receiver_number) AS receiver_display, s.sender_number AS sender_phone, s.receiver_number AS receiver_phone FROM `phone_sms` s LEFT JOIN `phone_contacts` pc_sender ON pc_sender.phone_number = %d AND pc_sender.contact_number = s.sender_number LEFT JOIN `phone_contacts` pc_receiver ON pc_receiver.phone_number = %d AND pc_receiver.contact_number = s.receiver_number WHERE s.id = %d", myphone, myphone, smsId);
+    new msgCol[16]; if(g_PhoneSMSUsesBody) strcopy(msgCol, "s.body", sizeof(msgCol)); else strcopy(msgCol, "s.message", sizeof(msgCol));
+    format(query, sizeof(query), "SELECT s.id, s.sender_number, s.receiver_number, %s AS message_col, s.timestamp, s.is_read, COALESCE(pc_sender.contact_name, s.sender_number) AS sender_display, COALESCE(pc_receiver.contact_name, s.receiver_number) AS receiver_display, s.sender_number AS sender_phone, s.receiver_number AS receiver_phone FROM `phone_sms` s LEFT JOIN `phone_contacts` pc_sender ON pc_sender.phone_number = %d AND pc_sender.contact_number = s.sender_number LEFT JOIN `phone_contacts` pc_receiver ON pc_receiver.phone_number = %d AND pc_receiver.contact_number = s.receiver_number WHERE s.id = %d", msgCol, myphone, myphone, smsId);
     if(strlen(query) >= sizeof(query) - 1) printf("[WARN] Dialog_HandlePhoneSMSList: query truncated (len=%d, cap=%d)\n", strlen(query), sizeof(query));
+    printf("[DBG] Dialog_HandlePhoneSMSList query: %s\n", query);
     mysql_tquery(mySQLconnection, query, "Phone_OnSMSViewLoaded", "i", playerid);
     return 1;
 }
@@ -818,23 +821,23 @@ Dialog_HandleItemGive(playerid, response, const inputtext[])
         Dialog_ShowInventory(playerid);
         return 1;
     }
-    
+
     new data[16];
     Dialog_GetData(playerid, data);
     new slot = strval(data);
-    
+
     new targetid = strval(inputtext);
-    
+
     if(!IsValidPlayerId(targetid) || !pInfo[targetid][player_logged])
     {
         SendClientMessage(playerid, COLOR_ERROR, "Nieprawid??owy gracz.");
         Dialog_ShowInventory(playerid);
         return 1;
     }
-    
+
     // Utw??rz ofert?? przedmiotu
     Offer_Create(playerid, targetid, OFFER_ITEM, 0, slot, 0);
-    
+
     return 1;
 }
 
@@ -848,15 +851,15 @@ Dialog_HandleGroups(playerid, response, listitem)
     {
         return 1;
     }
-    
+
     // Znajd?? wybran?? grup??
     new gid = -1;
     new count = 0;
-    
+
     for(new i = 0; i < MAX_PLAYER_GROUPS; i++)
     {
         new groupId = pInfo[playerid][player_group][i];
-        
+
         if(groupId > 0 && gInfo[groupId][group_created])
         {
             if(count == listitem)
@@ -867,25 +870,25 @@ Dialog_HandleGroups(playerid, response, listitem)
             count++;
         }
     }
-    
+
     if(gid == -1)
     {
         return 1;
     }
-    
+
     // Zapisz ID grupy
     new data[16];
     format(data, sizeof(data), "%d", gid);
     Dialog_SetData(playerid, data);
-    
+
     // Poka?? opcje grupy
     new content[256];
-    format(content, sizeof(content), 
+    format(content, sizeof(content),
         "Czat grupy\nLista cz??onk??w\nMagazyn grupy\nOpu???? grup??");
-    
-    ShowListDialog(playerid, DIALOG_GROUP_OPTIONS, 
+
+    ShowListDialog(playerid, DIALOG_GROUP_OPTIONS,
         gInfo[gid][group_name], content);
-    
+
     return 1;
 }
 
@@ -896,11 +899,11 @@ Dialog_HandleGroupOptions(playerid, response, listitem)
         Dialog_ShowPlayerGroups(playerid);
         return 1;
     }
-    
+
     new data[16];
     Dialog_GetData(playerid, data);
     new gid = strval(data);
-    
+
     switch(listitem)
     {
         case 0: // Czat grupy
@@ -911,25 +914,25 @@ Dialog_HandleGroupOptions(playerid, response, listitem)
                 "Wpisz wiadomo???? do cz??onk??w grupy:");
             Dialog_SetData(playerid, data);
         }
-        
+
         case 1: // Lista cz??onk??w
         {
             Dialog_ShowGroupMembers(playerid, gid);
         }
-        
+
         case 2: // Magazyn
         {
             // Poka?? magazyn grupy
             SendClientMessage(playerid, COLOR_INFO, "System magazynu w budowie.");
         }
-        
+
         case 3: // Opu???? grup??
         {
             Group_RemoveMember(gid, playerid);
             SendClientMessage(playerid, COLOR_INFO, "Opu??ci??e?? grup??.");
         }
     }
-    
+
     return 1;
 }
 
@@ -939,7 +942,7 @@ Dialog_HandleGroupMembers(playerid, response, listitem)
     {
         Dialog_ShowPlayerGroups(playerid);
     }
-    
+
     return 1;
 }
 
@@ -947,38 +950,38 @@ Dialog_ShowGroupMembers(playerid, groupId)
 {
     new content[2048];
     new count = 0;
-    
+
     strcopy(content, "Gracz\tRanga\tOnline\n", sizeof(content));
-    
+
     foreach(new i : Player)
     {
         if(Player_IsInGroup(i, groupId))
         {
             new rankName[32];
             Player_GetGroupRankName(i, groupId, rankName);
-            
+
             new line[128];
             format(line, sizeof(line), "%s\t%s\t%s\n",
                 Player_GetRPName(i),
                 rankName,
                 "Online");
-            
+
             strcat(content, line);
             count++;
         }
     }
-    
+
     if(count == 0)
     {
         strcopy(content, "Brak cz??onk??w online.", sizeof(content));
     }
-    
+
     new title[64];
     format(title, sizeof(title), "Cz??onkowie: %s", gInfo[groupId][group_name]);
-    
+
     ShowPlayerDialog(playerid, DIALOG_GROUP_MEMBERS, DIALOG_STYLE_TABLIST_HEADERS,
         title, content, "OK", "Wr????");
-    
+
     return 1;
 }
 
@@ -992,32 +995,32 @@ Dialog_HandleVehicles(playerid, response, listitem)
     {
         return 1;
     }
-    
+
     new vehicles[MAX_VEHICLES];
     new vehicleCount = Vehicle_GetPlayerVehicles(playerid, vehicles);
-    
+
     if(listitem >= vehicleCount)
     {
         return 1;
     }
-    
+
     new slot = vehicles[listitem];
-    
+
     // Zapisz slot
     new data[16];
     format(data, sizeof(data), "%d", slot);
     Dialog_SetData(playerid, data);
-    
+
     // Poka?? opcje
     new content[256] = "Lokalizuj pojazd\nPrzywo??aj pojazd\nSprzedaj pojazd";
-    
+
     new title[64];
     new modelName[32];
     GetVehicleModelName(vInfo[slot][veh_model], modelName);
     format(title, sizeof(title), "Opcje: %s", modelName);
-    
+
     ShowListDialog(playerid, DIALOG_VEHICLE_OPTIONS, title, content);
-    
+
     return 1;
 }
 
@@ -1028,11 +1031,11 @@ Dialog_HandleVehicleOptions(playerid, response, listitem)
         Dialog_ShowPlayerVehicles(playerid);
         return 1;
     }
-    
+
     new data[16];
     Dialog_GetData(playerid, data);
     new slot = strval(data);
-    
+
     switch(listitem)
     {
         case 0: // Lokalizuj
@@ -1042,7 +1045,7 @@ Dialog_HandleVehicleOptions(playerid, response, listitem)
             SetPlayerCheckpoint(playerid, x, y, z, 3.0);
             SendClientMessage(playerid, COLOR_INFO, "Pojazd zaznaczony na mapie.");
         }
-        
+
         case 1: // Przywo??aj
         {
             new Float:x, Float:y, Float:z;
@@ -1050,13 +1053,13 @@ Dialog_HandleVehicleOptions(playerid, response, listitem)
             SetVehiclePos(vInfo[slot][veh_gameid], x + 3.0, y, z);
             SendClientMessage(playerid, COLOR_SUCCESS, "Pojazd przywo??any.");
         }
-        
+
         case 2: // Sprzedaj
         {
             SendClientMessage(playerid, COLOR_INFO, "Aby sprzeda?? pojazd, znajd?? kupca i u??yj /sprzedajpojazd.");
         }
     }
-    
+
     return 1;
 }
 
@@ -1070,10 +1073,10 @@ Dialog_HandleWork(playerid, response, listitem)
     {
         return 1;
     }
-    
+
     // Mapowanie listitem na typ pracy
     new E_WORK_TYPE:workType;
-    
+
     switch(listitem)
     {
         case 0: workType = WORK_TAXI;
@@ -1087,12 +1090,12 @@ Dialog_HandleWork(playerid, response, listitem)
         case 8: workType = WORK_FISHERMAN;
         default: workType = WORK_NONE;
     }
-    
+
     if(workType != WORK_NONE)
     {
         Work_Start(playerid, workType);
     }
-    
+
     return 1;
 }
 
@@ -1124,7 +1127,7 @@ stock Player_ShowStatsMenu(playerid)
     // Sprawdz warunki do zalozenia grupy przestepczej
     new bool:canCreateGang = Player_CanCreateGang(playerid);
     new gangStatus[64];
-    
+
     if(canCreateGang)
     {
         gangStatus = "{00FF00}[DOSTEPNE]";
@@ -1133,18 +1136,18 @@ stock Player_ShowStatsMenu(playerid)
     {
         gangStatus = "{FF6600}[WYMAGANIA NIE SPELNIONE]";
     }
-    
+
     new content[512];
     content[0] = EOS;
-    
+
     strcat(content, "{FFFFFF}Statystyki postaci\n", sizeof(content));
     strcat(content, "{FFFFFF}Sklep Premium\n", sizeof(content));
     strcat(content, "{FFFFFF}Styl chodzenia (Alt)\n", sizeof(content));
     format(content, sizeof(content), "%s{FFFFFF}Zaloz grupe przestepcza %s", content, gangStatus);
-    
-    ShowPlayerDialog(playerid, DIALOG_STATS_MENU, DIALOG_STYLE_LIST, 
+
+    ShowPlayerDialog(playerid, DIALOG_STATS_MENU, DIALOG_STYLE_LIST,
         "Menu statystyk", content, "Wybierz", "Zamknij");
-    
+
     return 1;
 }
 
@@ -1154,24 +1157,24 @@ Dialog_HandleStatsMenu(playerid, response, listitem)
     {
         return 1;
     }
-    
+
     switch(listitem)
     {
         case 0: // Statystyki postaci
         {
             Player_ShowStats(playerid);
         }
-        
+
         case 1: // Sklep Premium
         {
             Player_ShowPremiumShop(playerid);
         }
-        
+
         case 2: // Styl chodzenia
         {
             Player_ShowWalkingStyles(playerid);
         }
-        
+
         case 3: // Zaloz grupe przestepcza
         {
             if(Player_CanCreateGang(playerid))
@@ -1184,26 +1187,26 @@ Dialog_HandleStatsMenu(playerid, response, listitem)
                 new houses = Player_CountHouses(playerid);
                 new vehicles = Player_CountVehicles(playerid);
                 new housesOk[16], vehiclesOk[16];
-                
+
                 if(houses >= 1) housesOk = "{00FF00}[OK]";
                 else housesOk = "{FF0000}[BRAK]";
-                
+
                 if(vehicles >= 1) vehiclesOk = "{00FF00}[OK]";
                 else vehiclesOk = "{FF0000}[BRAK]";
-                
+
                 msg[0] = EOS;
                 strcat(msg, "{FF0000}Nie spelniasz wymagan!\n\n", sizeof(msg));
                 strcat(msg, "{FFFFFF}Wymagania:\n", sizeof(msg));
                 format(msg, sizeof(msg), "%s- Domki: %d/1 %s\n", msg, houses, housesOk);
                 format(msg, sizeof(msg), "%s- Pojazdy: %d/1 %s\n", msg, vehicles, vehiclesOk);
                 strcat(msg, "- Czlonkowie: 3/3 (znajomi)", sizeof(msg));
-                
-                ShowPlayerDialog(playerid, DIALOG_INFO, DIALOG_STYLE_MSGBOX, 
+
+                ShowPlayerDialog(playerid, DIALOG_INFO, DIALOG_STYLE_MSGBOX,
                     "Wymagania", msg, "OK", "");
             }
         }
     }
-    
+
     return 1;
 }
 
@@ -1212,7 +1215,7 @@ stock Player_ShowPremiumShop(playerid)
     new content[512];
     new vipLevel = pInfo[playerid][player_vip];
     new vipStatus[32];
-    
+
     if(vipLevel > 0)
     {
         format(vipStatus, sizeof(vipStatus), "{00FF00}VIP Level %d", vipLevel);
@@ -1221,32 +1224,32 @@ stock Player_ShowPremiumShop(playerid)
     {
         vipStatus = "{FF0000}Brak VIP";
     }
-    
+
     // Budowanie tekstu etapami
     content[0] = EOS;
-    
+
     strcat(content, "{F1C40F}=== SKLEP PREMIUM ===\n\n", sizeof(content));
-    
+
     format(content, sizeof(content), "%s{FFFFFF}Twoj status: %s\n\n", content, vipStatus);
-    
+
     strcat(content, "{3498DB}Dostepne pakiety:\n", sizeof(content));
     strcat(content, "{FFFFFF}1. VIP Bronze (30 dni) - 10 PLN\n", sizeof(content));
     strcat(content, "   - 3 postacie\n", sizeof(content));
     strcat(content, "   - Dodatkowe style chodzenia\n\n", sizeof(content));
-    
+
     strcat(content, "{FFFFFF}2. VIP Silver (30 dni) - 20 PLN\n", sizeof(content));
     strcat(content, "   - Wszystko z Bronze\n", sizeof(content));
     strcat(content, "   - Wiecej slotow na pojazdy\n\n", sizeof(content));
-    
+
     strcat(content, "{FFFFFF}3. VIP Gold (30 dni) - 35 PLN\n", sizeof(content));
     strcat(content, "   - Wszystko z Silver\n", sizeof(content));
     strcat(content, "   - Priorytetowe wsparcie\n\n", sizeof(content));
-    
+
     strcat(content, "{AAAAAA}Aby zakupic VIP, odwiedz nasz sklep\n", sizeof(content));
     strcat(content, "lub skontaktuj sie z administracja.", sizeof(content));
-    
+
     ShowPlayerDialog(playerid, DIALOG_PREMIUM_SHOP, DIALOG_STYLE_MSGBOX, "Sklep Premium", content, "Zamknij", "");
-    
+
     return 1;
 }
 
@@ -1254,7 +1257,7 @@ stock Player_ShowWalkingStyles(playerid)
 {
     new content[512];
     new currentStyle = pInfo[playerid][player_walking_anim];
-    
+
     content = "";
     for(new i = 0; i < sizeof(WalkingStyles); i++)
     {
@@ -1267,9 +1270,9 @@ stock Player_ShowWalkingStyles(playerid)
             format(content, sizeof(content), "%s{FFFFFF}%s\n", content, WalkingStyles[i][walk_name]);
         }
     }
-    
+
     ShowPlayerDialog(playerid, DIALOG_WALKING_STYLE, DIALOG_STYLE_LIST, "Styl chodzenia (Alt)", content, "Wybierz", "Anuluj");
-    
+
     return 1;
 }
 
@@ -1277,29 +1280,29 @@ stock Player_ShowCreateGang(playerid)
 {
     new content[256];
     content[0] = EOS;
-    
+
     strcat(content, "{FFFFFF}Spelniasz wszystkie wymagania!\n\n", sizeof(content));
     strcat(content, "{3498DB}Wymagania:\n", sizeof(content));
     strcat(content, "{00FF00}[OK] {FFFFFF}1 domek\n", sizeof(content));
     strcat(content, "{00FF00}[OK] {FFFFFF}3 czlonkow\n", sizeof(content));
     strcat(content, "{00FF00}[OK] {FFFFFF}1 pojazd\n\n", sizeof(content));
     strcat(content, "{FFFFFF}Podaj nazwe dla swojej grupy:", sizeof(content));
-    
-    ShowPlayerDialog(playerid, DIALOG_CREATE_GANG, DIALOG_STYLE_INPUT, 
+
+    ShowPlayerDialog(playerid, DIALOG_CREATE_GANG, DIALOG_STYLE_INPUT,
         "Zaloz grupe przestepcza", content, "Dalej", "Anuluj");
-    
+
     return 1;
 }
 
 Dialog_HandlePremiumShop(playerid, response, listitem)
 {
     #pragma unused listitem
-    
+
     if(!response)
     {
         Player_ShowStatsMenu(playerid);
     }
-    
+
     return 1;
 }
 
@@ -1310,58 +1313,58 @@ Dialog_HandleWalkingStyle(playerid, response, listitem)
         Player_ShowStatsMenu(playerid);
         return 1;
     }
-    
+
     if(listitem < 0 || listitem >= sizeof(WalkingStyles))
     {
         return 1;
     }
-    
+
     // Zapisz styl chodzenia
     pInfo[playerid][player_walking_anim] = listitem;
     strcopy(pInfo[playerid][player_walking_lib], WalkingStyles[listitem][walk_lib], 16);
     strcopy(pInfo[playerid][player_walking_name], WalkingStyles[listitem][walk_anim], 24);
-    
+
     new msg[128];
     format(msg, sizeof(msg), "Ustawiono styl chodzenia: {00FF00}%s", WalkingStyles[listitem][walk_name]);
     SendClientMessage(playerid, COLOR_INFO, msg);
     SendClientMessage(playerid, COLOR_GRAY, "Przytrzymaj klawisz Alt aby chodzic w wybranym stylu.");
-    
+
     return 1;
 }
 
 Dialog_HandleCreateGang(playerid, response, listitem, const inputtext[])
 {
     #pragma unused listitem
-    
+
     if(!response)
     {
         Player_ShowStatsMenu(playerid);
         return 1;
     }
-    
+
     if(isnull(inputtext) || strlen(inputtext) < 3 || strlen(inputtext) > 32)
     {
         SendClientMessage(playerid, COLOR_ERROR, "Nazwa grupy musi miec od 3 do 32 znakow!");
         Player_ShowCreateGang(playerid);
         return 1;
     }
-    
+
     // Zapisz nazwe tymczasowo
     new tmpName[64];
     format(tmpName, sizeof(tmpName), "%s", inputtext);
     SetPVarString(playerid, "TempGangName", tmpName);
-    
+
     new msg[256];
     msg[0] = EOS;
-    
+
     strcat(msg, "{FFFFFF}Czy na pewno chcesz zalozyc grupe?\n\n", sizeof(msg));
     format(msg, sizeof(msg), "%s{3498DB}Nazwa: {FFFFFF}%s\n\n", msg, inputtext);
     strcat(msg, "{AAAAAA}Zalozenie grupy jest nieodwracalne.\n", sizeof(msg));
     strcat(msg, "Bedziesz liderem tej grupy.", sizeof(msg));
-    
-    ShowPlayerDialog(playerid, DIALOG_CREATE_GANG_CONFIRM, DIALOG_STYLE_MSGBOX, 
+
+    ShowPlayerDialog(playerid, DIALOG_CREATE_GANG_CONFIRM, DIALOG_STYLE_MSGBOX,
         "Potwierdz utworzenie grupy", msg, "Tak", "Nie");
-    
+
     return 1;
 }
 
@@ -1373,17 +1376,17 @@ Dialog_HandleCreateGangConfirm(playerid, response)
         Player_ShowStatsMenu(playerid);
         return 1;
     }
-    
+
     new gangName[64];
     GetPVarString(playerid, "TempGangName", gangName, sizeof(gangName));
     DeletePVar(playerid, "TempGangName");
-    
+
     if(isnull(gangName))
     {
         SendClientMessage(playerid, COLOR_ERROR, "Wystapil blad. Sprobuj ponownie.");
         return 1;
     }
-    
+
     // Znajdz wolny slot na grupe
     new groupId = Group_FindFreeSlot();
     if(groupId == -1)
@@ -1391,7 +1394,7 @@ Dialog_HandleCreateGangConfirm(playerid, response)
         SendClientMessage(playerid, COLOR_ERROR, "Nie mozna utworzyc wiecej grup. Skontaktuj sie z administracja.");
         return 1;
     }
-    
+
     // Utworz grupe
     gInfo[groupId][group_uid] = groupId;
     strcopy(gInfo[groupId][group_name], gangName, 64);
@@ -1401,7 +1404,7 @@ Dialog_HandleCreateGangConfirm(playerid, response)
     gInfo[groupId][group_bank] = 0;
     gInfo[groupId][group_color] = 0xAA3333FF;
     gInfo[groupId][group_created] = true;
-    
+
     // Dodaj gracza do grupy jako lidera
     for(new i = 0; i < MAX_PLAYER_GROUPS; i++)
     {
@@ -1412,15 +1415,15 @@ Dialog_HandleCreateGangConfirm(playerid, response)
             break;
         }
     }
-    
+
     // Zapisz grupe
     Group_Save(groupId);
-    
+
     new msg[128];
     format(msg, sizeof(msg), "Utworzono grupe przestepcza: {F1C40F}%s", gangName);
     SendClientMessage(playerid, COLOR_GREEN, msg);
     SendClientMessage(playerid, COLOR_INFO, "Jestes liderem tej grupy. Uzyj /g aby zarzadzac grupa.");
-    
+
     return 1;
 }
 

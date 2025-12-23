@@ -2,7 +2,7 @@
  * =============================================================================
  *  PLAYER COMMANDS - Komendy gracza
  * =============================================================================
- *  
+ *
  *  Modu??: player/player_commands.inc
  *  Opis: Podstawowe komendy RP dla graczy
  *
@@ -47,7 +47,7 @@
 YCMD:cmdtest(playerid, params[], help)
 {
     new msg[128];
-    format(msg, sizeof(msg), "[CMDTEST] Komenda dziala! logged=%d, bw=%d, aj=%d", 
+    format(msg, sizeof(msg), "[CMDTEST] Komenda dziala! logged=%d, bw=%d, aj=%d",
         pInfo[playerid][player_logged],
         pInfo[playerid][player_bw],
         pInfo[playerid][player_aj]);
@@ -91,6 +91,29 @@ YCMD:zadzwon(playerid, params[], help)
     if(targetid == playerid) {
         // allow self-call for testing
     }
+    Phone_Dial(playerid, targetid);
+    return 1;
+}
+
+// English alias: /call
+YCMD:call(playerid, params[], help)
+{
+    CMD_GUARDS();
+    if(isnull(params)) return SendClientMessage(playerid, COLOR_GRAY, "Usage: /call <number|id>");
+
+    new num;
+    if(sscanf(params, "%d", num) != 1) return SendClientMessage(playerid, COLOR_ERROR, "Provide a phone number (e.g. 12345 or 012345).");
+
+    if(num < PHONE_MIN_NUMBER || num > PHONE_MAX_NUMBER) return SendClientMessage(playerid, COLOR_ERROR, "Invalid phone number (use numbers 1000-99999).");
+
+    new targetid = -1;
+    foreach(new i : Player)
+    {
+        new pslot = Item_FindByType(i, ITEM_TYPE_PHONE);
+        if(pslot >= 0 && pItem[i][pslot][item_value2] == num && pInfo[i][player_logged]) { targetid = i; break; }
+    }
+
+    if(targetid == -1) return SendClientMessage(playerid, COLOR_ERROR, "Phone is unreachable.");
     Phone_Dial(playerid, targetid);
     return 1;
 }
@@ -204,20 +227,20 @@ YCMD:sms(playerid, params[], help)
 YCMD:me(playerid, params[], help)
 {
     CMD_GUARDS();
-    
+
     if(isnull(params))
     {
         return SendClientMessage(playerid, COLOR_GREY, "U??ycie: /me [akcja]");
     }
-    
+
     if(strlen(params) < 3 || strlen(params) > 128)
     {
         return SendClientMessage(playerid, COLOR_ERROR, "Akcja musi mie?? od 3 do 128 znak??w.");
     }
-    
+
     // U??yj systemu nieznajomych - ka??dy widzi nazw?? jak?? nada??
     Stranger_SendMeMessage(playerid, params, 15.0, COLOR_ME);
-    
+
     return 1;
 }
 
@@ -227,20 +250,20 @@ YCMD:me(playerid, params[], help)
 YCMD:opis(playerid, params[], help)
 {
     CMD_GUARDS();
-    
+
     if(isnull(params))
     {
         return SendClientMessage(playerid, COLOR_GREY, "Użycie: /do [opis sytuacji]");
     }
-    
+
     if(strlen(params) < 3 || strlen(params) > 128)
     {
         return SendClientMessage(playerid, COLOR_ERROR, "Opis musi mieć od 3 do 128 znaków.");
     }
-    
+
     // Użyj systemu nieznajomych - każdy widzi nazwę jaką nadał
     Stranger_SendDoMessage(playerid, params, 15.0, COLOR_DO);
-    
+
     return 1;
 }
 
@@ -250,15 +273,15 @@ YCMD:opis(playerid, params[], help)
 YCMD:s(playerid, params[], help)
 {
     CMD_GUARDS();
-    
+
     if(isnull(params))
     {
         return SendClientMessage(playerid, COLOR_GREY, "U??ycie: /s [tekst]");
     }
-    
+
     // U??yj systemu nieznajomych
     Stranger_SendSayMessage(playerid, params, 30.0, "krzyczy:");
-    
+
     return 1;
 }
 
@@ -268,37 +291,37 @@ YCMD:s(playerid, params[], help)
 YCMD:w(playerid, params[], help)
 {
     CMD_GUARDS();
-    
+
     new targetid, message[128];
     if(sscanf(params, "us[128]", targetid, message))
     {
         return SendClientMessage(playerid, COLOR_GREY, "Użycie: /w [id/nick] [wiadomość]");
     }
-    
+
     if(!IsValidPlayerId(targetid) || !pInfo[targetid][player_logged])
     {
         return SendClientMessage(playerid, COLOR_ERROR, "Nieprawidłowy gracz.");
     }
-    
+
     if(targetid == playerid)
     {
         return SendClientMessage(playerid, COLOR_ERROR, "Nie możesz wysłać wiadomości do siebie.");
     }
-    
+
     if(GetPVarInt(targetid, "BlockPM"))
     {
         return SendClientMessage(playerid, COLOR_ERROR, "Ten gracz zablokował prywatne wiadomości.");
     }
-    
+
     new sendMsg[256], recvMsg[256];
     format(sendMsg, sizeof(sendMsg), ">> PM do %s[%d]: %s", Player_RPName(targetid), targetid, message);
     format(recvMsg, sizeof(recvMsg), ">> PM od %s[%d]: %s", Player_RPName(playerid), playerid, message);
-    
+
     SendClientMessage(playerid, COLOR_PM_SEND, sendMsg);
     SendClientMessage(targetid, COLOR_PM_RECV, recvMsg);
-    
+
     SetPVarInt(targetid, "LastPM", playerid);
-    
+
     return 1;
 }
 
@@ -308,14 +331,14 @@ YCMD:w(playerid, params[], help)
 YCMD:k(playerid, params[], help)
 {
     CMD_GUARDS();
-    
+
     if(isnull(params))
     {
         return SendClientMessage(playerid, COLOR_GREY, "Użycie: /k [tekst]");
     }
-    
+
     Stranger_SendSayMessage(playerid, params, 30.0, "krzyczy:");
-    
+
     return 1;
 }
 
@@ -325,14 +348,14 @@ YCMD:k(playerid, params[], help)
 YCMD:sz(playerid, params[], help)
 {
     CMD_GUARDS();
-    
+
     if(isnull(params))
     {
         return SendClientMessage(playerid, COLOR_GREY, "Użycie: /sz [tekst]");
     }
-    
+
     Stranger_SendSayMessage(playerid, params, 5.0, "szepcze:");
-    
+
     return 1;
 }
 
@@ -342,15 +365,15 @@ YCMD:sz(playerid, params[], help)
 YCMD:l(playerid, params[], help)
 {
     CMD_GUARDS();
-    
+
     if(isnull(params))
     {
         return SendClientMessage(playerid, COLOR_GREY, "Użycie: /l [tekst]");
     }
-    
+
     // Normalna mowa, zasięg 15.0
     Stranger_SendSayMessage(playerid, params, 15.0, "mówi:");
-    
+
     return 1;
 }
 
@@ -370,18 +393,18 @@ YCMD:kill(playerid, params[], help)
 YCMD:b(playerid, params[], help)
 {
     CMD_GUARDS();
-    
+
     if(isnull(params))
     {
         return SendClientMessage(playerid, COLOR_GREY, "U??ycie: /b [tekst OOC]");
     }
-    
+
     // OOC pokazuje prawdziwy nick - to celowe, bo to wiadomo???? poza fabu????
     new message[256];
     format(message, sizeof(message), "(( %s[%d]: %s ))", Player_RPName(playerid), playerid, params);
-    
+
     SendLocalMessage(playerid, COLOR_OOC, message, 15.0);
-    
+
     return 1;
 }
 
@@ -391,39 +414,39 @@ YCMD:b(playerid, params[], help)
 YCMD:pm(playerid, params[], help)
 {
     CMD_GUARDS();
-    
+
     new targetid, message[128];
     if(sscanf(params, "us[128]", targetid, message))
     {
         return SendClientMessage(playerid, COLOR_GREY, "U??ycie: /pm [id/nick] [wiadomo????]");
     }
-    
+
     if(!IsValidPlayerId(targetid) || !pInfo[targetid][player_logged])
     {
         return SendClientMessage(playerid, COLOR_ERROR, "Nieprawid??owy gracz.");
     }
-    
+
     if(targetid == playerid)
     {
         return SendClientMessage(playerid, COLOR_ERROR, "Nie mo??esz wys??a?? wiadomo??ci do siebie.");
     }
-    
+
     // Sprawd?? czy odbiorca nie blokuje PM
     if(GetPVarInt(targetid, "BlockPM"))
     {
         return SendClientMessage(playerid, COLOR_ERROR, "Ten gracz zablokowa?? prywatne wiadomo??ci.");
     }
-    
+
     new sendMsg[256], recvMsg[256];
     format(sendMsg, sizeof(sendMsg), ">> PM do %s[%d]: %s", Player_RPName(targetid), targetid, message);
     format(recvMsg, sizeof(recvMsg), ">> PM od %s[%d]: %s", Player_RPName(playerid), playerid, message);
-    
+
     SendClientMessage(playerid, COLOR_PM_SEND, sendMsg);
     SendClientMessage(targetid, COLOR_PM_RECV, recvMsg);
-    
+
     // Zapisz ID nadawcy do odpowiedzi
     SetPVarInt(targetid, "LastPM", playerid);
-    
+
     return 1;
 }
 
@@ -433,28 +456,28 @@ YCMD:pm(playerid, params[], help)
 YCMD:re(playerid, params[], help)
 {
     CMD_GUARDS();
-    
+
     if(isnull(params))
     {
         return SendClientMessage(playerid, COLOR_GREY, "Użycie: /re [wiadomość]");
     }
-    
+
     new targetid = GetPVarInt(playerid, "LastPM");
-    
+
     if(!IsValidPlayerId(targetid) || !pInfo[targetid][player_logged])
     {
         return SendClientMessage(playerid, COLOR_ERROR, "Brak osoby do odpowiedzi.");
     }
-    
+
     new sendMsg[256], recvMsg[256];
     format(sendMsg, sizeof(sendMsg), ">> PM do %s[%d]: %s", Player_RPName(targetid), targetid, params);
     format(recvMsg, sizeof(recvMsg), ">> PM od %s[%d]: %s", Player_RPName(playerid), playerid, params);
-    
+
     SendClientMessage(playerid, COLOR_PM_SEND, sendMsg);
     SendClientMessage(targetid, COLOR_PM_RECV, recvMsg);
-    
+
     SetPVarInt(targetid, "LastPM", playerid);
-    
+
     return 1;
 }
 
@@ -468,9 +491,9 @@ YCMD:re(playerid, params[], help)
 YCMD:stats(playerid, params[], help)
 {
     CMD_GUARDS();
-    
+
     #pragma unused params, help
-    
+
     Player_ShowStatsMenu(playerid);
     return 1;
 }
@@ -513,7 +536,7 @@ stock bool:Player_CanCreateGang(playerid)
     new houses = Player_CountHouses(playerid);
     new vehicles = Player_CountVehicles(playerid);
     new friends = Player_GetKnownCount(playerid);
-    
+
     if(houses >= 1 && vehicles >= 1 && friends >= 3)
     {
         return true;
@@ -559,56 +582,56 @@ stock Player_CountVehicles(playerid)
 stock Player_ShowStats(playerid, targetid = INVALID_PLAYER_ID)
 {
     if(targetid == INVALID_PLAYER_ID) targetid = playerid;
-    
+
     new content[1024];
     new moneyStr[32], bankStr[32], durationStr[64], tmp[256];
-    
+
     format(moneyStr, sizeof(moneyStr), "%d", pInfo[targetid][player_money]);
     format(bankStr, sizeof(bankStr), "%d", pInfo[targetid][player_bank]);
     FormatDuration(pInfo[targetid][player_online_time], durationStr, sizeof(durationStr));
-    
+
     // Budowanie tekstu etapami
     content[0] = EOS;
-    
+
     format(tmp, sizeof(tmp), "{FFFFFF}=== Statystyki: %s ===\n\n", Player_RPName(targetid));
     strcat(content, tmp, sizeof(content));
-    
+
     format(tmp, sizeof(tmp), "{3498DB}Ogolne:\n");
     strcat(content, tmp, sizeof(content));
-    
-    format(tmp, sizeof(tmp), "{FFFFFF}Poziom: %d | Godziny gry: %d | Szacunek: %d\n", 
+
+    format(tmp, sizeof(tmp), "{FFFFFF}Poziom: %d | Godziny gry: %d | Szacunek: %d\n",
         pInfo[targetid][player_level], pInfo[targetid][player_hours], pInfo[targetid][player_respect]);
     strcat(content, tmp, sizeof(content));
-    
+
     format(tmp, sizeof(tmp), "Pieniadze: %s$ | Bank: %s$\n\n", moneyStr, bankStr);
     strcat(content, tmp, sizeof(content));
-    
+
     format(tmp, sizeof(tmp), "{E74C3C}Stan zdrowia:\n");
     strcat(content, tmp, sizeof(content));
-    
-    format(tmp, sizeof(tmp), "{FFFFFF}HP: %.0f | Glod: %d%% | Pragnienie: %d%%\n\n", 
+
+    format(tmp, sizeof(tmp), "{FFFFFF}HP: %.0f | Glod: %d%% | Pragnienie: %d%%\n\n",
         pInfo[targetid][player_health], pInfo[targetid][player_hunger], pInfo[targetid][player_thirst]);
     strcat(content, tmp, sizeof(content));
-    
+
     format(tmp, sizeof(tmp), "{2ECC71}Statystyki:\n");
     strcat(content, tmp, sizeof(content));
-    
-    format(tmp, sizeof(tmp), "{FFFFFF}Zabojstwa: %d | Smierci: %d | Spawnow: %d\n", 
+
+    format(tmp, sizeof(tmp), "{FFFFFF}Zabojstwa: %d | Smierci: %d | Spawnow: %d\n",
         pInfo[targetid][player_kills], pInfo[targetid][player_deaths], pInfo[targetid][player_spawns]);
     strcat(content, tmp, sizeof(content));
-    
-    format(tmp, sizeof(tmp), "Przejechane km: %.1f | Czas online: %s\n\n", 
+
+    format(tmp, sizeof(tmp), "Przejechane km: %.1f | Czas online: %s\n\n",
         pInfo[targetid][player_driven_km], durationStr);
     strcat(content, tmp, sizeof(content));
-    
+
     format(tmp, sizeof(tmp), "{F1C40F}Posiadlosci:\n");
     strcat(content, tmp, sizeof(content));
-    
-    format(tmp, sizeof(tmp), "{FFFFFF}Domki: %d | Pojazdy: %d", 
+
+    format(tmp, sizeof(tmp), "{FFFFFF}Domki: %d | Pojazdy: %d",
         Player_CountHouses(targetid), Player_CountVehicles(targetid));
     strcat(content, tmp, sizeof(content));
-    
-    ShowPlayerDialog(playerid, DIALOG_STATS, DIALOG_STYLE_MSGBOX, 
+
+    ShowPlayerDialog(playerid, DIALOG_STATS, DIALOG_STYLE_MSGBOX,
         "Statystyki", content, "Wstecz", "");
 }
 
@@ -621,24 +644,24 @@ YCMD:id(playerid, params[], help)
     {
         return SendClientMessage(playerid, COLOR_GREY, "U??ycie: /id [fragment nicku]");
     }
-    
+
     new count = 0;
     new result[512];
-    
+
     strcopy(result, "Znalezieni gracze:\n", sizeof(result));
-    
+
     foreach(new i : Player)
     {
         new name[MAX_PLAYER_NAME];
         GetPlayerName(i, name, sizeof(name));
-        
+
         if(strfind(name, params, true) != -1)
         {
             new line[64];
             format(line, sizeof(line), "%s (ID: %d)\n", name, i);
             strcat(result, line);
             count++;
-            
+
             if(count >= 20)
             {
                 strcat(result, "...i wi??cej");
@@ -646,15 +669,15 @@ YCMD:id(playerid, params[], help)
             }
         }
     }
-    
+
     if(count == 0)
     {
         return SendClientMessage(playerid, COLOR_ERROR, "Nie znaleziono graczy o podanym nicku.");
     }
-    
-    ShowPlayerDialog(playerid, DIALOG_INFO, DIALOG_STYLE_MSGBOX, 
+
+    ShowPlayerDialog(playerid, DIALOG_INFO, DIALOG_STYLE_MSGBOX,
         "Wyszukiwanie graczy", result, "OK", "");
-    
+
     return 1;
 }
 
@@ -665,10 +688,10 @@ YCMD:time(playerid, params[], help)
 {
     new hour, minute, second;
     gettime(hour, minute, second);
-    
+
     new year, month, day;
     getdate(year, month, day);
-    
+
     static const dayNames[][] = {
         "Niedziela", "Poniedzialek", "Wtorek", "Sroda", "Czwartek", "Piatek", "Sobota"
     };
@@ -682,14 +705,14 @@ YCMD:time(playerid, params[], help)
     {
         strcopy(dayName, "?", sizeof(dayName));
     }
-    
+
     new message[128];
-    format(message, sizeof(message), 
+    format(message, sizeof(message),
         "Aktualna data i godzina: %s, %02d.%02d.%d %02d:%02d:%02d",
         dayName, day, month, year, hour, minute, second);
-    
+
     SendClientMessage(playerid, COLOR_WHITE, message);
-    
+
     return 1;
 }
 
@@ -819,9 +842,9 @@ YCMD:skins(playerid, params[], help)
 YCMD:inv(playerid, params[], help)
 {
     CMD_GUARDS();
-    
+
     Dialog_ShowInventory(playerid);
-    
+
     return 1;
 }
 
@@ -838,9 +861,9 @@ YCMD:eq(playerid, params[], help)
 YCMD:grupy(playerid, params[], help)
 {
     CMD_GUARDS();
-    
+
     Dialog_ShowPlayerGroups(playerid);
-    
+
     return 1;
 }
 
@@ -850,9 +873,9 @@ YCMD:grupy(playerid, params[], help)
 YCMD:pojazdy(playerid, params[], help)
 {
     CMD_GUARDS();
-    
+
     Dialog_ShowPlayerVehicles(playerid);
-    
+
     return 1;
 }
 
@@ -866,71 +889,71 @@ YCMD:pojazdy(playerid, params[], help)
 YCMD:v(playerid, params[], help)
 {
     CMD_GUARDS();
-    
+
     if(isnull(params))
     {
         SendClientMessage(playerid, COLOR_GREY, "Uzycie: /v [opcja]");
         SendClientMessage(playerid, COLOR_GREY, "Opcje: lock, engine/odpal, lights, park, respawn, okno [1-4]");
         return 1;
     }
-    
+
     new option[32], subparams[32];
     if(sscanf(params, "s[32]S()[32]", option, subparams))
     {
         return 1;
     }
-    
+
     // Lock/Unlock
     if(!strcmp(option, "lock", true) || !strcmp(option, "zamknij", true))
     {
         // Znajdz najblizszy pojazd gracza
         new vehicleid = GetClosestPlayerVehicle(playerid, 10.0);
-        
+
         if(vehicleid == INVALID_VEHICLE_ID)
         {
             return SendClientMessage(playerid, COLOR_ERROR, "Nie ma w poblizu zadnego z twoich pojazdow.");
         }
-        
+
         new locked = Vehicle_ToggleLock(vehicleid);
-        
+
         new message[128];
-        format(message, sizeof(message), "* %s %s swoj pojazd kluczykiem.", 
+        format(message, sizeof(message), "* %s %s swoj pojazd kluczykiem.",
             Player_RPName(playerid), locked ? "zamyka" : "otwiera");
         SendLocalMessage(playerid, COLOR_ME, message, 15.0);
-        
+
         return 1;
     }
-    
+
     // Okno (szyba) - 1-4
     if(!strcmp(option, "okno", true) || !strcmp(option, "szyba", true))
     {
         CMD_IS_DRIVER();
-        
+
         new vehicleid = GetPlayerVehicleID(playerid);
         new windowId;
-        
+
         if(isnull(subparams))
         {
             SendClientMessage(playerid, COLOR_GREY, "Uzycie: /v okno [1-4]");
             SendClientMessage(playerid, COLOR_GREY, "1 = Kierowca, 2 = Pasazer, 3 = Tyl lewy, 4 = Tyl prawy");
             return 1;
         }
-        
+
         windowId = strval(subparams);
-        
+
         if(windowId < 1 || windowId > 4)
         {
             SendClientMessage(playerid, COLOR_ERROR, "Numer okna musi byc od 1 do 4.");
             return 1;
         }
-        
+
         // Pobierz aktualne stany okien
         new driver, passenger, backleft, backright;
         GetVehicleParamsCarWindows(vehicleid, driver, passenger, backleft, backright);
-        
+
         new windowName[32];
         new newState;
-        
+
         switch(windowId)
         {
             case 1:
@@ -958,105 +981,105 @@ YCMD:v(playerid, params[], help)
                 windowName = "tylne prawe";
             }
         }
-        
+
         SetVehicleParamsCarWindows(vehicleid, driver, passenger, backleft, backright);
-        
+
         new message[128];
-        format(message, sizeof(message), "* %s %s okno %s.", 
+        format(message, sizeof(message), "* %s %s okno %s.",
             Player_RPName(playerid), newState ? "zamyka" : "otwiera", windowName);
         SendLocalMessage(playerid, COLOR_ME, message, 15.0);
-        
+
         return 1;
     }
-    
+
     // Engine
     if(!strcmp(option, "engine", true) || !strcmp(option, "silnik", true) || !strcmp(option, "odpal", true))
     {
         CMD_IS_DRIVER();
-        
+
         new vehicleid = GetPlayerVehicleID(playerid);
-        
+
         new engine, lights, alarm, doors, bonnet, boot, objective;
         GetVehicleParamsEx(vehicleid, engine, lights, alarm, doors, bonnet, boot, objective);
-        
+
         engine = !engine;
         SetVehicleParamsEx(vehicleid, engine, lights, alarm, doors, bonnet, boot, objective);
-        
+
         new message[128];
-        format(message, sizeof(message), "* %s %s silnik pojazdu.", 
+        format(message, sizeof(message), "* %s %s silnik pojazdu.",
             Player_RPName(playerid), engine ? "wlacza" : "wylacza");
         SendLocalMessage(playerid, COLOR_ME, message, 15.0);
-        
+
         return 1;
     }
-    
+
     // Lights
     if(!strcmp(option, "lights", true) || !strcmp(option, "swiatla", true))
     {
         CMD_IS_DRIVER();
-        
+
         new vehicleid = GetPlayerVehicleID(playerid);
-        
+
         new engine, lights, alarm, doors, bonnet, boot, objective;
         GetVehicleParamsEx(vehicleid, engine, lights, alarm, doors, bonnet, boot, objective);
-        
+
         lights = !lights;
         SetVehicleParamsEx(vehicleid, engine, lights, alarm, doors, bonnet, boot, objective);
-        
+
         new message[64];
         format(message, sizeof(message), "??wiat??a: %s", lights ? "W????CZONE" : "WY????CZONE");
         SendClientMessage(playerid, COLOR_INFO, message);
-        
+
         return 1;
     }
-    
+
     // Park
     if(!strcmp(option, "park", true) || !strcmp(option, "zaparkuj", true))
     {
         CMD_IS_DRIVER();
-        
+
         new vehicleid = GetPlayerVehicleID(playerid);
-        
+
         if(!Vehicle_IsOwner(playerid, vehicleid))
         {
             return SendClientMessage(playerid, COLOR_ERROR, "To nie jest tw??j pojazd.");
         }
-        
+
         // Zapisz now?? pozycj?? parkowania
         new Float:x, Float:y, Float:z, Float:angle;
         GetVehiclePos(vehicleid, x, y, z);
         GetVehicleZAngle(vehicleid, angle);
-        
+
         Vehicle_SetSpawnPos(vehicleid, x, y, z, angle);
         new vehicleSlot = Vehicle_GetSlot(vehicleid);
         if(vehicleSlot != -1)
         {
             Vehicle_Save(vehicleSlot);
         }
-        
+
         SendClientMessage(playerid, COLOR_SUCCESS, "Pojazd zosta?? zaparkowany.");
-        
+
         return 1;
     }
-    
+
     // Respawn
     if(!strcmp(option, "respawn", true))
     {
         new vehicleid = GetClosestPlayerVehicle(playerid, 10.0);
-        
+
         if(vehicleid == INVALID_VEHICLE_ID)
         {
             return SendClientMessage(playerid, COLOR_ERROR, "Nie ma w pobli??u ??adnego z twoich pojazd??w.");
         }
-        
+
         Vehicle_Respawn(vehicleid);
         SendClientMessage(playerid, COLOR_SUCCESS, "Pojazd zosta?? przywr??cony na miejsce parkowania.");
-        
+
         return 1;
     }
-    
+
     SendClientMessage(playerid, COLOR_ERROR, "Nieznana opcja. Uzyj: lock, odpal, lights, park, respawn, okno");
-    
+
     return 1;
 }
 
@@ -1068,7 +1091,7 @@ YCMD:tempomat(playerid, params[], help)
 {
     CMD_GUARDS();
     CMD_IS_DRIVER();
-    
+
     new speed;
     if(sscanf(params, "i", speed))
     {
@@ -1076,25 +1099,25 @@ YCMD:tempomat(playerid, params[], help)
         SendClientMessage(playerid, COLOR_GREY, "Ogranicza prędkość pojazdu. /tempomat 0 wyłącza.");
         return 1;
     }
-    
+
     // Walidacja prędkości
     if(speed < 0 || speed > 250)
     {
         return SendClientMessage(playerid, COLOR_ERROR, "Prędkość musi być w zakresie 0-250 km/h.");
     }
-    
+
     // Sprawdź czy silnik jest włączony
     new vehicleid = GetPlayerVehicleID(playerid);
     new engine, lights, alarm, doors, bonnet, boot, objective;
     GetVehicleParamsEx(vehicleid, engine, lights, alarm, doors, bonnet, boot, objective);
-    
+
     if(!engine && speed > 0)
     {
         return SendClientMessage(playerid, COLOR_ERROR, "Najpierw włącz silnik pojazdu!");
     }
-    
+
     g_PlayerCruiseControl[playerid] = speed;
-    
+
     if(speed == 0)
     {
         SendClientMessage(playerid, COLOR_INFO, "Ogranicznik prędkości wyłączony.");
@@ -1105,7 +1128,7 @@ YCMD:tempomat(playerid, params[], help)
         format(msg, sizeof(msg), "Ogranicznik prędkości ustawiony na %d km/h.", speed);
         SendClientMessage(playerid, COLOR_SUCCESS, msg);
     }
-    
+
     return 1;
 }
 
@@ -1119,7 +1142,7 @@ YCMD:tempomat(playerid, params[], help)
 YCMD:wejdz(playerid, params[], help)
 {
     CMD_GUARDS();
-    
+
     Door_TryEnter(playerid);
     return 1;
 }
@@ -1130,7 +1153,7 @@ YCMD:wejdz(playerid, params[], help)
 YCMD:wyjdz(playerid, params[], help)
 {
     CMD_GUARDS();
-    
+
     Door_TryExit(playerid);
     return 1;
 }
@@ -1190,10 +1213,10 @@ stock GetClosestPlayerVehicle(playerid, Float:range = 10.0)
 {
     new Float:minDist = range;
     new closestVeh = INVALID_VEHICLE_ID;
-    
+
     new Float:px, Float:py, Float:pz;
     GetPlayerPos(playerid, px, py, pz);
-    
+
     foreach(new slot : Vehicles)
     {
         new vehicleid = vInfo[slot][veh_gameid];
@@ -1205,19 +1228,19 @@ stock GetClosestPlayerVehicle(playerid, Float:range = 10.0)
         {
             continue;
         }
-        
+
         new Float:vx, Float:vy, Float:vz;
         GetVehiclePos(vehicleid, vx, vy, vz);
-        
+
         new Float:dist = GetDistanceBetweenPoints3D(px, py, pz, vx, vy, vz);
-        
+
         if(dist < minDist)
         {
             minDist = dist;
             closestVeh = vehicleid;
         }
     }
-    
+
     return closestVeh;
 }
 
@@ -1251,32 +1274,32 @@ hook OnPlayerKeyStateChange@WalkStyle(playerid, KEY:newkeys, KEY:oldkeys)
         if(pInfo[playerid][player_spawned] && !IsPlayerInAnyVehicle(playerid))
         {
             new walkStyle = pInfo[playerid][player_walking_anim];
-            
+
             if(walkStyle > 0 && walkStyle < sizeof(PlayerWalkStyles))
             {
                 // Zastosuj animacje chodzenia
-                ApplyAnimation(playerid, 
-                    PlayerWalkStyles[walkStyle][pwalk_lib], 
-                    PlayerWalkStyles[walkStyle][pwalk_anim], 
+                ApplyAnimation(playerid,
+                    PlayerWalkStyles[walkStyle][pwalk_lib],
+                    PlayerWalkStyles[walkStyle][pwalk_anim],
                     4.1, true, true, true, true, 0);
             }
         }
     }
-    
+
     // Gdy puszczono Alt - zatrzymaj animacje
     if(!(newkeys & KEY_WALK) && (oldkeys & KEY_WALK))
     {
         if(pInfo[playerid][player_spawned] && !IsPlayerInAnyVehicle(playerid))
         {
             new walkStyle = pInfo[playerid][player_walking_anim];
-            
+
             if(walkStyle > 0)
             {
                 ClearAnimations(playerid);
             }
         }
     }
-    
+
     return 1;
 }
 
@@ -1297,20 +1320,20 @@ stock SendRPMessageWithInterjections(senderid, const text[], Float:range)
     {
         return 0;
     }
-    
+
     new Float:px, Float:py, Float:pz;
     GetPlayerPos(senderid, px, py, pz);
-    
+
     new vw = GetPlayerVirtualWorld(senderid);
     new interior = GetPlayerInterior(senderid);
-    
+
     // Podziel tekst na części - normalne i wtrącenia
     new buffer[256], interjection[128], normalPart[128];
     new textLen = strlen(text);
     new bool:inInterjection = false;
     new bufPos = 0, intPos = 0;
     new i = 0;
-    
+
     // Sprawdź czy są wtrącenia
     new bool:hasInterjections = false;
     for(new j = 0; j < textLen - 1; j++)
@@ -1321,24 +1344,24 @@ stock SendRPMessageWithInterjections(senderid, const text[], Float:range)
             break;
         }
     }
-    
+
     // Jeśli nie ma wtrąceń, wyślij normalną wiadomość
     if(!hasInterjections)
     {
         Stranger_SendSayMessage(senderid, text, range, "mówi:");
         return 1;
     }
-    
+
     // Iteruj przez graczy w zasięgu
     foreach(new receiver : Player)
     {
         if(GetPlayerVirtualWorld(receiver) != vw) continue;
         if(GetPlayerInterior(receiver) != interior) continue;
         if(!IsPlayerInRangeOfPoint(receiver, range, px, py, pz)) continue;
-        
+
         new senderName[64];
         Stranger_GetName(receiver, senderid, senderName, sizeof(senderName));
-        
+
         // Reset zmiennych dla każdego odbiorcy
         inInterjection = false;
         bufPos = 0;
@@ -1347,12 +1370,12 @@ stock SendRPMessageWithInterjections(senderid, const text[], Float:range)
         buffer[0] = EOS;
         interjection[0] = EOS;
         normalPart[0] = EOS;
-        
+
         // Najpierw wyślij "Nick mówi:"
         new headerMsg[128];
         format(headerMsg, sizeof(headerMsg), "%s mówi:", senderName);
         SendClientMessage(receiver, COLOR_TALK, headerMsg);
-        
+
         // Teraz parsuj tekst z wtrąceniami
         while(i < textLen)
         {
@@ -1382,12 +1405,12 @@ stock SendRPMessageWithInterjections(senderid, const text[], Float:range)
                     bufPos = 0;
                     normalPart[0] = EOS;
                 }
-                
+
                 inInterjection = !inInterjection;
                 i += 2; // Pomiń oba znaki **
                 continue;
             }
-            
+
             // Dodaj znak do odpowiedniego bufora
             if(inInterjection)
             {
@@ -1405,7 +1428,7 @@ stock SendRPMessageWithInterjections(senderid, const text[], Float:range)
             }
             i++;
         }
-        
+
         // Wyślij pozostały tekst
         if(inInterjection && intPos > 0)
         {
@@ -1420,7 +1443,7 @@ stock SendRPMessageWithInterjections(senderid, const text[], Float:range)
             SendClientMessage(receiver, COLOR_TALK, normalPart);
         }
     }
-    
+
     return 1;
 }
 
@@ -1434,16 +1457,16 @@ hook OnPlayerText@PlayerCommands(playerid, text[])
     {
         return Y_HOOKS_BREAK_RETURN_0;
     }
-    
+
     // Jeśli tekst zaczyna się od ( to to jest OOC - przepuść
     if(text[0] == '(')
     {
         return 1;
     }
-    
+
     // Obsłuż jako wiadomość RP z wtrąceniami
     SendRPMessageWithInterjections(playerid, text, 15.0);
-    
+
     // Zablokuj domyślną wiadomość
     return Y_HOOKS_BREAK_RETURN_0;
 }

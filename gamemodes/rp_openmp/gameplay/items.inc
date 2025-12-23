@@ -2,7 +2,7 @@
  * =============================================================================
  *  ITEMS - System przedmiot??w
  * =============================================================================
- *  
+ *
  *  Modu??: gameplay/items.inc
  *  Opis: Zarz??dzanie przedmiotami (tworzenie, u??ywanie, transfer)
  *
@@ -30,24 +30,24 @@
 enum E_ITEM_TYPE
 {
     ITEM_TYPE_NONE = 0,
-    
+
     // Dokumenty
     ITEM_TYPE_ID_CARD = 1,          // Dow??d osobisty
     ITEM_TYPE_DRIVING_LICENSE,      // Prawo jazdy
     ITEM_TYPE_GUN_LICENSE,          // Pozwolenie na bro??
     ITEM_TYPE_MEDICAL_CARD,         // Karta zdrowia
-    
+
     // Jedzenie i picie
     ITEM_TYPE_FOOD = 10,            // Jedzenie
     ITEM_TYPE_DRINK,                // Nap??j
     ITEM_TYPE_ALCOHOL,              // Alkohol
     ITEM_TYPE_DRUG,                 // Narkotyki
-    
+
     // Medyczne
     ITEM_TYPE_BANDAGE = 20,         // Banda??
     ITEM_TYPE_MEDKIT,               // Apteczka
     ITEM_TYPE_PAINKILLER,           // Leki przeciwb??lowe
-    
+
     // Narz??dzia
     ITEM_TYPE_PHONE = 30,
     ITEM_TYPE_SIMCARD,              // SIM Card
@@ -57,31 +57,31 @@ enum E_ITEM_TYPE
     ITEM_TYPE_FISHING_ROD,          // W??dka
     ITEM_TYPE_ROPE,                 // Lina
     ITEM_TYPE_LOCKPICK,             // Wytrych
-    
+
     // Bro??
     ITEM_TYPE_WEAPON = 50,          // Bro??
     ITEM_TYPE_AMMO,                 // Amunicja
     ITEM_TYPE_ARMOR,                // Kamizelka
-    
+
     // Pojazdy
     ITEM_TYPE_CAR_KEY = 60,         // Kluczyki do auta
     ITEM_TYPE_FUEL_CAN,             // Kanister z paliwem
     ITEM_TYPE_REPAIR_KIT,           // Zestaw naprawczy
-    
+
     // Klucze
     ITEM_TYPE_DOOR_KEY = 70,        // Klucz do drzwi
     ITEM_TYPE_SAFE_KEY,             // Klucz do sejfu
-    
+
     // Materia??y
     ITEM_TYPE_MATERIALS = 80,       // Materia??y
     ITEM_TYPE_DRUGS_PACKAGE,        // Paczka narkotyk??w
-    
+
     // Inne
     ITEM_TYPE_MASK = 90,            // Maska
     ITEM_TYPE_SPRAYPAINT,           // Farba w sprayu
     ITEM_TYPE_MONEY_BAG,            // Worek z pieni??dzmi
     ITEM_TYPE_BOOMBOX,              // Boombox
-    
+
     ITEM_TYPE_MAX
 };
 
@@ -112,7 +112,7 @@ stock Item_CreateForPlayer(playerid, E_ITEM_TYPE:itemType, value1 = 0, value2 = 
     {
         return -1;
     }
-    
+
     // Znajdź wolny slot
     new freeSlot = -1;
     for(new i = 0; i < MAX_PLAYER_ITEMS; i++)
@@ -145,13 +145,13 @@ stock Item_CreateForPlayer(playerid, E_ITEM_TYPE:itemType, value1 = 0, value2 = 
     {
         Item_GetDefaultName(itemType, pItem[playerid][freeSlot][item_name], ITEM_NAME_MAX);
     }
-    
+
     pInfo[playerid][player_item_count]++;
     Player_MarkDataModified(playerid);
-    
+
     // Zapisz do bazy
     Item_SaveToDatabase(playerid, freeSlot);
-    
+
     return freeSlot;
 }
 
@@ -182,12 +182,12 @@ stock Item_Remove(playerid, slot)
     {
         return 0;
     }
-    
+
     if(pItem[playerid][slot][item_id] == 0)
     {
         return 0;
     }
-    
+
     // Usu?? z bazy
     new query[128];
         mysql_format(mySQLconnection, query, sizeof(query),
@@ -195,17 +195,17 @@ stock Item_Remove(playerid, slot)
             pItem[playerid][slot][item_id]
     );
     mysql_tquery(mySQLconnection, query);
-    
+
     // Wyczy???? dane
     pItem[playerid][slot][item_id] = 0;
     pItem[playerid][slot][item_type] = 0;
     pItem[playerid][slot][item_value] = 0;
     pItem[playerid][slot][item_value2] = 0;
     pItem[playerid][slot][item_name][0] = EOS;
-    
+
     pInfo[playerid][player_item_count]--;
     Player_MarkDataModified(playerid);
-    
+
     return 1;
 }
 
@@ -225,7 +225,7 @@ stock Item_FindByType(playerid, E_ITEM_TYPE:itemType)
     {
         return -1;
     }
-    
+
     for(new i = 0; i < MAX_PLAYER_ITEMS; i++)
     {
         if(pItem[playerid][i][item_type] == _:itemType)
@@ -233,7 +233,7 @@ stock Item_FindByType(playerid, E_ITEM_TYPE:itemType)
             return i;
         }
     }
-    
+
     return -1;
 }
 
@@ -249,7 +249,7 @@ stock Item_FindById(playerid, itemDbId)
     {
         return -1;
     }
-    
+
     for(new i = 0; i < MAX_PLAYER_ITEMS; i++)
     {
         if(pItem[playerid][i][item_id] == itemDbId)
@@ -257,7 +257,7 @@ stock Item_FindById(playerid, itemDbId)
             return i;
         }
     }
-    
+
     return -1;
 }
 
@@ -284,9 +284,9 @@ stock Item_Count(playerid, E_ITEM_TYPE:itemType)
     {
         return 0;
     }
-    
+
     new count = 0;
-    
+
     for(new i = 0; i < MAX_PLAYER_ITEMS; i++)
     {
         if(pItem[playerid][i][item_type] == _:itemType)
@@ -294,7 +294,7 @@ stock Item_Count(playerid, E_ITEM_TYPE:itemType)
             count++;
         }
     }
-    
+
     return count;
 }
 
@@ -314,20 +314,20 @@ stock Item_Use(playerid, slot)
     {
         return 0;
     }
-    
+
     if(pItem[playerid][slot][item_id] == 0)
     {
         return 0;
     }
-    
+
     new itemType = pItem[playerid][slot][item_type];
     new value1 = pItem[playerid][slot][item_value];
     new value2 = pItem[playerid][slot][item_value2];
     new itemName[ITEM_NAME_MAX];
     strcopy(itemName, pItem[playerid][slot][item_name], ITEM_NAME_MAX);
-    
+
     new bool:consumed = false;
-    
+
     switch(E_ITEM_TYPE:itemType)
     {
         // === DOKUMENTY ===
@@ -335,23 +335,23 @@ stock Item_Use(playerid, slot)
         {
             // Poka?? dow??d
             new msg[256];
-            format(msg, sizeof(msg), 
+            format(msg, sizeof(msg),
                 "* %s pokazuje sw??j dow??d osobisty.",
                 pInfo[playerid][player_name]);
             SendLocalMessage(playerid, COLOR_PURPLE, msg, 10.0);
-            
+
             // TODO: Wy??wietl dialog z danymi
         }
-        
+
         case ITEM_TYPE_DRIVING_LICENSE:
         {
             new msg[256];
-            format(msg, sizeof(msg), 
+            format(msg, sizeof(msg),
                 "* %s pokazuje swoje prawo jazdy.",
                 pInfo[playerid][player_name]);
             SendLocalMessage(playerid, COLOR_PURPLE, msg, 10.0);
         }
-        
+
         // === JEDZENIE ===
         case ITEM_TYPE_FOOD:
         {
@@ -361,16 +361,16 @@ stock Item_Use(playerid, slot)
             {
                 pInfo[playerid][player_hunger] = 100;
             }
-            
+
             new msg[128];
-            format(msg, sizeof(msg), 
+            format(msg, sizeof(msg),
                 "* %s je %s.",
                 pInfo[playerid][player_name], itemName);
             SendLocalMessage(playerid, COLOR_PURPLE, msg, 10.0);
-            
+
             consumed = true;
         }
-        
+
         case ITEM_TYPE_DRINK:
         {
             pInfo[playerid][player_thirst] += value1;
@@ -380,7 +380,7 @@ stock Item_Use(playerid, slot)
             }
 
             new msg[128];
-            format(msg, sizeof(msg), 
+            format(msg, sizeof(msg),
                 "* %s pije %s.",
                 pInfo[playerid][player_name], itemName);
             SendLocalMessage(playerid, COLOR_PURPLE, msg, 10.0);
@@ -402,68 +402,68 @@ stock Item_Use(playerid, slot)
             Dialog_ShowPhoneMenu(playerid);
             return 1;
         }
-        
+
         case ITEM_TYPE_ALCOHOL:
         {
             pInfo[playerid][player_thirst] += value1;
             pInfo[playerid][player_drunk] += value2;
-            
+
             if(pInfo[playerid][player_thirst] > 100)
                 pInfo[playerid][player_thirst] = 100;
-            
+
             new msg[128];
-            format(msg, sizeof(msg), 
+            format(msg, sizeof(msg),
                 "* %s pije %s.",
                 pInfo[playerid][player_name], itemName);
             SendLocalMessage(playerid, COLOR_PURPLE, msg, 10.0);
-            
+
             // Efekt upicia
             if(pInfo[playerid][player_drunk] > 2000)
             {
                 SetPlayerDrunkLevel(playerid, pInfo[playerid][player_drunk]);
             }
-            
+
             consumed = true;
         }
-        
+
         // === MEDYCZNE ===
         case ITEM_TYPE_BANDAGE:
         {
             new Float:health;
             GetPlayerHealth(playerid, health);
-            
+
             if(health >= 100.0)
             {
                 SendClientMessage(playerid, COLOR_RED, "Nie potrzebujesz banda??a!");
                 return 0;
             }
-            
+
             health += float(value1);
             if(health > 100.0) health = 100.0;
             SetPlayerHealth(playerid, health);
-            
+
             new msg[128];
-            format(msg, sizeof(msg), 
+            format(msg, sizeof(msg),
                 "* %s u??ywa banda??a.",
                 pInfo[playerid][player_name]);
             SendLocalMessage(playerid, COLOR_PURPLE, msg, 10.0);
-            
+
             consumed = true;
         }
-        
+
         case ITEM_TYPE_MEDKIT:
         {
             SetPlayerHealth(playerid, 100.0);
-            
+
             new msg[128];
-            format(msg, sizeof(msg), 
+            format(msg, sizeof(msg),
                 "* %s u??ywa apteczki.",
                 pInfo[playerid][player_name]);
             SendLocalMessage(playerid, COLOR_PURPLE, msg, 10.0);
-            
+
             consumed = true;
         }
-        
+
         // === MASKA ===
         case ITEM_TYPE_MASK:
         {
@@ -478,44 +478,44 @@ stock Item_Use(playerid, slot)
                 SendClientMessage(playerid, COLOR_GREEN, "Za??o??y??e?? mask??. Twoja to??samo???? jest ukryta.");
             }
         }
-        
+
         // === KAMIZELKA ===
         case ITEM_TYPE_ARMOR:
         {
             SetPlayerArmour(playerid, float(value1));
-            
+
             new msg[128];
-            format(msg, sizeof(msg), 
+            format(msg, sizeof(msg),
                 "* %s zak??ada kamizelk?? kuloodporn??.",
                 pInfo[playerid][player_name]);
             SendLocalMessage(playerid, COLOR_PURPLE, msg, 10.0);
-            
+
             consumed = true;
         }
-        
+
         // === KANISTER ===
         case ITEM_TYPE_FUEL_CAN:
         {
             // Sprawd?? czy jest w poje??dzie lub obok
             new vehicleid = GetPlayerVehicleID(playerid);
-            
+
             if(vehicleid == 0)
             {
                 vehicleid = GetClosestVehicle(playerid, 5.0);
             }
-            
+
             if(vehicleid == 0 || vehicleid == INVALID_VEHICLE_ID)
             {
                 SendClientMessage(playerid, COLOR_RED, "Nie ma tu ??adnego pojazdu!");
                 return 0;
             }
-            
+
             new refueled = Vehicle_Refuel(vehicleid, value1);
-            
+
             if(refueled > 0)
             {
                 new msg[128];
-                format(msg, sizeof(msg), 
+                format(msg, sizeof(msg),
                     "Zatankowa??e?? %d litr??w paliwa.", refueled);
                 SendClientMessage(playerid, COLOR_GREEN, msg);
                 consumed = true;
@@ -526,20 +526,20 @@ stock Item_Use(playerid, slot)
                 return 0;
             }
         }
-        
+
         default:
         {
             SendClientMessage(playerid, COLOR_RED, "Nie mo??esz u??y?? tego przedmiotu!");
             return 0;
         }
     }
-    
+
     // Usu?? przedmiot je??li zosta?? zu??ty
     if(consumed)
     {
         Item_Remove(playerid, slot);
     }
-    
+
     return 1;
 }
 
@@ -560,24 +560,24 @@ stock Item_Transfer(fromPlayerid, toPlayerid, slot)
     {
         return 0;
     }
-    
+
     if(slot < 0 || slot >= MAX_PLAYER_ITEMS)
     {
         return 0;
     }
-    
+
     if(pItem[fromPlayerid][slot][item_id] == 0)
     {
         return 0;
     }
-    
+
     // Sprawd?? czy odbiorca ma miejsce
     if(pInfo[toPlayerid][player_item_count] >= MAX_PLAYER_ITEMS)
     {
         SendClientMessage(fromPlayerid, COLOR_RED, "Gracz nie ma miejsca w ekwipunku!");
         return 0;
     }
-    
+
     // Utw??rz przedmiot u odbiorcy
     new newSlot = Item_CreateForPlayer(
         toPlayerid,
@@ -586,25 +586,25 @@ stock Item_Transfer(fromPlayerid, toPlayerid, slot)
         pItem[fromPlayerid][slot][item_value2],
         pItem[fromPlayerid][slot][item_name]
     );
-    
+
     if(newSlot == -1)
     {
         return 0;
     }
-    
+
     // Usu?? u daj??cego
     Item_Remove(fromPlayerid, slot);
-    
+
     // Komunikaty
     new msg[128];
     format(msg, sizeof(msg), "Przekaza??e?? %s graczowi %s.",
         pItem[toPlayerid][newSlot][item_name], pInfo[toPlayerid][player_name]);
     SendClientMessage(fromPlayerid, COLOR_GREEN, msg);
-    
+
     format(msg, sizeof(msg), "Otrzyma??e?? %s od gracza %s.",
         pItem[toPlayerid][newSlot][item_name], pInfo[fromPlayerid][player_name]);
     SendClientMessage(toPlayerid, COLOR_GREEN, msg);
-    
+
     return 1;
 }
 
@@ -660,7 +660,7 @@ stock Item_SaveToDatabase(playerid, slot)
         new query[512];
         new escapedName[65];
         mysql_escape_string(pItem[playerid][slot][item_name], escapedName, mySQLconnection, sizeof(escapedName));
-        
+
         mysql_format(mySQLconnection, query, sizeof(query),
             "INSERT INTO `items` (`item_owner`, `item_owner_type`, `item_type`, `item_value`, `item_value2`, `item_phone`, `item_name`) VALUES (%d, 0, %d, %d, %d, %d, '%s')",
             pInfo[playerid][player_id],
@@ -670,7 +670,7 @@ stock Item_SaveToDatabase(playerid, slot)
             (pItem[playerid][slot][item_type] == ITEM_TYPE_PHONE) ? pItem[playerid][slot][item_value2] : 0,
             escapedName
         );
-        
+
         mysql_tquery(mySQLconnection, query, "Item_OnInsert", "dd", playerid, slot);
     }
     else
@@ -679,7 +679,7 @@ stock Item_SaveToDatabase(playerid, slot)
         new query[512];
         new escapedName[65];
         mysql_escape_string(pItem[playerid][slot][item_name], escapedName, mySQLconnection, sizeof(escapedName));
-        
+
         mysql_format(mySQLconnection, query, sizeof(query),
             "UPDATE `items` SET `item_type` = %d, `item_value` = %d, `item_value2` = %d, `item_phone` = %d, `item_name` = '%s' WHERE `item_id` = %d",
             pItem[playerid][slot][item_type],
@@ -689,20 +689,19 @@ stock Item_SaveToDatabase(playerid, slot)
             escapedName,
             pItem[playerid][slot][item_id]
         );
-        
+
         mysql_tquery(mySQLconnection, query);
         // If this is a phone, synchronously update/create phone_devices record so DB mapping stays current
         if(pItem[playerid][slot][item_type] == ITEM_TYPE_PHONE)
         {
-            // Use NOW() for timestamp fields to ensure proper MySQL datetime format
-            MySQL_ExecuteFormat("INSERT INTO `phone_devices` (`phone_number`,`item_id`,`owner_uid`,`owner_type`,`created_at`,`updated_at`) VALUES (%d, %d, %d, %d, NOW(), NOW()) ON DUPLICATE KEY UPDATE `item_id` = VALUES(`item_id`), `owner_uid` = VALUES(`owner_uid`), `owner_type` = VALUES(`owner_type`), `updated_at` = NOW()",
-                pItem[playerid][slot][item_value2], pItem[playerid][slot][item_id], pInfo[playerid][player_uid], 0);
+            // Ensure phone_numbers row exists and use the shared helper to insert/update device to avoid FK errors
+            Phone_CreateOrUpdateDeviceForItem(pItem[playerid][slot][item_id], pItem[playerid][slot][item_value2], pInfo[playerid][player_uid], 0);
         }
     }
 }
 
 forward Item_OnInsert(playerid, slot);
-forward Phone_CreateOrUpdateDeviceForItem(item_id, phone_number, owner_uid, owner_type);
+forward Phone_CreateOrUpdateDeviceForItem(p_item_id, phone_number, owner_uid, owner_type);
 public Item_OnInsert(playerid, slot)
 {
     if(IsPlayerConnected(playerid) && slot >= 0 && slot < MAX_PLAYER_ITEMS)
@@ -711,10 +710,10 @@ public Item_OnInsert(playerid, slot)
         // If this is a phone, ensure phone_devices entry is created/updated
         if(pItem[playerid][slot][item_type] == ITEM_TYPE_PHONE)
         {
-            new item_id = pItem[playerid][slot][item_id];
+            new created_item_id = pItem[playerid][slot][item_id];
             new phone_num = pItem[playerid][slot][item_value2];
             new owner_uid = pInfo[playerid][player_uid];
-            Phone_CreateOrUpdateDeviceForItem(item_id, phone_num, owner_uid, 0);
+            Phone_CreateOrUpdateDeviceForItem(created_item_id, phone_num, owner_uid, 0);
         }
     }
     return 1;
@@ -733,24 +732,24 @@ stock SendLocalMessage(playerid, color, const message[], Float:range = 15.0)
     {
         return 0;
     }
-    
+
     new Float:px, Float:py, Float:pz;
     GetPlayerPos(playerid, px, py, pz);
-    
+
     new vw = GetPlayerVirtualWorld(playerid);
     new interior = GetPlayerInterior(playerid);
-    
+
     foreach(new i : Player)
     {
         if(GetPlayerVirtualWorld(i) != vw) continue;
         if(GetPlayerInterior(i) != interior) continue;
-        
+
         if(IsPlayerInRangeOfPoint(i, range, px, py, pz))
         {
             SendClientMessage(i, color, message);
         }
     }
-    
+
     return 1;
 }
 
@@ -764,21 +763,21 @@ stock GetClosestVehicle(playerid, Float:range)
 {
     new Float:px, Float:py, Float:pz;
     GetPlayerPos(playerid, px, py, pz);
-    
+
     new closestVeh = 0;
     new Float:closestDist = range;
-    
+
     foreach(new vehSlot : Vehicles)
     {
         new vehicleid = vInfo[vehSlot][veh_gameid];
-        
+
         if(vehicleid != INVALID_VEHICLE_ID)
         {
             new Float:vx, Float:vy, Float:vz;
             GetVehiclePos(vehicleid, vx, vy, vz);
-            
+
             new Float:dist = GetDistanceBetweenPoints3D(px, py, pz, vx, vy, vz);
-            
+
             if(dist < closestDist)
             {
                 closestDist = dist;
@@ -786,7 +785,7 @@ stock GetClosestVehicle(playerid, Float:range)
             }
         }
     }
-    
+
     return closestVeh;
 }
 

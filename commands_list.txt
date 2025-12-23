@@ -25,8 +25,7 @@ pos
 tpm
 tpc
 skins
-inv
-eq
+p  (alias: inv, eq)
 grupy
 pojazdy
 v
@@ -51,7 +50,7 @@ freeze
 announce
 giveweapon
 givemoney
-sethealth
+sethealth (alias: sethp)
 setskin
 veh
 destroyveh

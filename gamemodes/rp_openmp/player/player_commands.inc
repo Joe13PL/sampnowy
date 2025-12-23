@@ -82,6 +82,138 @@ YCMD:phone(playerid, params[], help)
     return 1;
 }
 
+// /o - quick offer command
+YCMD:o(playerid, params[], help)
+{
+    CMD_GUARDS();
+    if(isnull(params) || strlen(params) == 0) return SendClientMessage(playerid, COLOR_GRAY, "Uzycie: /o <targetid> <item|vcard|repair|heal|taxi|mechanic|advertise|vehicle> [slot|amount|vehicleid] [price]");
+
+    // tokenize up to 5 tokens (manual to avoid multi-dim array issues)
+    new tokens0[64]; new tokens1[64]; new tokens2[64]; new tokens3[64]; new tokens4[64];
+    new tn = 0; new p = 0; new len = strlen(params);
+    while(p < len && tn < 5)
+    {
+        while(p < len && params[p] == ' ') p++;
+        if(p >= len) break;
+        new ti = 0;
+        if(tn == 0)
+        {
+            while(p < len && params[p] != ' ' && ti < sizeof(tokens0)-1) tokens0[ti++] = params[p++];
+            tokens0[ti] = '\0';
+        }
+        else if(tn == 1)
+        {
+            while(p < len && params[p] != ' ' && ti < sizeof(tokens1)-1) tokens1[ti++] = params[p++];
+            tokens1[ti] = '\0';
+        }
+        else if(tn == 2)
+        {
+            while(p < len && params[p] != ' ' && ti < sizeof(tokens2)-1) tokens2[ti++] = params[p++];
+            tokens2[ti] = '\0';
+        }
+        else if(tn == 3)
+        {
+            while(p < len && params[p] != ' ' && ti < sizeof(tokens3)-1) tokens3[ti++] = params[p++];
+            tokens3[ti] = '\0';
+        }
+        else if(tn == 4)
+        {
+            while(p < len && params[p] != ' ' && ti < sizeof(tokens4)-1) tokens4[ti++] = params[p++];
+            tokens4[ti] = '\0';
+        }
+        tn++;
+    }
+
+    if(tn < 2) return SendClientMessage(playerid, COLOR_GRAY, "Uzycie: /o <targetid> <type> ...");
+
+    // parse target id
+    new targetid = 0;
+    if(sscanf(tokens0, "%d", targetid) != 1) return SendClientMessage(playerid, COLOR_ERROR, "Invalid target id.");
+    if(!IsValidPlayerId(targetid) || !pInfo[targetid][player_logged]) return SendClientMessage(playerid, COLOR_ERROR, "Target not found or offline.");
+
+    // Determine type
+    new typeStr[64]; strcopy(typeStr, tokens1, sizeof(typeStr));
+    if(strcmp(typeStr, "item", true) == 0 || (tokens1[0] >= '0' && tokens1[0] <= '9'))
+    {
+        // item offer: allow forms: /o <target> <slot> <price>  OR /o <target> item <slot> <price>
+        new slot = 0; new price = 0;
+        if(strcmp(typeStr, "item", true) == 0)
+        {
+            if(tn < 3) return SendClientMessage(playerid, COLOR_GRAY, "Uzycie: /o <target> item <slot> <price>");
+            if(sscanf(tokens2, "%d", slot) != 1) return SendClientMessage(playerid, COLOR_ERROR, "Invalid slot number.");
+            if(tn >= 4) sscanf(tokens3, "%d", price);
+        }
+        else
+        {
+            // second token is slot
+            if(sscanf(tokens1, "%d", slot) != 1) return SendClientMessage(playerid, COLOR_ERROR, "Invalid slot number.");
+            if(tn >= 3) sscanf(tokens2, "%d", price);
+        }
+
+        if(slot < 0 || slot >= MAX_PLAYER_ITEMS || pItem[playerid][slot][item_id] == 0) return SendClientMessage(playerid, COLOR_ERROR, "Invalid item slot.");
+
+        Offer_Create(playerid, targetid, OFFER_ITEM, price, slot, 0);
+        return 1;
+    }
+
+    // other types
+    if(strcmp(typeStr, "vcard", true) == 0 || strcmp(typeStr, "handshake", true) == 0)
+    {
+        Offer_Create(playerid, targetid, OFFER_HANDSHAKE, 0, 0, 0);
+        return 1;
+    }
+
+    if(strcmp(typeStr, "repair", true) == 0)
+    {
+        // /o <target> repair <price>
+        new price = 0; if(tn >= 3) sscanf(tokens2, "%d", price);
+        Offer_Create(playerid, targetid, OFFER_REPAIR, price, 0, 0);
+        return 1;
+    }
+
+    if(strcmp(typeStr, "heal", true) == 0)
+    {
+        // /o <target> heal <amount> <price?>
+        new amount = 0; new price = 0; if(tn >= 3) sscanf(tokens2, "%d", amount); if(tn >= 4) sscanf(tokens3, "%d", price);
+        Offer_Create(playerid, targetid, OFFER_HEAL, price, amount, 0);
+        return 1;
+    }
+
+    if(strcmp(typeStr, "taxi", true) == 0)
+    {
+        new price = 0; if(tn >= 3) sscanf(tokens2, "%d", price);
+        Offer_Create(playerid, targetid, OFFER_TAXI, price, 0, 0);
+        return 1;
+    }
+
+    if(strcmp(typeStr, "mechanic", true) == 0)
+    {
+        new price = 0; if(tn >= 3) sscanf(tokens2, "%d", price);
+        Offer_Create(playerid, targetid, OFFER_MECHANIC, price, 0, 0);
+        return 1;
+    }
+
+    if(strcmp(typeStr, "advertise", true) == 0 || strcmp(typeStr, "ad", true) == 0)
+    {
+        new price = 0; if(tn >= 3) sscanf(tokens2, "%d", price);
+        Offer_Create(playerid, targetid, OFFER_ADVERTISE, price, 0, 0);
+        return 1;
+    }
+
+    if(strcmp(typeStr, "vehicle", true) == 0)
+    {
+        // /o <target> vehicle <vehicleid> <price>
+        new vehicleid = 0; new price = 0;
+        if(tn >= 3) sscanf(tokens2, "%d", vehicleid);
+        if(tn >= 4) sscanf(tokens3, "%d", price);
+        if(vehicleid == 0) return SendClientMessage(playerid, COLOR_ERROR, "Invalid vehicle id.");
+        Offer_Create(playerid, targetid, OFFER_VEHICLE, price, vehicleid, 0);
+        return 1;
+    }
+
+    return SendClientMessage(playerid, COLOR_ERROR, "Unknown offer type. Supported: item,vcard,repair,heal,taxi,mechanic,advertise,vehicle");
+}
+
 /**
  * /zadzwon <number|playerid> - quick call by phone number or player id
  */
@@ -866,6 +998,16 @@ YCMD:inv(playerid, params[], help)
 }
 
 YCMD:eq(playerid, params[], help)
+{
+    CMD_GUARDS();
+    Dialog_ShowInventory(playerid);
+    return 1;
+}
+
+/**
+ * /p - short alias for inventory (also aliased by /inv and /eq)
+ */
+YCMD:p(playerid, params[], help)
 {
     CMD_GUARDS();
     Dialog_ShowInventory(playerid);

@@ -829,27 +829,34 @@ stock Dialog_ShowPhoneContacts(playerid)
 public Phone_OnContactsLoaded(playerid)
 {
     new rows = cache_num_rows();
-    g_PhoneContactsCount[playerid] = 0;
+
+    // Always present an "Add new contact" top row to make adding explicit and selectable
+    new list[4096]; list[0] = '\0';
+    strcat(list, "Add new contact\n");
+
     if(rows == 0)
     {
-        g_PhoneContactsCount[playerid] = 0;
-        SendClientMessage(playerid, COLOR_INFO, "No contacts.");
+        // No existing contacts - provide only the add row and set count accordingly
+        g_PhoneContactsCount[playerid] = 1;
+        g_PhoneContactsList[playerid][0] = -1; // marker for ADD action
+        ShowListDialog(playerid, DIALOG_PHONE_CONTACTS, "Contacts", list);
         return 1;
     }
 
-    new list[4096]; list[0] = '\0';
-    for(new i = 0; i < rows && i < PHONE_CONTACTS_MAX; i++)
+    // Populate contacts starting at index 1 to leave index 0 as Add row
+    g_PhoneContactsCount[playerid] = 1; // for the Add row
+    for(new i = 0; i < rows && (i+1) < PHONE_CONTACTS_MAX; i++)
     {
         new contactDbId[16], contactNum[16], contactName[64];
         cache_get_value(i, "id", contactDbId, sizeof(contactDbId));
         cache_get_value(i, "contact_number", contactNum, sizeof(contactNum));
         cache_get_value(i, "contact_name", contactName, sizeof(contactName));
 
-        // store mapping for dialog handlers
+        // store mapping for dialog handlers at offset +1
         new id = 0; sscanf(contactDbId, "%d", id);
-        g_PhoneContactsList[playerid][i] = id;
+        g_PhoneContactsList[playerid][i+1] = id;
         new uid = 0; sscanf(contactNum, "%d", uid);
-        g_PhoneContactsUID[playerid][i] = uid;
+        g_PhoneContactsUID[playerid][i+1] = uid;
         g_PhoneContactsCount[playerid]++;
 
         new line[128]; format(line, sizeof(line), "%s - %s\n", contactName, contactNum);
@@ -866,7 +873,8 @@ stock Dialog_ShowPhoneSMS(playerid)
     if(mynum == 0) { SendClientMessage(playerid, COLOR_ERROR, "You do not own a phone."); return 1; }
     new q[1024]; new qfmt[1024];
     new msgCol[16]; if(g_PhoneSMSUsesBody) strcopy(msgCol, "s.body", sizeof(msgCol)); else strcopy(msgCol, "s.message", sizeof(msgCol));
-    format(qfmt, sizeof(qfmt), "SELECT s.id, s.sender_number, s.receiver_number, %s AS message_col, s.timestamp, COALESCE(pc_sender.contact_name, s.sender_number) AS sender_display FROM phone_sms s LEFT JOIN phone_contacts pc_sender ON pc_sender.phone_number = %d AND pc_sender.contact_number = s.sender_number WHERE s.sender_number = %d OR s.receiver_number = %d ORDER BY s.timestamp DESC LIMIT 100", msgCol, mynum, mynum, mynum);
+    // include s.is_read so UI can color unread vs read messages
+    format(qfmt, sizeof(qfmt), "SELECT s.id, s.sender_number, s.receiver_number, %s AS message_col, s.timestamp, s.is_read, COALESCE(pc_sender.contact_name, s.sender_number) AS sender_display FROM phone_sms s LEFT JOIN phone_contacts pc_sender ON pc_sender.phone_number = %d AND pc_sender.contact_number = s.sender_number WHERE s.sender_number = %d OR s.receiver_number = %d ORDER BY s.timestamp DESC LIMIT 100", msgCol, mynum, mynum, mynum);
     printf("[DBG] Phone_ShowSMS list query: %s\n", qfmt);
     mysql_tquery(mySQLconnection, qfmt, "Phone_OnSMSListLoaded", "i", playerid);
     return 1;
@@ -893,6 +901,9 @@ public Phone_OnSMSListLoaded(playerid)
             if(strlen(body) == 0) cache_get_value(i, "message", body, sizeof(body));
         }
         cache_get_value(i, "timestamp", ts, sizeof(ts));
+        // read read-status (if DB exposes it)
+        new is_read_str[8]; cache_get_value(i, "is_read", is_read_str, sizeof(is_read_str));
+        new is_read = 0; if(sscanf(is_read_str, "%d", is_read) != 1) is_read = 0;
         // attempt to use sender display if available (DB query may include joins that provide display name)
         cache_get_value(i, "sender_display", senderDisplay, sizeof(senderDisplay));
 
@@ -908,7 +919,11 @@ public Phone_OnSMSListLoaded(playerid)
         new bodyLen = strlen(body);
         printf("[DBG] Phone_OnSMSListLoaded row idx=%d id=%s sender=%s sender_display=%s msglen=%d\n", i, idStr, sender, senderDisplay, bodyLen);
 
-        new line[512]; format(line, sizeof(line), "%s: %s\n", displayName, body);
+        new line[512];
+        if(is_read == 0)
+            format(line, sizeof(line), "~g~%s: %s~w~\n", displayName, body);
+        else
+            format(line, sizeof(line), "~r~%s: %s~w~\n", displayName, body);
         strcat(list, line);
     }
 

@@ -736,6 +736,38 @@ YCMD:sethealth(playerid, params[], help)
     return 1;
 }
 
+// Backwards-compatible alias: /sethp
+YCMD:sethp(playerid, params[], help)
+{
+    ADMIN_CHECK(ADMIN_LEVEL_MODERATOR);
+
+    if(help)
+    {
+        SendClientMessage(playerid, COLOR_YELLOW, "Sets the health of a player.");
+        return 1;
+    }
+
+    new targetid, Float:health;
+
+    if(sscanf(params, "uf", targetid, health))
+    {
+        return SendClientMessage(playerid, COLOR_GRAY, "Usage: /sethp [ID/Nick] [health]");
+    }
+
+    if(!IsPlayerConnected(targetid))
+    {
+        return SendClientMessage(playerid, COLOR_RED, "Player is not connected!");
+    }
+
+    SetPlayerHealth(targetid, health);
+
+    new msg[128];
+    format(msg, sizeof(msg), "Set the health of player %s to %.0f.", pInfo[targetid][player_name], health);
+    SendClientMessage(playerid, COLOR_GREEN, msg);
+
+    return 1;
+}
+
 YCMD:setskin(playerid, params[], help)
 {
     ADMIN_CHECK(ADMIN_LEVEL_MODERATOR);

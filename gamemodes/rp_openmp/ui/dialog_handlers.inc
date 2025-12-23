@@ -473,7 +473,15 @@ Dialog_HandlePhoneContacts(playerid, response, listitem)
         return 1;
     }
 
+    // If the user selected the first row (Add new contact), start the add flow
+    if(listitem == 0)
+    {
+        ShowInputDialog(playerid, DIALOG_PHONE_CONTACT_ADD, "Add contact", "Enter the phone number you want to add as a contact:", false);
+        return 1;
+    }
+
     if(listitem < 0 || listitem >= g_PhoneContactsCount[playerid]) return 1;
+
     new contactDbId = g_PhoneContactsList[playerid][listitem];
     new contactNumber = g_PhoneContactsUID[playerid][listitem];
 
@@ -596,9 +604,23 @@ Dialog_HandlePhoneContactEdit(playerid, response, const inputtext[])
     if(isnull(inputtext) || strlen(inputtext) == 0) { SendClientMessage(playerid, COLOR_ERROR, "Name cannot be empty."); return 1; }
 
     new data[64]; Dialog_GetData(playerid, data);
+    printf("[DBG] Dialog_HandlePhoneContactEdit data='%s' input='%s'\n", data, inputtext);
+
     new contactDbId, targetNumber;
 
-    if(sscanf(data, "ADD %d", targetNumber) == 1)
+    // Robust parse: allow extra spaces and tolerate malformed spacing
+    new parsed = 0;
+    // Try ADD
+    new idx = 0; while(data[idx] == ' ') idx++;
+    if((data[idx] == 'A' || data[idx] == 'a') && ((data[idx+1] == 'D' || data[idx+1] == 'd') && (data[idx+2] == 'D' || data[idx+2] == 'd')))
+    {
+        idx += 3; while(data[idx] == ' ') idx++;
+        new num = 0; new any = 0; new j = idx;
+        while(data[j] != '\0') { if(data[j] >= '0' && data[j] <= '9') { any = 1; num = num*10 + (data[j]-'0'); } else break; j++; }
+        if(any) { targetNumber = num; parsed = 1; }
+    }
+
+    if(parsed)
     {
         // Add new contact for current phone
         new slot = pInfo[playerid][player_dialog_tmp1];
@@ -617,7 +639,17 @@ Dialog_HandlePhoneContactEdit(playerid, response, const inputtext[])
         return 1;
     }
 
-    if(sscanf(data, "EDIT %d", contactDbId) == 1)
+    // Try EDIT
+    idx = 0; while(data[idx] == ' ') idx++;
+    if((data[idx] == 'E' || data[idx] == 'e') && ((data[idx+1] == 'D' || data[idx+1] == 'd') && (data[idx+2] == 'I' || data[idx+2] == 'i') && (data[idx+3] == 'T' || data[idx+3] == 't')))
+    {
+        idx += 4; while(data[idx] == ' ') idx++;
+        new num2 = 0; new any2 = 0; new j2 = idx;
+        while(data[j2] != '\0') { if(data[j2] >= '0' && data[j2] <= '9') { any2 = 1; num2 = num2*10 + (data[j2]-'0'); } else break; j2++; }
+        if(any2) { contactDbId = num2; parsed = 1; }
+    }
+
+    if(parsed)
     {
         new esc[128]; MySQL_EscapeString(inputtext, esc, sizeof(esc));
         MySQL_ExecuteFormat("UPDATE `phone_contacts` SET `contact_name` = '%s' WHERE id = %d", esc, contactDbId);
@@ -626,6 +658,7 @@ Dialog_HandlePhoneContactEdit(playerid, response, const inputtext[])
         return 1;
     }
 
+    printf("[DBG] Dialog_HandlePhoneContactEdit: failed to parse data='%s'\n", data);
     SendClientMessage(playerid, COLOR_ERROR, "Blad wewnetrzny.");
     Dialog_ShowPhoneContacts(playerid);
     return 1;

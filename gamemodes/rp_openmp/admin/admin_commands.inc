@@ -806,6 +806,45 @@ YCMD:setskin(playerid, params[], help)
     return 1;
 }
 
+/**
+ * /setmarkerhere - Create a server-side marker/checkpoint at your current position (Admin-only)
+ */
+YCMD:setmarkerhere(playerid, params[], help)
+{
+    ADMIN_CHECK(ADMIN_LEVEL_ADMIN);
+
+    if(help)
+    {
+        SendClientMessage(playerid, COLOR_YELLOW, "Sets a server-side marker at your current position (admin only).");
+        return 1;
+    }
+
+    new Float:x, Float:y, Float:z;
+    GetPlayerPos(playerid, x, y, z);
+    // Small offset up to avoid clipping
+    SetPlayerCheckpoint(playerid, x, y, z + 0.5, 3.0);
+    SendClientMessage(playerid, COLOR_SUCCESS, "Server marker set at your position. Use /tpm to teleport to it.");
+    return 1;
+}
+
+/**
+ * /clearmarker - Remove server-side marker/checkpoint for you (Admin-only)
+ */
+YCMD:clearmarker(playerid, params[], help)
+{
+    ADMIN_CHECK(ADMIN_LEVEL_ADMIN);
+
+    if(help)
+    {
+        SendClientMessage(playerid, COLOR_YELLOW, "Clears your server-side marker/checkpoint.");
+        return 1;
+    }
+
+    // Clear by setting radius 0
+    SetPlayerCheckpoint(playerid, 0.0, 0.0, 0.0, 0.0);
+    SendClientMessage(playerid, COLOR_SUCCESS, "Server marker cleared.");
+    return 1;
+}
 // ===========================================================================
 // COMMANDS - VEHICLES
 // ===========================================================================

@@ -893,7 +893,8 @@ YCMD:tpm(playerid, params[], help)
     // Wymagamy aktywnego checkpointu (np. z lokalizacji pojazdu/GPS)
     if(!IsPlayerCheckpointActive(playerid))
     {
-        return SendClientMessage(playerid, COLOR_ERROR, "Brak aktywnego markera lub checkpointu.");
+        // Clarify behavior: only server-side checkpoints are supported. Client map waypoint is not accessible.
+        return SendClientMessage(playerid, COLOR_ERROR, "No active server marker/checkpoint. Client map waypoint is not supported. Use /tpc <x> <y> <z> or ask an admin to set a server marker.");
     }
 
     new Float:x, Float:y, Float:z, Float:radius;
@@ -921,6 +922,41 @@ YCMD:tpm(playerid, params[], help)
     }
 
     SendClientMessage(playerid, COLOR_SUCCESS, "Przeteleportowano do markera.");
+    return 1;
+}
+
+// -----------------------------------------------------------------------------
+// Client map click handler - admins only
+// -----------------------------------------------------------------------------
+public OnPlayerClickMap(playerid, Float:fX, Float:fY, Float:fZ)
+{
+    // Only allow admins to use client map click to teleport
+    if(!IsPlayerAdmin(playerid))
+    {
+        return 0; // ignore for non-admins
+    }
+
+    // Set a temporary server checkpoint and teleport the admin immediately
+    SetPlayerCheckpoint(playerid, fX, fY, fZ + 0.5, 3.0);
+
+    new Float:angle;
+    GetPlayerFacingAngle(playerid, angle);
+
+    if(!IsPlayerInAnyVehicle(playerid))
+    {
+        SetPlayerPosFindZ(playerid, fX, fY, fZ + 0.5);
+        SetPlayerFacingAngle(playerid, angle);
+    }
+    else
+    {
+        new vehicleid = GetPlayerVehicleID(playerid);
+        SetVehiclePos(vehicleid, fX, fY, fZ + 1.0);
+        SetVehicleZAngle(vehicleid, angle);
+        LinkVehicleToInterior(vehicleid, GetPlayerInterior(playerid));
+        SetVehicleVirtualWorld(vehicleid, GetPlayerVirtualWorld(playerid));
+    }
+
+    SendClientMessage(playerid, COLOR_SUCCESS, "Teleported to your map waypoint.");
     return 1;
 }
 

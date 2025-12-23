@@ -23,6 +23,8 @@ id
 time
 pos
 tpm
+setmarkerhere
+clearmarker
 tpc
 skins
 p  (alias: inv, eq)

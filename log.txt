@@ -4277,3 +4277,56 @@ Parsing unknown legacy option crashdetect_log
 [2025-12-23T04:21:35+0100] [Info] sscanf warning (C:\Users\qsasu\Desktop\asdsaas\sampnowy\gamemodes\scripts\..\rp_openmp\admin/admin_commands.inc:4398): "sscanf specifiers do not require '' before them."
 [2025-12-23T04:23:39+0100] [Info] [PlayerSave] Zapisano dane gracza Cristo_Mata (UID: 22) - pow??d: global-autosave
 [2025-12-23T04:23:39+0100] [Info] [AutoSave] Zapisano dane 1 graczy, pojazd??w i grup
+[2025-12-23T04:28:06+0100] [Info] [AUTH DEBUG] pid=0 dialog=205 state=9 resp=1 list=0
+[2025-12-23T04:28:07+0100] [Info] [AUTH DEBUG] pid=0 dialog=102 state=9 resp=1 list=0
+[2025-12-23T04:28:09+0100] [Info] [AUTH DEBUG] pid=0 dialog=600 state=9 resp=1 list=1
+[2025-12-23T04:28:09+0100] [Info] sscanf warning (C:\Users\qsasu\Desktop\asdsaas\sampnowy\gamemodes\scripts\..\rp_openmp\gameplay/phone_system.inc:856): "sscanf specifiers do not require '' before them."
+[2025-12-23T04:28:09+0100] [Info] sscanf warning (C:\Users\qsasu\Desktop\asdsaas\sampnowy\gamemodes\scripts\..\rp_openmp\gameplay/phone_system.inc:858): "sscanf specifiers do not require '' before them."
+[2025-12-23T04:28:10+0100] [Info] [AUTH DEBUG] pid=0 dialog=603 state=9 resp=0 list=0
+[2025-12-23T04:28:10+0100] [Info] [AUTH DEBUG] pid=0 dialog=607 state=9 resp=0 list=-1
+[2025-12-23T04:28:10+0100] [Info] sscanf warning (C:\Users\qsasu\Desktop\asdsaas\sampnowy\gamemodes\scripts\..\rp_openmp\gameplay/phone_system.inc:856): "sscanf specifiers do not require '' before them."
+[2025-12-23T04:28:10+0100] [Info] sscanf warning (C:\Users\qsasu\Desktop\asdsaas\sampnowy\gamemodes\scripts\..\rp_openmp\gameplay/phone_system.inc:858): "sscanf specifiers do not require '' before them."
+[2025-12-23T04:28:12+0100] [Info] [AUTH DEBUG] pid=0 dialog=603 state=9 resp=0 list=0
+[2025-12-23T04:28:13+0100] [Info] [AUTH DEBUG] pid=0 dialog=607 state=9 resp=0 list=-1
+[2025-12-23T04:28:13+0100] [Info] sscanf warning (C:\Users\qsasu\Desktop\asdsaas\sampnowy\gamemodes\scripts\..\rp_openmp\gameplay/phone_system.inc:856): "sscanf specifiers do not require '' before them."
+[2025-12-23T04:28:13+0100] [Info] sscanf warning (C:\Users\qsasu\Desktop\asdsaas\sampnowy\gamemodes\scripts\..\rp_openmp\gameplay/phone_system.inc:858): "sscanf specifiers do not require '' before them."
+[2025-12-23T04:28:13+0100] [Info] [AUTH DEBUG] pid=0 dialog=603 state=9 resp=0 list=0
+[2025-12-23T04:28:13+0100] [Info] [AUTH DEBUG] pid=0 dialog=607 state=9 resp=0 list=-1
+[2025-12-23T04:28:13+0100] [Info] sscanf warning (C:\Users\qsasu\Desktop\asdsaas\sampnowy\gamemodes\scripts\..\rp_openmp\gameplay/phone_system.inc:856): "sscanf specifiers do not require '' before them."
+[2025-12-23T04:28:13+0100] [Info] sscanf warning (C:\Users\qsasu\Desktop\asdsaas\sampnowy\gamemodes\scripts\..\rp_openmp\gameplay/phone_system.inc:858): "sscanf specifiers do not require '' before them."
+[2025-12-23T04:28:13+0100] [Info] [AUTH DEBUG] pid=0 dialog=603 state=9 resp=0 list=0
+[2025-12-23T04:28:14+0100] [Info] [AUTH DEBUG] pid=0 dialog=607 state=9 resp=1 list=-1
+[2025-12-23T04:28:15+0100] [Info] [AUTH DEBUG] pid=0 dialog=205 state=9 resp=1 list=1
+[2025-12-23T04:28:17+0100] [Info] [AUTH DEBUG] pid=0 dialog=102 state=9 resp=1 list=0
+[2025-12-23T04:28:17+0100] [Info] [DBG] Phone_ShowSMS list query: SELECT s.id, s.sender_number, s.receiver_number, s.message AS message_col, s.timestamp, s.is_read, COALESCE(pc_sender.contact_name, s.sender_number) AS sender_display FROM phone_sms s LEFT JOIN phone_contacts pc_sender ON pc_sender.phone_number = 1002 AND pc_sender.contact_number = s.sender_number WHERE s.sender_number = 1002 OR s.receiver_number = 1002 ORDER BY s.timestamp DESC LIMIT 100
+
+[2025-12-23T04:28:17+0100] [Info] [AUTH DEBUG] pid=0 dialog=600 state=9 resp=1 list=2
+[2025-12-23T04:28:17+0100] [Info] [DBG] Phone_OnSMSListLoaded invoked for player=0 rows=1
+
+[2025-12-23T04:28:18+0100] [Info] sscanf warning (C:\Users\qsasu\Desktop\asdsaas\sampnowy\gamemodes\scripts\..\rp_openmp\gameplay/phone_system.inc:906): "sscanf specifiers do not require '' before them."
+[2025-12-23T04:28:18+0100] [Info] sscanf warning (C:\Users\qsasu\Desktop\asdsaas\sampnowy\gamemodes\scripts\..\rp_openmp\gameplay/phone_system.inc:910): "sscanf specifiers do not require '' before them."
+[2025-12-23T04:28:18+0100] [Info] [DBG] Phone_OnSMSListLoaded row idx=0 id=19 sender=1002 sender_display=1002 msglen=4
+
+[2025-12-23T04:28:18+0100] [Info] [DBG] Phone_OnSMSListLoaded compiled list player=0 count=1 listlen=17
+
+[2025-12-23T04:28:18+0100] [Info] [DBG] Dialog_HandlePhoneSMSList query: SELECT s.id, s.sender_number, s.receiver_number, s.message AS message_col, s.timestamp, s.is_read, COALESCE(pc_sender.contact_name, s.sender_number) AS sender_display, COALESCE(pc_receiver.contact_name, s.receiver_number) AS receiver_display, s.sender_number AS sender_phone, s.receiver_number AS receiver_phone FROM `phone_sms` s LEFT JOIN `phone_contacts` pc_sender ON pc_sender.phone_number = 1003 AND pc_sender.contact_number = s.sender_number LEFT JOIN `phone_contacts` pc_receiver ON pc_receiver.phone_number = 1003 AND pc_receiver.contact_number = s.receiver_number WHERE s.id = 19
+
+[2025-12-23T04:28:18+0100] [Info] [AUTH DEBUG] pid=0 dialog=611 state=9 resp=1 list=0
+[2025-12-23T04:28:18+0100] [Info] [DBG] Phone_OnSMSViewLoaded invoked for player=0 rows=1
+
+[2025-12-23T04:28:18+0100] [Info] [DBG] Phone_OnSMSViewLoaded id=19 sender=1002 receiver=1004 msglen=4 timestamp=2025-12-23 03:50:39 sender_display='1002' receiver_display='1004'
+
+[2025-12-23T04:28:21+0100] [Info] [DBG] Dialog_HandlePhoneSMSView invoked response=0 data='19'
+
+[2025-12-23T04:28:21+0100] [Info] sscanf warning (C:\Users\qsasu\Desktop\asdsaas\sampnowy\gamemodes\scripts\..\rp_openmp\ui/dialog_handlers.inc:761): "sscanf specifiers do not require '' before them."
+[2025-12-23T04:28:21+0100] [Info] sscanf warning (C:\Users\qsasu\Desktop\asdsaas\sampnowy\gamemodes\scripts\..\rp_openmp\ui/dialog_handlers.inc:761): "sscanf specifiers do not require '' before them."
+[2025-12-23T04:28:21+0100] [Info] sscanf warning (C:\Users\qsasu\Desktop\asdsaas\sampnowy\gamemodes\scripts\..\rp_openmp\ui/dialog_handlers.inc:771): "sscanf specifiers do not require '' before them."
+[2025-12-23T04:28:21+0100] [Info] [DBG] Dialog_HandlePhoneSMSView: failed to parse data='19' for delete
+
+[2025-12-23T04:28:21+0100] [Info] [AUTH DEBUG] pid=0 dialog=612 state=9 resp=0 list=-1
+[2025-12-23T04:28:24+0100] [Info] [PlayerSave] Zapisano dane gracza Cristo_Mata (UID: 22) - pow??d: disconnect
+[2025-12-23T04:28:24+0100] [Info] [part] tester5 has left the server (0:1)
+[2025-12-23T04:28:39+0100] [Info] [AutoSave] Zapisano dane 0 graczy, pojazd??w i grup
+[2025-12-23T04:33:39+0100] [Info] [AutoSave] Zapisano dane 0 graczy, pojazd??w i grup
+[2025-12-23T04:38:39+0100] [Info] [AutoSave] Zapisano dane 0 graczy, pojazd??w i grup
+[2025-12-23T04:43:39+0100] [Info] [AutoSave] Zapisano dane 0 graczy, pojazd??w i grup

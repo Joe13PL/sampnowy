@@ -126,7 +126,7 @@ stock Item_CreateForPlayer(playerid, E_ITEM_TYPE:itemType, value1 = 0, value2 = 
 
     if(freeSlot == -1)
     {
-        SendClientMessage(playerid, COLOR_RED, "Twój ekwipunek jest pełny!");
+        SendClientMessage(playerid, COLOR_RED, "Your inventory is full!");
         return -1;
     }
 
@@ -336,18 +336,18 @@ stock Item_Use(playerid, slot)
             // Poka?? dow??d
             new msg[256];
             format(msg, sizeof(msg),
-                "* %s pokazuje sw??j dow??d osobisty.",
+                "* %s shows their ID card.",
                 pInfo[playerid][player_name]);
             SendLocalMessage(playerid, COLOR_PURPLE, msg, 10.0);
 
-            // TODO: Wy??wietl dialog z danymi
+            // TODO: Display dialog with data
         }
 
         case ITEM_TYPE_DRIVING_LICENSE:
         {
             new msg[256];
             format(msg, sizeof(msg),
-                "* %s pokazuje swoje prawo jazdy.",
+                "* %s shows their driving license.",
                 pInfo[playerid][player_name]);
             SendLocalMessage(playerid, COLOR_PURPLE, msg, 10.0);
         }
@@ -381,7 +381,7 @@ stock Item_Use(playerid, slot)
 
             new msg[128];
             format(msg, sizeof(msg),
-                "* %s pije %s.",
+                "* %s drinks %s.",
                 pInfo[playerid][player_name], itemName);
             SendLocalMessage(playerid, COLOR_PURPLE, msg, 10.0);
 
@@ -413,11 +413,11 @@ stock Item_Use(playerid, slot)
 
             new msg[128];
             format(msg, sizeof(msg),
-                "* %s pije %s.",
+                "* %s drinks %s.",
                 pInfo[playerid][player_name], itemName);
             SendLocalMessage(playerid, COLOR_PURPLE, msg, 10.0);
 
-            // Efekt upicia
+            // Effect of drunkenness
             if(pInfo[playerid][player_drunk] > 2000)
             {
                 SetPlayerDrunkLevel(playerid, pInfo[playerid][player_drunk]);
@@ -434,7 +434,7 @@ stock Item_Use(playerid, slot)
 
             if(health >= 100.0)
             {
-                SendClientMessage(playerid, COLOR_RED, "Nie potrzebujesz banda??a!");
+                SendClientMessage(playerid, COLOR_RED, "You don't need a bandage!");
                 return 0;
             }
 
@@ -444,7 +444,7 @@ stock Item_Use(playerid, slot)
 
             new msg[128];
             format(msg, sizeof(msg),
-                "* %s u??ywa banda??a.",
+                "* %s uses a bandage.",
                 pInfo[playerid][player_name]);
             SendLocalMessage(playerid, COLOR_PURPLE, msg, 10.0);
 
@@ -457,7 +457,7 @@ stock Item_Use(playerid, slot)
 
             new msg[128];
             format(msg, sizeof(msg),
-                "* %s u??ywa apteczki.",
+                "* %s uses a medkit.",
                 pInfo[playerid][player_name]);
             SendLocalMessage(playerid, COLOR_PURPLE, msg, 10.0);
 
@@ -470,12 +470,12 @@ stock Item_Use(playerid, slot)
             if(pInfo[playerid][player_mask])
             {
                 pInfo[playerid][player_mask] = false;
-                SendClientMessage(playerid, COLOR_GREEN, "Zdj????e?? mask??.");
+                SendClientMessage(playerid, COLOR_GREEN, "You removed your mask.");
             }
             else
             {
                 pInfo[playerid][player_mask] = true;
-                SendClientMessage(playerid, COLOR_GREEN, "Za??o??y??e?? mask??. Twoja to??samo???? jest ukryta.");
+                SendClientMessage(playerid, COLOR_GREEN, "You put on a mask. Your identity is hidden.");
             }
         }
 
@@ -486,7 +486,7 @@ stock Item_Use(playerid, slot)
 
             new msg[128];
             format(msg, sizeof(msg),
-                "* %s zak??ada kamizelk?? kuloodporn??.",
+                "* %s puts on a bulletproof vest.",
                 pInfo[playerid][player_name]);
             SendLocalMessage(playerid, COLOR_PURPLE, msg, 10.0);
 
@@ -506,7 +506,7 @@ stock Item_Use(playerid, slot)
 
             if(vehicleid == 0 || vehicleid == INVALID_VEHICLE_ID)
             {
-                SendClientMessage(playerid, COLOR_RED, "Nie ma tu ??adnego pojazdu!");
+                SendClientMessage(playerid, COLOR_RED, "There is no vehicle nearby!");
                 return 0;
             }
 
@@ -516,25 +516,25 @@ stock Item_Use(playerid, slot)
             {
                 new msg[128];
                 format(msg, sizeof(msg),
-                    "Zatankowa??e?? %d litr??w paliwa.", refueled);
+                    "You refueled %d liters of fuel.", refueled);
                 SendClientMessage(playerid, COLOR_GREEN, msg);
                 consumed = true;
             }
             else
             {
-                SendClientMessage(playerid, COLOR_RED, "Zbiornik jest pe??ny!");
+                SendClientMessage(playerid, COLOR_RED, "The tank is full!");
                 return 0;
             }
         }
 
         default:
         {
-            SendClientMessage(playerid, COLOR_RED, "Nie mo??esz u??y?? tego przedmiotu!");
+            SendClientMessage(playerid, COLOR_RED, "You can't use this item!");
             return 0;
         }
     }
 
-    // Usu?? przedmiot je??li zosta?? zu??ty
+    // Remove item if consumed
     if(consumed)
     {
         Item_Remove(playerid, slot);
@@ -574,11 +574,11 @@ stock Item_Transfer(fromPlayerid, toPlayerid, slot)
     // Sprawd?? czy odbiorca ma miejsce
     if(pInfo[toPlayerid][player_item_count] >= MAX_PLAYER_ITEMS)
     {
-        SendClientMessage(fromPlayerid, COLOR_RED, "Gracz nie ma miejsca w ekwipunku!");
+        SendClientMessage(fromPlayerid, COLOR_RED, "The player has no space in their inventory!");
         return 0;
     }
 
-    // Utw??rz przedmiot u odbiorcy
+    // Create item for the recipient
     new newSlot = Item_CreateForPlayer(
         toPlayerid,
         E_ITEM_TYPE:pItem[fromPlayerid][slot][item_type],
@@ -592,16 +592,16 @@ stock Item_Transfer(fromPlayerid, toPlayerid, slot)
         return 0;
     }
 
-    // Usu?? u daj??cego
+    // Remove from the giver
     Item_Remove(fromPlayerid, slot);
 
-    // Komunikaty
+    // Messages
     new msg[128];
-    format(msg, sizeof(msg), "Przekaza??e?? %s graczowi %s.",
+    format(msg, sizeof(msg), "You have given %s to player %s.",
         pItem[toPlayerid][newSlot][item_name], pInfo[toPlayerid][player_name]);
     SendClientMessage(fromPlayerid, COLOR_GREEN, msg);
 
-    format(msg, sizeof(msg), "Otrzyma??e?? %s od gracza %s.",
+    format(msg, sizeof(msg), "You have received %s from player %s.",
         pItem[toPlayerid][newSlot][item_name], pInfo[fromPlayerid][player_name]);
     SendClientMessage(toPlayerid, COLOR_GREEN, msg);
 

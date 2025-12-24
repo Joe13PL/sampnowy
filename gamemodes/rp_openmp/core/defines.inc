@@ -424,7 +424,7 @@
 
 #define guiopis                         "{adc7e7}{ffffff} "version" {adc7e7}??? {ffffff}"
 #define opis                            "{adc7e7}{ffffff} "version" {adc7e7}: {ffffff}"
-#define wersja                          "Essential RP Open Multiplayer 0.0.1"
+#define wersja                          "OpenRP 0.0.1"
 
 // HEX colors for dialogs
 #define COLOR_GUI_BLUE                  "{a9c4e4}"

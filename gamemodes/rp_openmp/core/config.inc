@@ -217,7 +217,7 @@ stock LoadConfiguration()
     // Inicjalizacja element??w gry
     InitializeGameElements();
 
-    printf("[Config] Konfiguracja za??adowana [czas: %d ms]", GetTickCount() - loadStart);
+    printf("[Config] Config Loaded [czas: %d ms]", GetTickCount() - loadStart);
     return 1;
 }
 
@@ -343,7 +343,7 @@ stock UpdateDateTextdraw()
     getdate(year, month, day);
 
     new str[64];
-    format(str, sizeof(str), "~y~revo~w~Gaming.pl~n~%02d.%02d.%d", day, month, year);
+    format(str, sizeof(str), "~y~OpenRP~w~~n~%02d.%02d.%d", day, month, year);
     TextDrawSetString(Textdraw2, str);
 }
 

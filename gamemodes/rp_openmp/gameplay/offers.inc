@@ -2,7 +2,7 @@
  * =============================================================================
  *  OFFERS - System ofert
  * =============================================================================
- *  
+ *
  *  Moduł: gameplay/offers.inc
  *  Opis: System ofert między graczami (sprzedaż przedmiotów, usługi, etc.)
  *
@@ -90,42 +90,42 @@ stock Offer_Create(playerid, targetid, E_OFFER_TYPE:offerType, price = 0, itemId
     {
         return 0;
     }
-    
+
     if(!pInfo[playerid][player_logged] || !pInfo[targetid][player_logged])
     {
-        SendClientMessage(playerid, COLOR_ERROR, "Gracz nie jest zalogowany.");
+        SendClientMessage(playerid, COLOR_ERROR, "Player is not logged in.");
         return 0;
     }
-    
+
     if(playerid == targetid)
     {
-        SendClientMessage(playerid, COLOR_ERROR, "Nie mo??esz z??o??y?? oferty samemu sobie.");
+        SendClientMessage(playerid, COLOR_ERROR, "You cannot make an offer to yourself.");
         return 0;
     }
-    
-    // Sprawd?? odleg??o????
+
+    // Check distance
     new Float:dist = GetPlayerDistanceFromPlayer(playerid, targetid);
     if(dist > 5.0)
     {
-        SendClientMessage(playerid, COLOR_ERROR, "Gracz jest za daleko.");
+        SendClientMessage(playerid, COLOR_ERROR, "Player is too far away.");
         return 0;
     }
-    
-    // Sprawd?? czy gracz nie ma ju?? aktywnej oferty
+
+    // Check if the player already has an active offer
     if(g_PlayerOffer[targetid][offer_active])
     {
-        SendClientMessage(playerid, COLOR_ERROR, "Ten gracz ma ju?? oczekuj??c?? ofert??.");
+        SendClientMessage(playerid, COLOR_ERROR, "This player already has a pending offer.");
         return 0;
     }
-    
-    // Sprawd?? czy sk??adaj??cy ma wystarczaj??co pieni??dzy (dla niekt??rych typ??w)
+
+    // Check if the offerer has enough money (for certain types)
     if(price < 0 && Player_GetMoney(playerid) < -price)
     {
-        SendClientMessage(playerid, COLOR_ERROR, "Nie masz wystarczaj??co pieni??dzy.");
+        SendClientMessage(playerid, COLOR_ERROR, "You do not have enough money.");
         return 0;
     }
-    
-    // Utw??rz ofert??
+
+    // Create offer
     g_PlayerOffer[targetid][offer_active] = 1;
     g_PlayerOffer[targetid][offer_type] = offerType;
     g_PlayerOffer[targetid][offer_from] = playerid;
@@ -134,26 +134,25 @@ stock Offer_Create(playerid, targetid, E_OFFER_TYPE:offerType, price = 0, itemId
     g_PlayerOffer[targetid][offer_item_id] = itemId;
     g_PlayerOffer[targetid][offer_item_value] = itemValue;
     g_PlayerOffer[targetid][offer_expire_time] = gettime() + OFFER_EXPIRE_TIME;
-    
+
     // Timer wyga??ni??cia
     g_PlayerOffer[targetid][offer_timer] = SetTimerEx("OnOfferExpire", OFFER_EXPIRE_TIME * 1000, false, "i", targetid);
-    
+
     // Wy??lij wiadomo??ci
     new msg[256];
     new typeName[32];
     Offer_GetTypeName(offerType, typeName);
-    
-    format(msg, sizeof(msg), 
-        "%s oferuje ci: {FFFFFF}%s\n{3498DB}Cena: {FFFFFF}%s$\n\n{2ECC71}/akceptuj{FFFFFF} aby zaakceptowa??\n{E74C3C}/odrzuc{FFFFFF} aby odrzuci??",
+
+    format(msg, sizeof(msg),
+        "%s offers you: {FFFFFF}%s\n{3498DB}Price: {FFFFFF}%s$\n\n{2ECC71}/accept{FFFFFF} to accept\n{E74C3C}/reject{FFFFFF} to decline",
         Player_RPName(playerid), typeName, FormatMoney(price));
-    
-    ShowPlayerDialog(targetid, DIALOG_OFFER, DIALOG_STYLE_MSGBOX, 
-        "Oferta", msg, "Akceptuj", "Odrzu??");
-    
-    format(msg, sizeof(msg), "Z??o??y??e?? ofert?? dla %s: %s za %s$",
+
+    ShowPlayerDialog(targetid, DIALOG_OFFER, DIALOG_STYLE_MSGBOX,
+        "Offer", msg, "Accept", "Reject");
+    format(msg, sizeof(msg), "You have made an offer to %s: %s for %s$",
         Player_RPName(targetid), typeName, FormatMoney(price));
     SendClientMessage(playerid, COLOR_INFO, msg);
-    
+
     return 1;
 }
 
@@ -165,77 +164,77 @@ stock Offer_Accept(playerid)
 {
     if(!IsValidPlayerId(playerid) || !g_PlayerOffer[playerid][offer_active])
     {
-        SendClientMessage(playerid, COLOR_ERROR, "Nie masz ??adnej oczekuj??cej oferty.");
+        SendClientMessage(playerid, COLOR_ERROR, "You do not have any pending offers.");
         return 0;
     }
-    
+
     new fromid = g_PlayerOffer[playerid][offer_from];
     new price = g_PlayerOffer[playerid][offer_price];
-    
+
     // Sprawd?? czy sk??adaj??cy jest online
     if(!IsValidPlayerId(fromid) || !pInfo[fromid][player_logged])
     {
-        SendClientMessage(playerid, COLOR_ERROR, "Gracz sk??adaj??cy ofert?? jest offline.");
+        SendClientMessage(playerid, COLOR_ERROR, "The player who made the offer is offline.");
         Offer_Cancel(playerid);
         return 0;
     }
-    
-    // Sprawd?? odleg??o????
+
+    // Check distance
     new Float:dist = GetPlayerDistanceFromPlayer(playerid, fromid);
     if(dist > 10.0)
     {
-        SendClientMessage(playerid, COLOR_ERROR, "Gracz jest za daleko.");
+        SendClientMessage(playerid, COLOR_ERROR, "Player is too far away.");
         return 0;
     }
-    
-    // Sprawd?? pieni??dze akceptuj??cego
+
+    // Check if the acceptor has enough money
     if(price > 0 && Player_GetMoney(playerid) < price)
     {
-        SendClientMessage(playerid, COLOR_ERROR, "Nie masz wystarczaj??co pieni??dzy.");
+        SendClientMessage(playerid, COLOR_ERROR, "You do not have enough money.");
         return 0;
     }
-    
-    // Wykonaj akcj?? w zale??no??ci od typu
+
+    // Perform action depending on type
     new success = 0;
-    
+
     switch(g_PlayerOffer[playerid][offer_type])
     {
         case OFFER_ITEM:
         {
             success = Offer_ProcessItem(playerid, fromid);
         }
-        
+
         case OFFER_VEHICLE:
         {
             success = Offer_ProcessVehicle(playerid, fromid);
         }
-        
+
         case OFFER_REPAIR:
         {
             success = Offer_ProcessRepair(playerid, fromid);
         }
-        
+
         case OFFER_HEAL:
         {
             success = Offer_ProcessHeal(playerid, fromid);
         }
-        
+
         case OFFER_HANDSHAKE:
         {
             success = Offer_ProcessHandshake(playerid, fromid);
         }
-        
+
         case OFFER_TAXI:
         {
             success = Offer_ProcessTaxi(playerid, fromid);
         }
-        
+
         default:
         {
-            success = 1; // Domy??lna akceptacja
+            success = 1; // Default acceptance
         }
     }
-    
+
     if(success)
     {
         // Przeka?? pieni??dze
@@ -249,20 +248,20 @@ stock Offer_Accept(playerid)
             Player_GiveMoney(playerid, -price);
             Player_GiveMoney(fromid, price);
         }
-        
-        // Wiadomo??ci RP
+
+        // RP messages
         new msg[128];
-        format(msg, sizeof(msg), "* %s akceptuje ofert?? od %s.", 
+        format(msg, sizeof(msg), "* %s accepts an offer from %s.",
             Player_RPName(playerid), Player_RPName(fromid));
         SendLocalMessage(playerid, COLOR_ME, msg, 10.0);
-        
-        SendClientMessage(playerid, COLOR_SUCCESS, "Zaakceptowa??e?? ofert??.");
-        SendClientMessage(fromid, COLOR_SUCCESS, "Twoja oferta zosta??a zaakceptowana.");
+
+        SendClientMessage(playerid, COLOR_SUCCESS, "You have accepted the offer.");
+        SendClientMessage(fromid, COLOR_SUCCESS, "Your offer has been accepted.");
     }
-    
-    // Wyczy???? ofert??
+
+    // Clear offer
     Offer_Cancel(playerid);
-    
+
     return success;
 }
 
@@ -274,21 +273,21 @@ stock Offer_Reject(playerid)
 {
     if(!IsValidPlayerId(playerid) || !g_PlayerOffer[playerid][offer_active])
     {
-        SendClientMessage(playerid, COLOR_ERROR, "Nie masz ??adnej oczekuj??cej oferty.");
+        SendClientMessage(playerid, COLOR_ERROR, "You do not have any pending offers.");
         return 0;
     }
-    
+
     new fromid = g_PlayerOffer[playerid][offer_from];
-    
-    SendClientMessage(playerid, COLOR_WARNING, "Odrzuci??e?? ofert??.");
-    
+
+    SendClientMessage(playerid, COLOR_WARNING, "You have rejected the offer.");
+
     if(IsValidPlayerId(fromid) && pInfo[fromid][player_logged])
     {
-        SendClientMessage(fromid, COLOR_WARNING, "Twoja oferta zosta??a odrzucona.");
+        SendClientMessage(fromid, COLOR_WARNING, "Your offer has been rejected.");
     }
-    
+
     Offer_Cancel(playerid);
-    
+
     return 1;
 }
 
@@ -302,14 +301,14 @@ stock Offer_Cancel(playerid)
     {
         return 0;
     }
-    
+
     // Anuluj timer
     if(g_PlayerOffer[playerid][offer_timer] != 0)
     {
         KillTimer(g_PlayerOffer[playerid][offer_timer]);
         g_PlayerOffer[playerid][offer_timer] = 0;
     }
-    
+
     // Resetuj ofert??
     g_PlayerOffer[playerid][offer_active] = 0;
     g_PlayerOffer[playerid][offer_type] = OFFER_NONE;
@@ -318,7 +317,7 @@ stock Offer_Cancel(playerid)
     g_PlayerOffer[playerid][offer_price] = 0;
     g_PlayerOffer[playerid][offer_item_id] = 0;
     g_PlayerOffer[playerid][offer_item_value] = 0;
-    
+
     return 1;
 }
 
@@ -332,24 +331,24 @@ stock Offer_Cancel(playerid)
 static stock Offer_ProcessItem(playerid, fromid)
 {
     new itemSlot = g_PlayerOffer[playerid][offer_item_id];
-    
-    // Sprawd?? czy przedmiot istnieje
+
+    // Check if item exists
     if(itemSlot < 0 || itemSlot >= MAX_PLAYER_ITEMS || pItem[fromid][itemSlot][item_id] == 0)
     {
-        SendClientMessage(playerid, COLOR_ERROR, "Przedmiot nie istnieje.");
+        SendClientMessage(playerid, COLOR_ERROR, "Item does not exist.");
         return 0;
     }
-    
-    // Przeka?? przedmiot
+
+    // Transfer item
     if(Item_Transfer(fromid, playerid, itemSlot))
     {
         new msg[128];
-        format(msg, sizeof(msg), "Otrzyma??e?? przedmiot: %s", pItem[playerid][itemSlot][item_name]);
+        format(msg, sizeof(msg), "You have received an item: %s", pItem[playerid][itemSlot][item_name]);
         SendClientMessage(playerid, COLOR_INFO, msg);
-        
+
         return 1;
     }
-    
+
     return 0;
 }
 
@@ -359,22 +358,22 @@ static stock Offer_ProcessItem(playerid, fromid)
 static stock Offer_ProcessVehicle(playerid, fromid)
 {
     new vehicleSlot = g_PlayerOffer[playerid][offer_item_id];
-    
+
     // Sprawdź czy pojazd istnieje i należy do składającego
     if(!Vehicle_IsOwner(fromid, vehicleSlot))
     {
-        SendClientMessage(playerid, COLOR_ERROR, "Pojazd nie należy do sprzedającego.");
+        SendClientMessage(playerid, COLOR_ERROR, "The vehicle does not belong to the seller.");
         return 0;
     }
-    
-    // Przekaż własność
+
+    // Transfer ownership
     Vehicle_SetOwner(vehicleSlot, playerid);
     Vehicle_Save(vehicleSlot);
-    
+
     new msg[128];
-    format(msg, sizeof(msg), "Kupi??e?? pojazd od %s.", Player_RPName(fromid));
+    format(msg, sizeof(msg), "You have purchased a vehicle from %s.", Player_RPName(fromid));
     SendClientMessage(playerid, COLOR_SUCCESS, msg);
-    
+
     return 1;
 }
 
@@ -384,22 +383,22 @@ static stock Offer_ProcessVehicle(playerid, fromid)
 static stock Offer_ProcessRepair(playerid, fromid)
 {
     new vehicleid = GetPlayerVehicleID(playerid);
-    
+
     if(vehicleid == 0)
     {
-        SendClientMessage(playerid, COLOR_ERROR, "Musisz by?? w poje??dzie.");
+        SendClientMessage(playerid, COLOR_ERROR, "You must be in a vehicle.");
         return 0;
     }
-    
+
     RepairVehicle(vehicleid);
     SetVehicleHealth(vehicleid, 1000.0);
-    
-    // Akcja RP
+
+    // RP action
     new msg[128];
-    format(msg, sizeof(msg), "* %s naprawia pojazd %s.", 
+    format(msg, sizeof(msg), "* %s repairs the vehicle of %s.",
         Player_RPName(fromid), Player_RPName(playerid));
     SendLocalMessage(playerid, COLOR_ME, msg, 15.0);
-    
+
     return 1;
 }
 
@@ -409,22 +408,22 @@ static stock Offer_ProcessRepair(playerid, fromid)
 static stock Offer_ProcessHeal(playerid, fromid)
 {
     new healAmount = g_PlayerOffer[playerid][offer_item_value];
-    
+
     if(healAmount <= 0) healAmount = 100;
-    
+
     new Float:health;
     GetPlayerHealth(playerid, health);
-    
+
     health = (health + float(healAmount) > 100.0) ? 100.0 : (health + float(healAmount));
     SetPlayerHealth(playerid, health);
     Player_SetHealth(playerid, health);
-    
-    // Akcja RP
+
+    // RP action
     new msg[128];
-    format(msg, sizeof(msg), "* %s opatruje rany %s.", 
+    format(msg, sizeof(msg), "* %s heals the wounds of %s.",
         Player_RPName(fromid), Player_RPName(playerid));
     SendLocalMessage(playerid, COLOR_ME, msg, 15.0);
-    
+
     return 1;
 }
 
@@ -433,16 +432,16 @@ static stock Offer_ProcessHeal(playerid, fromid)
  */
 static stock Offer_ProcessHandshake(playerid, fromid)
 {
-    // Akcja RP
+    // RP action
     new msg[128];
-    format(msg, sizeof(msg), "* %s podaje d??o?? %s.", 
+    format(msg, sizeof(msg), "* %s shakes the hand of %s.",
         Player_RPName(fromid), Player_RPName(playerid));
     SendLocalMessage(playerid, COLOR_ME, msg, 15.0);
-    
-    format(msg, sizeof(msg), "* %s ??ciska d??o?? %s.", 
+
+    format(msg, sizeof(msg), "* %s shakes the hand of %s.",
         Player_RPName(playerid), Player_RPName(fromid));
     SendLocalMessage(playerid, COLOR_ME, msg, 15.0);
-    
+
     return 1;
 }
 
@@ -453,18 +452,18 @@ static stock Offer_ProcessTaxi(playerid, fromid)
 {
     // Gracz wsiada do taks??wki
     new vehicleid = GetPlayerVehicleID(fromid);
-    
+
     if(vehicleid == 0)
     {
-        SendClientMessage(playerid, COLOR_ERROR, "Taks??wkarz nie jest w poje??dzie.");
+        SendClientMessage(playerid, COLOR_ERROR, "The taxi driver is not in a vehicle.");
         return 0;
     }
-    
-    PutPlayerInVehicle(playerid, vehicleid, 1); // Jako pasa??er
-    
-    SendClientMessage(playerid, COLOR_INFO, "Wsiad??e?? do taks??wki.");
-    SendClientMessage(fromid, COLOR_INFO, "Pasa??er wsiad?? do taks??wki.");
-    
+
+    PutPlayerInVehicle(playerid, vehicleid, 1); // As a passenger
+
+    SendClientMessage(playerid, COLOR_INFO, "You have entered the taxi.");
+    SendClientMessage(fromid, COLOR_INFO, "A passenger has entered the taxi.");
+
     return 1;
 }
 
@@ -478,27 +477,27 @@ static stock Offer_ProcessTaxi(playerid, fromid)
 stock Offer_GetTypeName(E_OFFER_TYPE:offerType, output[])
 {
     static const names[][] = {
-        "Brak",
-        "Przedmiot",
-        "Pojazd",
-        "Nieruchomo????",
-        "Naprawa pojazdu",
-        "Leczenie",
-        "Bro??",
-        "Narkotyki",
-        "U??cisk d??oni",
-        "Kurs taks??wk??",
-        "Us??uga mechanika",
-        "Reklama"
+        "None",
+        "Item",
+        "Vehicle",
+        "Property",
+        "Vehicle Repair",
+        "Healing",
+        "Gun",
+        "Drugs",
+        "Handshake",
+        "Taxi Ride",
+        "Mechanic Service",
+        "Advertisement"
     };
-    
+
     if(offerType >= OFFER_NONE && offerType < E_OFFER_MAX)
     {
         strcopy(output, names[_:offerType], 32);
     }
     else
     {
-        strcopy(output, "Nieznana", 32);
+        strcopy(output, "Unknown", 32);
     }
 }
 
@@ -511,7 +510,7 @@ stock bool:Offer_HasPending(playerid)
     {
         return false;
     }
-    
+
     return g_PlayerOffer[playerid][offer_active] != 0;
 }
 
@@ -522,10 +521,10 @@ stock Float:GetPlayerDistanceFromPlayer(playerid, targetid)
 {
     new Float:x1, Float:y1, Float:z1;
     new Float:x2, Float:y2, Float:z2;
-    
+
     GetPlayerPos(playerid, x1, y1, z1);
     GetPlayerPos(targetid, x2, y2, z2);
-    
+
     return GetDistanceBetweenPoints3D(x1, y1, z1, x2, y2, z2);
 }
 
@@ -540,19 +539,19 @@ public OnOfferExpire(playerid)
     {
         return 1;
     }
-    
+
     new fromid = g_PlayerOffer[playerid][offer_from];
-    
-    SendClientMessage(playerid, COLOR_WARNING, "Oferta wygas??a.");
-    
+
+    SendClientMessage(playerid, COLOR_WARNING, "Offer has expired.");
+
     if(IsValidPlayerId(fromid) && pInfo[fromid][player_logged])
     {
-        SendClientMessage(fromid, COLOR_WARNING, "Twoja oferta wygas??a.");
+        SendClientMessage(fromid, COLOR_WARNING, "Your offer has expired.");
     }
-    
+
     g_PlayerOffer[playerid][offer_timer] = 0;
     Offer_Cancel(playerid);
-    
+
     return 1;
 }
 
@@ -560,29 +559,29 @@ public OnOfferExpire(playerid)
 // KOMENDY
 // ===========================================================================
 
-YCMD:akceptuj(playerid, params[], help)
+YCMD:accept(playerid, params[], help)
 {
     return Offer_Accept(playerid);
 }
 
-YCMD:odrzuc(playerid, params[], help)
+YCMD:reject(playerid, params[], help)
 {
     return Offer_Reject(playerid);
 }
 
-YCMD:podajreke(playerid, params[], help)
+YCMD:shakehands(playerid, params[], help)
 {
     if(!pInfo[playerid][player_logged])
     {
-        return SendClientMessage(playerid, COLOR_ERROR, "Musisz by?? zalogowany!");
+        return SendClientMessage(playerid, COLOR_ERROR, "You must be logged in!");
     }
-    
+
     new targetid;
     if(sscanf(params, "u", targetid))
     {
-        return SendClientMessage(playerid, COLOR_GREY, "U??ycie: /podajreke [id/nick]");
+        return SendClientMessage(playerid, COLOR_GREY, "Usage: /shakehands [id/nick]");
     }
-    
+
     return Offer_Create(playerid, targetid, OFFER_HANDSHAKE, 0);
 }
 
@@ -614,10 +613,10 @@ hook OnDialogResponse@Offers(playerid, dialogid, response, listitem, inputtext[]
         {
             Offer_Reject(playerid);
         }
-        
+
         return Y_HOOKS_BREAK_RETURN_1;
     }
-    
+
     return 1;
 }
 

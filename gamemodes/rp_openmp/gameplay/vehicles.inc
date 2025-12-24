@@ -24,7 +24,7 @@
 
 #define VEHICLE_RESPAWN_DELAY       300000      // 5 minut do respawnu
 #define VEHICLE_FUEL_MAX            100         // Max paliwa
-#define VEHICLE_MILEAGE_FUEL_RATE   0.01        // Zu??ycie paliwa na metr
+#define VEHICLE_MILEAGE_FUEL_RATE   0.001        // Removed fuel per unit distance
 
 // Typy w??asno??ci
 enum E_VEHICLE_OWNER_TYPE
@@ -61,20 +61,20 @@ Vehicle_Create(modelid, Float:x, Float:y, Float:z, Float:angle,
 
     if(vehicleSlot == -1)
     {
-        printf("[Vehicles] B????D: Brak wolnych slot??w dla pojazd??w!");
+        printf("[Vehicles] ERROR: No free slots for vehicles!");
         return INVALID_VEHICLE_ID;
     }
 
-    // Utw??rz pojazd w grze
+    // Create vehicle in game
     new vehicleid = CreateVehicle(modelid, x, y, z, angle, color1, color2, VEHICLE_RESPAWN_DELAY / 1000);
 
     if(vehicleid == INVALID_VEHICLE_ID)
     {
-        printf("[Vehicles] B????D: Nie mo??na utworzy?? pojazdu model %d", modelid);
+        printf("[Vehicles] ERROR: Cannot create vehicle model %d", modelid);
         return INVALID_VEHICLE_ID;
     }
 
-    // Zapisz dane
+    // Save data
     vInfo[vehicleSlot][veh_created] = true;
     vInfo[vehicleSlot][veh_gameid] = vehicleid;
     vInfo[vehicleSlot][veh_model] = modelid;
@@ -769,7 +769,7 @@ hook OnVehicleDeath@Vehicles(vehicleid, killerid)
 
     if(slot != -1)
     {
-        printf("[Vehicles] Pojazd #%d (slot %d) zosta?? zniszczony", vehicleid, slot);
+        printf("[Vehicles] Vehicle #%d (slot %d) was destroyed", vehicleid, slot);
     }
 
     return 1;

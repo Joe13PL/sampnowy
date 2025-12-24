@@ -121,18 +121,18 @@ new VehicleFuelMax[212] = {
 50, 60, 60, 70, 75, 100, 60,
 50, 55, 60, 50, 45, 40,
 100, 60, 80, 75, 70, 60, 100,
-100, 90, 65, 0, 45, 90, 55, 
+100, 90, 65, 0, 45, 90, 55,
 55, 60, 0, 55, 90, 90, 50,
 60, 60, 15, 0, 0, 65, 60,
-60, 60, 80, 80, 25, 55, 70, 
+60, 60, 80, 80, 25, 55, 70,
 60, 30, 10, 25, 0, 0, 55,
 55, 45, 60, 70, 20, 60, 30,
 55, 60, 80, 85, 55, 60, 70, 0,
-60, 55, 60, 30, 75, 90, 90, 
-65, 70, 55, 60, 50, 70, 75, 
+60, 55, 60, 30, 75, 90, 90,
+65, 70, 55, 60, 50, 70, 75,
 55, 90, 75, 75, 55, 0,
-70, 70, 70, 65, 75, 
-60, 75, 0, 0, 250, 220, 220, 
+70, 70, 70, 65, 75,
+60, 75, 0, 0, 250, 220, 220,
 90, 90, 55, 60, 60, 90, 90,
 30, 35, 30, 60, 55, 50, 50,
 60, 55, 25, 30, 60, 55, 50,
@@ -163,7 +163,7 @@ stock ListDealership(playerid, category, const header[40])
 		new model = cache_get_row_int(row, 2);
 		new price = cache_get_row_int(row, 3);
 		format(list_vehicles, sizeof(list_vehicles), "%s %s\t$%d\n", list_vehicles, VehicleNames[model-400], price);
-		DynamicGui_AddRow(playerid, DG_PRODS_SALON, model);  
+		DynamicGui_AddRow(playerid, DG_PRODS_SALON, model);
 	}
 
 	if(strlen(list_vehicles))
@@ -180,17 +180,17 @@ stock LoadVehicle(const limit[] = "", bool:return_id = false)
 {
 	new rows, fields;
 	Code_ExTimer_Begin(VehicleLoad);
-	mysql_query(mySQLconnection, sprintf("SELECT * FROM `ipb_vehicles` %s", limit));
+	mysql_query(mySQLconnection, sprintf("SELECT * FROM `vehicles` %s", limit));
 	cache_get_data(rows, fields);
-	
+
 	new vid = INVALID_VEHICLE_ID;
-	
+
 	for(new row = 0; row != rows; row++)
 	{
 		if( return_id && GetVehicleByUid(cache_get_row_int(row, 0)) != INVALID_VEHICLE_ID ) continue;
-		
+
 		new tmp_model, Float:tmp_park[4], tmp_color[2], tmp_owner;
-		
+
 		tmp_model 	= cache_get_row_int(row, 1);
 		tmp_park[0] = cache_get_row_float(row, 2);
 		tmp_park[1] = cache_get_row_float(row, 3);
@@ -215,7 +215,7 @@ stock LoadVehicle(const limit[] = "", bool:return_id = false)
 
 		LinkVehicleToInterior(vid, cache_get_row_int(row, 7));
 		SetVehicleVirtualWorld(vid, cache_get_row_int(row, 6));
-		
+
 		Vehicle[vid][vehicle_park_world] = cache_get_row_int(row, 6);
 		Vehicle[vid][vehicle_park_interior] = cache_get_row_int(row, 7);
 
@@ -232,55 +232,55 @@ stock LoadVehicle(const limit[] = "", bool:return_id = false)
 		Vehicle[vid][vehicle_park][3] = tmp_park[3];
 		Vehicle[vid][vehicle_health] = cache_get_row_float(row, 12);
 		Vehicle[vid][vehicle_accessories] = cache_get_row_int(row, 17);
-		
+
 		Vehicle[vid][vehicle_mileage] = cache_get_row_float(row, 13);
 
 		Vehicle[vid][vehicle_blocked] = cache_get_row_int(row, 18);
 
 		Vehicle[vid][vehicle_registered] = cache_get_row_int(row, 19);
-		
+
 		Vehicle[vid][vehicle_last_pos][0] = tmp_park[0];
 		Vehicle[vid][vehicle_last_pos][1] = tmp_park[1];
 		Vehicle[vid][vehicle_last_pos][2] = tmp_park[2];
-		
+
 		Vehicle[vid][vehicle_map_icon] = CreateDynamicMapIcon(Vehicle[vid][vehicle_last_pos][0], Vehicle[vid][vehicle_last_pos][1], Vehicle[vid][vehicle_last_pos][2], 55, 0, 0, 0, 0, 10000.0);
 		Streamer_SetIntData(STREAMER_TYPE_MAP_ICON, Vehicle[vid][vehicle_map_icon], E_STREAMER_STYLE, 3);
 		Streamer_RemoveArrayData(STREAMER_TYPE_MAP_ICON, Vehicle[vid][vehicle_map_icon], E_STREAMER_PLAYER_ID, 0);
-		
+
 		Vehicle[vid][vehicle_description] = CreateDynamic3DTextLabel("", LABEL_DESCRIPTION, 0.0, 0.0, 0.0, 6.0, INVALID_PLAYER_ID, vid);
 
 		Vehicle[vid][vehicle_sign] = CreateDynamic3DTextLabel("", COLOR_WHITE, -0.9, -2.50, -0.46, 15.0, INVALID_PLAYER_ID, vid);
-		
-		cache_get_row(row, 23, Vehicle[vid][vehicle_block_reason], mySQLconnection, 32);	
+
+		cache_get_row(row, 23, Vehicle[vid][vehicle_block_reason], mySQLconnection, 32);
 
 		new tmp_dmg[80];
-		cache_get_row(row, 15, tmp_dmg);	
+		cache_get_row(row, 15, tmp_dmg);
 		sscanf(tmp_dmg, "a<d>[4]", Vehicle[vid][vehicle_damage]);
 
 		new tmp_comp[128];
-		cache_get_row(row, 24, tmp_comp);	
+		cache_get_row(row, 24, tmp_comp);
 		sscanf(tmp_comp, "a<d>[12]", Vehicle[vid][vehicle_component]);
-		
+
 		Vehicle[vid][vehicle_engine] = false;
 		Vehicle[vid][vehicle_lights] = false;
 		Vehicle[vid][vehicle_boot] = false;
 		Vehicle[vid][vehicle_bonnet] = false;
 		Vehicle[vid][vehicle_destroyed] = false;
-		
+
 		Vehicle[vid][vehicle_locked] = true;
 		Vehicle[vid][vehicle_last_fuel_td] = gettime();
 		Vehicle[vid][vehicle_driver] = INVALID_PLAYER_ID;
-		
+
 		// Wczytywanie paliwa
 		Vehicle[vid][vehicle_fuel_current] = cache_get_row_float(row, 10);
 		Vehicle[vid][vehicle_fuel_type] = 1;
-		
+
 		cache_get_row(row, 20, Vehicle[vid][vehicle_register], mySQLconnection, 12);
 
 		if(Vehicle[vid][vehicle_registered] == 0)
 		{
 			new rstr[22];
-			
+
 			if(Vehicle[vid][vehicle_uid] < 10)
 			{
 				format(rstr, sizeof(rstr), "%d%c%c%c00%d", random(9), randomString(), randomString(), randomString(), Vehicle[vid][vehicle_uid]);
@@ -309,7 +309,7 @@ stock LoadVehicle(const limit[] = "", bool:return_id = false)
 	    {
 	        Vehicle[vid][vehicle_engine] = true;
 	    }
-		
+
 		// Wykrywanie zniszczonych pojazdow
 		if( Vehicle[vid][vehicle_health] <= 250.0 )
 		{
@@ -318,13 +318,13 @@ stock LoadVehicle(const limit[] = "", bool:return_id = false)
 			SetVehicleHealth(vid, 300.0);
 		}
 		else SetVehicleHealth(vid, Vehicle[vid][vehicle_health]);
-		
+
 		if( Vehicle[vid][vehicle_paintjob] >= 0 && Vehicle[vid][vehicle_paintjob] < 3 )
 		{
 		 	ChangeVehiclePaintjob(vid, Vehicle[vid][vehicle_paintjob]);
 		 	ChangeVehicleColor(vid, Vehicle[vid][vehicle_color][0], Vehicle[vid][vehicle_color][1]);
 		}
-		
+
 		Vehicle[vid][vehicle_win_driver] = true;
 		Vehicle[vid][vehicle_win_pp] = true;
 		Vehicle[vid][vehicle_win_pt] = true;
@@ -343,10 +343,10 @@ stock LoadVehicle(const limit[] = "", bool:return_id = false)
 
 		// Tworzenie labela statusow
 		Vehicle[vid][vehicle_state_label] = CreateDynamic3DTextLabel("", COLOR_WHITE, 0.0, 0.0, 1.1, 10.0, INVALID_PLAYER_ID, vid, 0, -1, 0, -1, 50.0);
-		
+
 		if( rows == 1 ) logprintf(LOG_VEHICLE, "[load] Wczytano pojazd o UID %d w czasie %d ms", Vehicle[vid][vehicle_uid], Code_ExTimer_End(VehicleLoad));
 	}
-	
+
 	if( return_id ) return vid;
 	return rows;
 }
@@ -367,19 +367,19 @@ stock IsVehicleBike(vehicleid)
 
 stock DeleteVehicle(vehicleid, bool:from_db = false)
 {
-	if( from_db ) mysql_query(mySQLconnection, sprintf("DELETE FROM `ipb_vehicles` WHERE `vehicle_uid` = %d", Vehicle[vehicleid][vehicle_uid]));
+	if( from_db ) mysql_query(mySQLconnection, sprintf("DELETE FROM `vehicles` WHERE `vehicle_uid` = %d", Vehicle[vehicleid][vehicle_uid]));
 	else SaveVehicle(vehicleid);
-	
+
 	DestroyDynamic3DTextLabel(Vehicle[vehicleid][vehicle_state_label]);
 	DestroyDynamic3DTextLabel(Vehicle[vehicleid][vehicle_description]);
 	DestroyDynamic3DTextLabel(Vehicle[vehicleid][vehicle_sign]);
-	
+
 	if(Vehicle[vehicleid][vehicle_siren] == true)
 	{
 		DestroyDynamicObject(Vehicle[vehicleid][vehicle_siren_object]);
 		Vehicle[vehicleid][vehicle_siren] = false;
 	}
-	
+
 	for(new z=0; e_vehicles:z != e_vehicles; z++)
 	{
 		Vehicle[vehicleid][e_vehicles:z] = 0;
@@ -407,7 +407,7 @@ stock SaveVehicle(vehicleid)
 
 	new Float:saveHealth = Vehicle[vehicleid][vehicle_health];
 	if( Vehicle[vehicleid][vehicle_destroyed] ) saveHealth = 0.0;
-	mysql_query(mySQLconnection, sprintf("UPDATE `ipb_vehicles` SET `vehicle_health` = '%f', `vehicle_visual` = '%s', `vehicle_mileage` = %f, `vehicle_fuel` = '%f' WHERE `vehicle_uid` = %d", saveHealth, visual_damage, Vehicle[vehicleid][vehicle_mileage], Vehicle[vehicleid][vehicle_fuel_current], Vehicle[vehicleid][vehicle_uid]));
+	mysql_query(mySQLconnection, sprintf("UPDATE `vehicles` SET `vehicle_health` = '%f', `vehicle_visual` = '%s', `vehicle_mileage` = %f, `vehicle_fuel` = '%f' WHERE `vehicle_uid` = %d", saveHealth, visual_damage, Vehicle[vehicleid][vehicle_mileage], Vehicle[vehicleid][vehicle_fuel_current], Vehicle[vehicleid][vehicle_uid]));
 }
 
 stock GetVehicleByUid(v_uid)
@@ -416,7 +416,7 @@ stock GetVehicleByUid(v_uid)
 	{
 		if( Vehicle[vid][vehicle_uid] == v_uid ) return vid;
 	}
-	
+
 	return INVALID_VEHICLE_ID;
 }
 
@@ -434,7 +434,7 @@ stock CanPlayerUseVehicle(playerid, vehicleid)
 {
 	if(playerid == INVALID_PLAYER_ID) return 0;
 	if( HasCrewFlag(playerid, CREW_FLAG_VEHICLES) ) return 1;
-	
+
 	if( Vehicle[vehicleid][vehicle_owner_type] == VEHICLE_OWNER_TYPE_JOB)
 	{
 		if( Vehicle[vehicleid][vehicle_owner] == pInfo[playerid][player_job]) return 1;
@@ -451,14 +451,14 @@ stock CanPlayerUseVehicle(playerid, vehicleid)
 			if( WorkerHasFlag(playerid, slot, WORKER_FLAG_VEHICLES) ) return 1;
 		}
 	}
-	
+
 	return 0;
 }
 
 stock CanPlayerEditVehicle(playerid, vehicleid)
 {
 	if( HasCrewFlag(playerid, CREW_FLAG_VEHICLES) ) return 1;
-	
+
 	if( Vehicle[vehicleid][vehicle_owner_type] == VEHICLE_OWNER_TYPE_PLAYER )
 	{
 		if( Vehicle[vehicleid][vehicle_owner] == pInfo[playerid][player_id] ) return 1;
@@ -471,21 +471,21 @@ stock CanPlayerEditVehicle(playerid, vehicleid)
 			if( WorkerHasFlag(playerid, slot, WORKER_FLAG_LEADER) ) return 1;
 		}
 	}
-	
+
 	return 0;
 }
 
 stock GetNearestVehicle(playerid)
 {
-	new 
+	new
 		Float:vehicle_pos[3],
 		Float:pretender_distance = 10.0,
 		pretender = -1;
-		
+
 	foreach(new v_id : Vehicles)
-	{	
+	{
 		GetVehiclePos(v_id, vehicle_pos[0], vehicle_pos[1], vehicle_pos[2]);
-		new 
+		new
 			Float:distance = GetPlayerDistanceFromPoint(playerid, vehicle_pos[0], vehicle_pos[1], vehicle_pos[2]);
 		if( distance <= pretender_distance )
 		{
@@ -495,23 +495,23 @@ stock GetNearestVehicle(playerid)
 			pretender = v_id;
 		}
 	}
-	
+
 	return pretender;
 }
 
 stock GetNearestPlayerVehicle(playerid)
 {
-	new 
+	new
 		Float:vehicle_pos[3],
 		Float:pretender_distance = 10.0,
 		pretender = -1;
-		
+
 	foreach(new v_id : Vehicles)
 	{
 		if( !CanPlayerUseVehicle(playerid, v_id) ) continue;
-		
+
 		GetVehiclePos(v_id, vehicle_pos[0], vehicle_pos[1], vehicle_pos[2]);
-		new 
+		new
 			Float:distance = GetPlayerDistanceFromPoint(playerid, vehicle_pos[0], vehicle_pos[1], vehicle_pos[2]);
 		if( distance <= pretender_distance )
 		{
@@ -521,7 +521,7 @@ stock GetNearestPlayerVehicle(playerid)
 			pretender = v_id;
 		}
 	}
-	
+
 	return pretender;
 }
 
@@ -540,15 +540,15 @@ task VehiclesUpdate[1000]()
 					if( driver != INVALID_PLAYER_ID )
 					{
 						new bstring[60];
-						format(bstring, sizeof(bstring), "~n~~n~~n~~n~~n~~n~~n~~n~~n~~y~Paliwo~w~: %d/%dl", floatround(Vehicle[vid][vehicle_fuel_current], floatround_ceil), VehicleFuelMax[GetVehicleModel(vid)-400]);	
+						format(bstring, sizeof(bstring), "~n~~n~~n~~n~~n~~n~~n~~n~~n~~y~Paliwo~w~: %d/%dl", floatround(Vehicle[vid][vehicle_fuel_current], floatround_ceil), VehicleFuelMax[GetVehicleModel(vid)-400]);
 						GameTextForPlayer(driver, bstring, 4000, 3);
 					}
-					
+
 					Vehicle[vid][vehicle_last_fuel_td] = gettime();
 				}
 			}
 		}
-		
+
 		//NOP engine state
 		if(GetVehicleSpeed(vid)>30 && Vehicle[vid][vehicle_engine] == false && Vehicle[vid][vehicle_occupants] > 0)
 		{
@@ -611,35 +611,35 @@ task VehiclesUpdate[1000]()
 	            }
 	        }
 	    }
-		
+
 		// Sprawdzamy zniszczenia wizualne
 		new vehicleDmg[4];
 		GetVehicleDamageStatus(vid, vehicleDmg[0], vehicleDmg[1], vehicleDmg[2], vehicleDmg[3]);
-		
+
 		if( vehicleDmg[0] < Vehicle[vid][vehicle_damage][0] || vehicleDmg[1] < Vehicle[vid][vehicle_damage][1] || vehicleDmg[2] < Vehicle[vid][vehicle_damage][2] || vehicleDmg[3] < Vehicle[vid][vehicle_damage][3] )
 		{
 			UpdateVehicleDamageStatus(vid, Vehicle[vid][vehicle_damage][0], Vehicle[vid][vehicle_damage][1], Vehicle[vid][vehicle_damage][2], Vehicle[vid][vehicle_damage][3]);
 		}
-		
+
 		Vehicle[vid][vehicle_damage][0] = vehicleDmg[0];
 		Vehicle[vid][vehicle_damage][1] = vehicleDmg[1];
 		Vehicle[vid][vehicle_damage][2] = vehicleDmg[2];
 		Vehicle[vid][vehicle_damage][3] = vehicleDmg[3];
-		
+
 		// Czas na przebieg
 		new Float:distance = GetVehicleDistanceFromPoint(vid, Vehicle[vid][vehicle_last_pos][0], Vehicle[vid][vehicle_last_pos][1], Vehicle[vid][vehicle_last_pos][2]);
 		if( distance >= 0 )
 		{
 			if( distance > 0 ) Vehicle[vid][vehicle_mileage] += distance/1000;
-			
+
 			if( Vehicle[vid][vehicle_engine] )
 			{
 				// Czas na paliwko
 				new Float:fuel_drain;
-				
+
 				// Pojemnosc silnika
 				fuel_drain = floatdiv(VehicleEngineCapacity[Vehicle[vid][vehicle_model]-400], 10000);
-				
+
 				// Typ paliwa
 				switch( Vehicle[vid][vehicle_fuel_type] )
 				{
@@ -647,41 +647,41 @@ task VehiclesUpdate[1000]()
 					{
 						fuel_drain *= BENZYNA_MULTIPLIER;
 					}
-					
+
 					case VEHICLE_FUEL_TYPE_DIESEL:
 					{
 						fuel_drain *= DIESEL_MULTIPLIER;
 					}
-					
+
 					case VEHICLE_FUEL_TYPE_GAZ:
 					{
 						fuel_drain *= GAZ_MULTIPLIER;
 					}
-					
+
 					case VEHICLE_FUEL_TYPE_LOTNICZE:
 					{
 						fuel_drain *= LOTNICZE_MULTIPLIER;
 					}
 				}
-				
+
 				// Przebieg pojazdu
 				if( Vehicle[vid][vehicle_mileage] > FUEL_DRAIN_INCREASE_MILEAGE_CAP )
 				{
 					fuel_drain *= floatdiv(Vehicle[vid][vehicle_mileage], FUEL_DRAIN_INCREASE_MILEAGE_CAP);
 				}
-				
+
 				if( distance > 0 ) fuel_drain *= distance;
 				else fuel_drain *= 1.4;
-				
+
 
 				if( floatcmp(Vehicle[vid][vehicle_fuel_current], fuel_drain) <= 0 )
 				{
 					Vehicle[vid][vehicle_fuel_current] = 0.0;
 					Vehicle[vid][vehicle_engine] = false;
 					UpdateVehicleVisuals(vid);
-					
+
 					new playerid = GetVehicleDriver(vid);
-					
+
 					if( playerid != INVALID_PLAYER_ID )
 					{
 						TextDrawShowForPlayer(playerid, vehicleInfo);
@@ -694,7 +694,7 @@ task VehiclesUpdate[1000]()
 
 		// Ustawiamy ostatnia pozycje na aktualna
 		GetVehiclePos(vid, Vehicle[vid][vehicle_last_pos][0], Vehicle[vid][vehicle_last_pos][1], Vehicle[vid][vehicle_last_pos][2]);
-		
+
 		if( distance > 0 )
 		{
 			// Poprawiamy pozycje map icony
@@ -958,7 +958,7 @@ stock GetComponentName(component)
 	   case 1145: format(modname, sizeof(modname), "Right Square Vents");
 	   case 1152, 1157, 1165, 1170, 1172, 1173: format(modname, sizeof(modname), "X-Flow Front Bumper");
 	   case 1153, 1155, 1160, 1166, 1169, 1171: format(modname, sizeof(modname), "Alien Front Bumper");
-	   
+
 	}
 	return modname;
 }

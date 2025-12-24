@@ -328,6 +328,10 @@
 
 #define DIALOG_SALON_SELL               300
 
+// Car shop dialogs
+#define DIALOG_CARSHOP_CATEGORIES       360
+#define DIALOG_CARSHOP_VEHICLES         361
+
 // Stats menu dialogs
 #define DIALOG_STATS_MENU               350
 #define DIALOG_PREMIUM_SHOP             351

@@ -770,21 +770,81 @@ YCMD:givemoney(playerid, params[], help)
         return SendClientMessage(playerid, COLOR_RED, "Player is not connected!");
     }
 
-    Player_GiveMoney(targetid, amount);
+    // Do the transfer and validate success
+    if(!Player_GiveMoney(targetid, amount))
+    {
+        return SendClientMessage(playerid, COLOR_RED, "Operation failed: target has insufficient funds or amount is invalid.");
+    }
+
+    // Format money strings into a local buffer to avoid temporary-buffer aliasing issues
+    new amountStr[32];
+    FormatMoney(amount, amountStr, sizeof(amountStr));
 
     new msg[128];
     format(msg, sizeof(msg), "Gave player %s %s$.",
-        pInfo[targetid][player_name], FormatMoney(amount));
+        pInfo[targetid][player_name], amountStr);
     SendClientMessage(playerid, COLOR_GREEN, msg);
 
     format(msg, sizeof(msg), "You have received %s$ from the admin.",
-        FormatMoney(amount));
+        amountStr);
     SendClientMessage(targetid, COLOR_YELLOW, msg);
 
     // Log
     new logMsg[128];
     format(logMsg, sizeof(logMsg), "Gave money: %s -> %s (%s$)",
-        pInfo[playerid][player_name], pInfo[targetid][player_name], FormatMoney(amount));
+        pInfo[playerid][player_name], pInfo[targetid][player_name], amountStr);
+    Admin_LogAction(playerid, logMsg);
+
+    return 1;
+}
+
+YCMD:removemoney(playerid, params[], help)
+{
+    ADMIN_CHECK(ADMIN_LEVEL_ADMIN);
+
+    if(help)
+    {
+        SendClientMessage(playerid, COLOR_YELLOW, "Removes money from a player.");
+        return 1;
+    }
+
+    new targetid, amount;
+
+    if(sscanf(params, "ud", targetid, amount))
+    {
+        return SendClientMessage(playerid, COLOR_GRAY, "Usage: /removemoney [ID/Nick] [amount]");
+    }
+
+    if(!IsPlayerConnected(targetid))
+    {
+        return SendClientMessage(playerid, COLOR_RED, "Player is not connected!");
+    }
+
+    if(amount <= 0)
+    {
+        return SendClientMessage(playerid, COLOR_GRAY, "Usage: /removemoney [ID/Nick] [amount]");
+    }
+
+    // Attempt to remove money
+    if(!Player_GiveMoney(targetid, -amount))
+    {
+        return SendClientMessage(playerid, COLOR_RED, "Operation failed: target has insufficient funds or amount is invalid.");
+    }
+
+    // Format money strings into a local buffer
+    new amountStr[32];
+    FormatMoney(amount, amountStr, sizeof(amountStr));
+
+    new msg[128];
+    format(msg, sizeof(msg), "Removed %s$ from player %s.", amountStr, pInfo[targetid][player_name]);
+    SendClientMessage(playerid, COLOR_GREEN, msg);
+
+    format(msg, sizeof(msg), "An admin removed %s$ from your account.", amountStr);
+    SendClientMessage(targetid, COLOR_YELLOW, msg);
+
+    // Log
+    new logMsg[128];
+    format(logMsg, sizeof(logMsg), "Removed money: %s -> %s (%s$)", pInfo[playerid][player_name], pInfo[targetid][player_name], amountStr);
     Admin_LogAction(playerid, logMsg);
 
     return 1;

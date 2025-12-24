@@ -2,7 +2,7 @@
  * =============================================================================
  *  VARIABLES - Zmienne globalne
  * =============================================================================
- *  
+ *
  *  Modu??: core/variables.inc
  *  Opis: Deklaracje wszystkich zmiennych globalnych projektu
  *
@@ -158,6 +158,8 @@ new GroupDefaultFlags[10] = {
 // ===========================================================================
 
 new Vehicle[MAX_VEHICLES][e_vehicles];
+// Mapping from internal vehicle slot to database UID (0 = none)
+new VehicleDbUid[MAX_VEHICLES];
 #define vInfo Vehicle  // Alias dla kompatybilności
 
 // ===========================================================================
@@ -344,11 +346,11 @@ stock InitializeVariables()
     // Czas ??wiata
     WorldTime = 12;
     WorldWeather = 1;
-    
+
     // Iteratory dla graczy (inicjalizowane w OnGameModeInit)
     // Iter_Init(PlayerItems);
     // Iter_Init(PlayerVehicles);
-    
+
     print("[Variables] Zmienne zainicjalizowane");
 }
 
@@ -363,13 +365,13 @@ stock CleanPlayerVariables(playerid)
     {
         gInfo[playerid][e_global_account_info:i] = 0;
     }
-    
+
     // Dane postaci
     for(new i = 0; i < sizeof(pInfo[]); i++)
     {
         pInfo[playerid][e_players_info:i] = 0;
     }
-    
+
     // Grupy
     for(new g = 0; g < 5; g++)
     {
@@ -379,7 +381,7 @@ stock CleanPlayerVariables(playerid)
         }
         pGroup[playerid][g][pg_id] = -1;
     }
-    
+
     // Bronie
     for(new w = 0; w < 13; w++)
     {
@@ -390,7 +392,7 @@ stock CleanPlayerVariables(playerid)
         pWeapon[playerid][w][pw_itemid] = -1;
         pWeapon[playerid][w][pw_object_index] = -1;
     }
-    
+
     // Obra??enia
     for(new inj = 0; inj < 10; inj++)
     {
@@ -399,7 +401,7 @@ stock CleanPlayerVariables(playerid)
             pInjury[playerid][inj][e_player_injuries:i] = 0;
         }
     }
-    
+
     // Przedmioty
     for(new item = 0; item < MAX_PLAYER_ITEMS; item++)
     {
@@ -408,13 +410,13 @@ stock CleanPlayerVariables(playerid)
             PlayerItem[playerid][item][e_player_items:i] = 0;
         }
     }
-    
+
     // Oferty
     for(new i = 0; i < sizeof(pOffer[]); i++)
     {
         pOffer[playerid][e_player_offer:i] = 0;
     }
-    
+
     // Domy??lne warto??ci
     pInfo[playerid][player_duty_gid] = -1;
     pInfo[playerid][player_robbery] = -1;
@@ -423,10 +425,10 @@ stock CleanPlayerVariables(playerid)
     pInfo[playerid][player_vehicle_target] = INVALID_VEHICLE_ID;
     pInfo[playerid][player_edited_object] = INVALID_OBJECT_ID;
     pInfo[playerid][player_phone_object_index] = -1;
-    
+
     // Reset tempomatu
     g_PlayerCruiseControl[playerid] = 0;
-    
+
     // Iterator przedmiot??w
     Iter_Clear(PlayerItems[playerid]);
     Iter_Clear(PlayerVehicles[playerid]);

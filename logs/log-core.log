@@ -191,3 +191,34 @@
 [24.12.2025 20:56:32] [INFO] received Windows console close event; shutting log-core down
 [24.12.2025 21:00:20] [INFO] received Windows console close event; shutting log-core down
 [24.12.2025 21:04:12] [INFO] received Windows console close event; shutting log-core down
+[24.12.2025 21:12:18] [INFO] received Windows console close event; shutting log-core down
+[24.12.2025 21:16:20] [INFO] received Windows console close event; shutting log-core down
+[24.12.2025 21:21:58] [INFO] received Windows console close event; shutting log-core down
+[24.12.2025 21:30:49] [INFO] received Windows console close event; shutting log-core down
+[24.12.2025 21:35:32] [INFO] received Windows console close event; shutting log-core down
+[24.12.2025 21:42:21] [INFO] received Windows console close event; shutting log-core down
+[24.12.2025 21:47:16] [INFO] received Windows console close event; shutting log-core down
+[24.12.2025 21:51:51] [INFO] received Windows console close event; shutting log-core down
+[24.12.2025 22:08:46] [INFO] received Windows console close event; shutting log-core down
+[24.12.2025 22:08:46] [INFO] received Windows console close event; shutting log-core down
+[24.12.2025 22:09:33] [INFO] received Windows console close event; shutting log-core down
+[24.12.2025 22:26:42] [INFO] received Windows console close event; shutting log-core down
+[24.12.2025 22:36:04] [INFO] received Windows console close event; shutting log-core down
+[24.12.2025 22:48:45] [INFO] received Windows console close event; shutting log-core down
+[24.12.2025 22:48:45] [INFO] received Windows console close event; shutting log-core down
+[24.12.2025 22:49:30] [ERROR] exception 0XC0000005 (ACCESS_VIOLATION) from Vectored Exception Handler catched; shutting log-core down
+[24.12.2025 22:55:15] [ERROR] exception 0XC0000005 (ACCESS_VIOLATION) from Vectored Exception Handler catched; shutting log-core down
+[24.12.2025 23:00:35] [INFO] received Windows console close event; shutting log-core down
+[24.12.2025 23:02:09] [INFO] received Windows console close event; shutting log-core down
+[24.12.2025 23:07:06] [ERROR] exception 0XC0000005 (ACCESS_VIOLATION) from Vectored Exception Handler catched; shutting log-core down
+[24.12.2025 23:10:17] [INFO] received Windows console close event; shutting log-core down
+[24.12.2025 23:10:25] [INFO] received Windows console close event; shutting log-core down
+[24.12.2025 23:20:21] [INFO] received Windows console close event; shutting log-core down
+[24.12.2025 23:26:02] [INFO] received Windows console close event; shutting log-core down
+[24.12.2025 23:26:08] [INFO] received Windows console close event; shutting log-core down
+[24.12.2025 23:29:52] [INFO] received Windows console close event; shutting log-core down
+[24.12.2025 23:30:00] [INFO] received Windows console close event; shutting log-core down
+[24.12.2025 23:31:39] [INFO] received Windows console close event; shutting log-core down
+[24.12.2025 23:33:31] [INFO] received Windows console close event; shutting log-core down
+[24.12.2025 23:36:31] [INFO] received Windows console close event; shutting log-core down
+[24.12.2025 23:42:41] [INFO] received Windows console close event; shutting log-core down

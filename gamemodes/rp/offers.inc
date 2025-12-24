@@ -14,13 +14,13 @@ stock SetOffer(sellerid, buyerid, type, price, extraid = -1)
 			return 0;
 		}
 	}
-	
+
 	if( pOffer[buyerid][offer_type] > 0 )
 	{
 		SendGuiInformation(sellerid, "Informacja", "Gracz, do kt�rego chcia�e� wys�a� oferte aktualnie otrzyma� ju� jedn�.");
 		return 0;
 	}
-	
+
 	if( pInfo[buyerid][player_afk] )
 	{
 		SendGuiInformation(sellerid, "Informacja", "Gracz, do kt�rego chcia�e� wys�a� oferte aktualnie jest AFK.");
@@ -32,31 +32,31 @@ stock SetOffer(sellerid, buyerid, type, price, extraid = -1)
 		SendGuiInformation(sellerid, "Informacja", "Gracz, do kt�rego chcesz wys�a� oferte musi by� w bezruchu.");
 		return 0;
 	}
-	
+
 	switch( type )
 	{
 		case OFFER_TYPE_VCARD:
 		{
 			if(extraid == -1) return 0;
-			
+
 			new itemid = GetPlayerUsedItem(buyerid, ITEM_TYPE_PHONE);
 			if( GetPlayerUsedItem(buyerid, ITEM_TYPE_PHONE) == -1 )
 			{
 				SendGuiInformation(sellerid, "Informacja", "Ten gracz ma wy��czony telefon.");
 				return 0;
 			}
-			
+
 			new rows, fields;
 			mysql_query(mySQLconnection, sprintf("SELECT contact_uid FROM `ipb_contacts` WHERE `contact_owner` = %d AND `contact_number` = %d AND `contact_deleted` = 0", Item[itemid][item_uid], Item[extraid][item_value1]));
 			cache_get_data(rows, fields);
-			
+
 			if( rows )
 			{
 				SendGuiInformation(sellerid, "Informacja", "Ten gracz ma ju� tw�j vCard.");
 				return 0;
 			}
 		}
-		
+
 		case OFFER_TYPE_ITEM:
 		{
 			if(extraid == -1) return 0;
@@ -80,7 +80,7 @@ stock SetOffer(sellerid, buyerid, type, price, extraid = -1)
 				SendGuiInformation(sellerid, "Informacja", "Przedmiot ten jest zbyt ci�ki dla tego gracza.");
 				SendGuiInformation(buyerid, "Informacja", "Przedmiot ten jest dla Ciebie zbyt ci�ki.");
 				return 0;
-			} 
+			}
 		}
 
 		case OFFER_TYPE_INTERVIEW:
@@ -92,7 +92,7 @@ stock SetOffer(sellerid, buyerid, type, price, extraid = -1)
 			}
 		}
 	}
-	
+
 	pOffer[buyerid][offer_type] = type;
 	pOffer[buyerid][offer_sellerid] = sellerid;
 	pOffer[buyerid][offer_buyerid] = INVALID_PLAYER_ID;
@@ -102,7 +102,7 @@ stock SetOffer(sellerid, buyerid, type, price, extraid = -1)
 	{
 		pOffer[buyerid][offer_extraid] = extraid;
 	}
-	
+
 	if( sellerid != INVALID_PLAYER_ID )
 	{
 		pOffer[sellerid][offer_type] = type;
@@ -114,11 +114,11 @@ stock SetOffer(sellerid, buyerid, type, price, extraid = -1)
 		{
 			pOffer[sellerid][offer_extraid] = extraid;
 		}
-		
+
 		pOffer[sellerid][offer_start] = gettime();
 	}
 	pOffer[buyerid][offer_start] = gettime();
-	
+
 	return 1;
 }
 
@@ -135,25 +135,25 @@ stock ShowPlayerOffer(playerid, fromid, const const header[], const name[], pric
 
 	format(capt, sizeof(capt), "Oferta od %s.", tmp);
 	format(inf, sizeof(inf), ""HEX_COLOR_LIGHTER_YELLOW"%s: %s\n\n"COLOR_GUI_BLUE"Koszt: $%d. Czy akceptujesz t� ofert�?", header, name, price);
-	
+
 	ShowPlayerDialog(playerid, DIALOG_OFFER, DIALOG_STYLE_MSGBOX, capt, inf, "Tak", "Nie");
-	
+
 	if( fromid != INVALID_PLAYER_ID ) SendClientMessage(fromid, COLOR_LIGHTER_ORANGE, "Oferta zosta�a wys�ana. Odczekaj chwile, by przekona� si�, czy gracz j� zaakceptuje.");
-	
+
 	return 1;
 }
 
 stock OnPlayerOfferResponse(playerid, response)
 {
 	if(playerid == INVALID_PLAYER_ID) return 1;
-	
+
 	new sellerid = pOffer[playerid][offer_sellerid];
 	new type = pOffer[playerid][offer_type];
 
 	if( !response )
 	{
 		if( sellerid != INVALID_PLAYER_ID ) GameTextForPlayer(sellerid, "~w~oferta ~r~odrzucona", 3000, 3);
-		
+
 		GameTextForPlayer(playerid, "~w~oferta ~r~odrzucona", 3000, 3);
 
 		if(type == OFFER_TYPE_TRIBUTE)
@@ -186,7 +186,7 @@ stock OnPlayerOfferFinish(playerid, type, response)
 {
 	new sellerid = pOffer[playerid][offer_sellerid];
 	type = pOffer[playerid][offer_type];
-	
+
 	if( !response )
 	{
 		if( sellerid != INVALID_PLAYER_ID )  GameTextForPlayer(sellerid, "~w~oferta ~r~odrzucona", 3000, 3);
@@ -194,7 +194,7 @@ stock OnPlayerOfferFinish(playerid, type, response)
 	else
 	{
 		logprintf(LOG_PLAYER, "[OFFER] %s (UID: %d) zaakceptowal oferte od %s (UID %d). Typ oferty: %d, cena: $%d", pInfo[playerid][player_name], pInfo[playerid][player_id], pInfo[sellerid][player_name], pInfo[sellerid][player_id], type, pOffer[playerid][offer_price]);
-		if( sellerid != INVALID_PLAYER_ID && type != OFFER_TYPE_REPAIR && type != OFFER_TYPE_REFUEL) 
+		if( sellerid != INVALID_PLAYER_ID && type != OFFER_TYPE_REPAIR && type != OFFER_TYPE_REFUEL)
 		{
 			if(type == OFFER_TYPE_PRODUCT || type == OFFER_TYPE_GYM || type == OFFER_TYPE_DOCUMENT || type == OFFER_TYPE_MANDAT || type == OFFER_TYPE_MEDIC || type == OFFER_TYPE_ADVERTISE || type == OFFER_TYPE_RP || type == OFFER_TYPE_DOOR_ACCESS || type == OFFER_TYPE_GYM_FIGHT)
 			{
@@ -228,11 +228,11 @@ stock OnPlayerOfferFinish(playerid, type, response)
 				{
 					GivePlayerMoney(sellerid, pOffer[playerid][offer_price]);
 				}
-			}		
+			}
 			GameTextForPlayer(sellerid, "~w~oferta ~g~zaakceptowana", 3000, 3);
 			GameTextForPlayer(playerid, "~w~oferta ~g~zaakceptowana", 3000, 3);
 		}
-		
+
 		switch( type )
 		{
 			case OFFER_TYPE_VCARD:
@@ -244,7 +244,7 @@ stock OnPlayerOfferFinish(playerid, type, response)
 					valstr(number, PlayerItem[sellerid][pOffer[playerid][offer_extraid]][player_item_value1]);
 					mysql_query(mySQLconnection, sprintf("INSERT INTO `ipb_contacts` VALUES (null, %d, '%s', %d, 0)", PlayerItem[sellerid][pOffer[playerid][offer_extraid]][player_item_value1], number, PlayerItem[playerid][itemid][player_item_uid]));
 					ProxMessage(sellerid, sprintf("wysy�a vCard %s", pInfo[playerid][player_name]), PROX_ME);
-				}	
+				}
 			}
 
 			case OFFER_TYPE_PASS:
@@ -287,7 +287,7 @@ stock OnPlayerOfferFinish(playerid, type, response)
 				if( free_slot == -1 ) return SendGuiInformation(playerid, "Informacja", "Nie posiadasz wolnych slot�w.");
 
 				mysql_query(mySQLconnection, sprintf("INSERT INTO `ipb_char_groups` (char_uid, group_belongs, group_perm) VALUES (%d, %d, %d)", pInfo[playerid][player_id], Group[gid][group_uid], 0));
-				
+
 				pGroup[playerid][free_slot][pg_id] = gid;
 				pGroup[playerid][free_slot][pg_rank_perm] = 0;
 				if(!PlayerHasAchievement(playerid, ACHIEV_CAREER)) AddAchievement(playerid, ACHIEV_CAREER, 200);
@@ -303,7 +303,7 @@ stock OnPlayerOfferFinish(playerid, type, response)
             {
             	new gid = pInfo[sellerid][player_duty_gid];
             	if(gid == -1) return 1;
-            	
+
                 Item_Create(ITEM_OWNER_TYPE_PLAYER, playerid, ITEM_TYPE_GYM_KARNET, 2709, 10, Group[gid][group_uid], "Karnet");
                 SendGuiInformation(playerid, "Informacja", "Karnet zosta� dodany do ekwipunku.");
             }
@@ -312,7 +312,7 @@ stock OnPlayerOfferFinish(playerid, type, response)
             {
             	new gid = pInfo[sellerid][player_duty_gid];
             	if(gid == -1) return 1;
-            	
+
                 SendGuiInformation(playerid, "Informacja", "Mo�esz rozpocz�� trening na worku.");
 
                 new style = pOffer[playerid][offer_extraid];
@@ -333,7 +333,7 @@ stock OnPlayerOfferFinish(playerid, type, response)
             }
 
 			case OFFER_TYPE_REPAIR:
-			{				
+			{
 				new vehid = pOffer[playerid][offer_extraid];
 
 				pInfo[sellerid][player_repair_car] = pOffer[playerid][offer_extraid];
@@ -434,14 +434,14 @@ stock OnPlayerOfferFinish(playerid, type, response)
 					KickAc(sellerid, -1, "Bug abusing try (o: veh)");
 					return 1;
 				}
-				
+
 				Vehicle[vehid][vehicle_owner] = pInfo[playerid][player_id];
 
-				mysql_query(mySQLconnection, sprintf("UPDATE ipb_vehicles SET vehicle_owner = %d WHERE vehicle_uid = %d", Vehicle[vehid][vehicle_owner], Vehicle[vehid][vehicle_uid]));
+mysql_query(mySQLconnection, sprintf("UPDATE vehicles SET vehicle_owner = %d WHERE vehicle_uid = %d", Vehicle[vehid][vehicle_owner], Vehicle[vehid][vehicle_uid]));
 
-				SendGuiInformation(playerid, "Informacja", "Zakupi�e� pojazd zgodnie z ofert�.");	
+				SendGuiInformation(playerid, "Informacja", "Zakupi�e� pojazd zgodnie z ofert�.");
 				SendGuiInformation(sellerid, "Informacja", "Pojazd zosta� sprzedany pomy�lnie.");
-				RemovePlayerFromVehicle(sellerid);	
+				RemovePlayerFromVehicle(sellerid);
 			}
 
 			case OFFER_TYPE_ITEM:
@@ -490,8 +490,8 @@ stock OnPlayerOfferFinish(playerid, type, response)
 
 				Item_Create(ITEM_OWNER_TYPE_PLAYER, playerid, Item[itemid][item_type], Item[itemid][item_model], Item[itemid][item_value1], Item[itemid][item_value2], itemname, Item[itemid][item_extraid]);
 
-				printf("[OFFER %s (%d)] %s (UID %d) sprzeda� produkt %s (UID %d) dla gracza %s (UID %d). Cena: $%d.", Group[gid][group_name], Group[gid][group_uid], pInfo[sellerid][player_name], pInfo[sellerid][player_id], Item[itemid][item_name], Item[itemid][item_uid], pInfo[playerid][player_name], pInfo[playerid][player_id], Item[itemid][item_price]);	
-				
+				printf("[OFFER %s (%d)] %s (UID %d) sprzeda� produkt %s (UID %d) dla gracza %s (UID %d). Cena: $%d.", Group[gid][group_name], Group[gid][group_uid], pInfo[sellerid][player_name], pInfo[sellerid][player_id], Item[itemid][item_name], Item[itemid][item_uid], pInfo[playerid][player_name], pInfo[playerid][player_id], Item[itemid][item_price]);
+
 				pInfo[sellerid][player_capacity] += Item[itemid][item_weight];
 				pInfo[playerid][player_capacity] -= Item[itemid][item_weight];
 
@@ -507,7 +507,7 @@ stock OnPlayerOfferFinish(playerid, type, response)
 					mysql_query(mySQLconnection, sprintf("UPDATE ipb_items SET item_count = %d WHERE item_uid = %d", Item[itemid][item_count], Item[itemid][item_uid]));
 				}
 
-				SendGuiInformation(playerid, "Informacja", "Przedmiot zosta� dodany do ekwipunku.");	
+				SendGuiInformation(playerid, "Informacja", "Przedmiot zosta� dodany do ekwipunku.");
 				SendGuiInformation(sellerid, "Informacja", "Produkt zosta� sprzedany.");
 			}
 
@@ -518,7 +518,7 @@ stock OnPlayerOfferFinish(playerid, type, response)
 				pInfo[sellerid][player_taxi_price] = pOffer[playerid][offer_extraid];
 				pInfo[sellerid][player_taxi_distance] = 0;
 				pInfo[sellerid][player_taxi_passenger] = playerid;
-			
+
 				pInfo[sellerid][player_taxi_drive] = true;
 			}
 
@@ -530,7 +530,7 @@ stock OnPlayerOfferFinish(playerid, type, response)
 		    	new offererid = pOffer[playerid][offer_sellerid];
 
 				GetPlayerPos(offererid, PosX, PosY, PosZ);
-				
+
 				if(welcome_type <= 6)
 				{
 					GetXYInFrontOfPlayer(offererid, PosX, PosY, 1.0);
@@ -539,12 +539,12 @@ stock OnPlayerOfferFinish(playerid, type, response)
 				{
 		            GetXYInFrontOfPlayer(offererid, PosX, PosY, 0.5);
 				}
-				
+
 				GetPlayerFacingAngle(offererid, PosA);
 
 				SetPlayerPos(playerid, PosX, PosY, PosZ);
 				SetPlayerFacingAngle(playerid, (floatabs(PosA) - 180.0));
-				
+
 				switch(welcome_type)
 				{
 				    case 1:
@@ -594,7 +594,7 @@ stock OnPlayerOfferFinish(playerid, type, response)
 					}
 				}
 			}
-			
+
 			case OFFER_TYPE_DOCUMENT:
 			{
 				pInfo[playerid][player_documents] += pOffer[playerid][offer_extraid];
@@ -602,7 +602,7 @@ stock OnPlayerOfferFinish(playerid, type, response)
 			}
 		}
 	}
-	
+
 	for(new x=0; e_player_offer:x != e_player_offer; x++)
 	{
 		pOffer[playerid][e_player_offer:x] = 0;

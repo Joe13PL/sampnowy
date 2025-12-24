@@ -2981,7 +2981,7 @@ COMMAND:odblokuj(playerid, params[])
 		{
 			Vehicle[target][vehicle_blocked] = 0;
 			SendGuiInformation(playerid, "Informacja", "Ko�o zosta�o odblokowane.");
-			mysql_query(mySQLconnection, sprintf("UPDATE `ipb_vehicles` SET `vehicle_blockwheel` = 0 WHERE `vehicle_uid` = %d", Vehicle[target][vehicle_uid]));
+			mysql_query(mySQLconnection, sprintf("UPDATE `vehicles` SET `vehicle_blockwheel` = 0 WHERE `vehicle_uid` = %d", Vehicle[target][vehicle_uid]));
 		}
 		else
 		{
@@ -3043,7 +3043,7 @@ COMMAND:blokuj(playerid, params[])
 			sscanf(text, "s[32]", Vehicle[target][vehicle_block_reason]);
 			logprintf(LOG_PLAYER, "[BLOCKADE] %s na�o�y� blokad� na ko�o pojazdu UID %d", pInfo[playerid][player_name], Vehicle[target][vehicle_uid]);
 			SendGuiInformation(playerid, "Informacja", sprintf("Zablokowa�e� ko�o w poje�dzie. (ID: %d, kwota: $%d, powod: %s)", target, money, text));
-			mysql_query(mySQLconnection, sprintf("UPDATE `ipb_vehicles` SET `vehicle_blockwheel` = %d, `vehicle_block_reason` = '%s' WHERE `vehicle_uid` = %d", Vehicle[target][vehicle_blocked], text, Vehicle[target][vehicle_uid]));
+			mysql_query(mySQLconnection, sprintf("UPDATE `vehicles` SET `vehicle_blockwheel` = %d, `vehicle_block_reason` = '%s' WHERE `vehicle_uid` = %d", Vehicle[target][vehicle_blocked], text, Vehicle[target][vehicle_uid]));
 		}
 		else
 		{
@@ -3923,7 +3923,7 @@ COMMAND:grupy(playerid, params[])
 
 			new str[600], rows, fields;
 
-			mysql_query(mySQLconnection, sprintf("SELECT vehicle_uid, vehicle_model FROM `ipb_vehicles` WHERE `vehicle_ownertype` = %d AND `vehicle_owner` = %d", VEHICLE_OWNER_TYPE_GROUP, Group[gid][group_uid]));
+			mysql_query(mySQLconnection, sprintf("SELECT vehicle_uid, vehicle_model FROM `vehicles` WHERE `vehicle_ownertype` = %d AND `vehicle_owner` = %d", VEHICLE_OWNER_TYPE_GROUP, Group[gid][group_uid]));
 			cache_get_data(rows, fields);
 
 			if( !rows ) SendGuiInformation(playerid, "Informacja", "Ta grupa nie posiada przypisanych pojazd�w.");
@@ -6286,7 +6286,7 @@ COMMAND:pojazd(playerid, params[])
 
 			new str[400], rows, fields;
 
-			mysql_query(mySQLconnection, sprintf("SELECT vehicle_uid, vehicle_model FROM `ipb_vehicles` WHERE `vehicle_ownertype` = %d AND `vehicle_owner` = %d", VEHICLE_OWNER_TYPE_PLAYER, pInfo[playerid][player_id]));
+			mysql_query(mySQLconnection, sprintf("SELECT vehicle_uid, vehicle_model FROM `vehicles` WHERE `vehicle_ownertype` = %d AND `vehicle_owner` = %d", VEHICLE_OWNER_TYPE_PLAYER, pInfo[playerid][player_id]));
 			cache_get_data(rows, fields);
 
 			if( !rows ) SendGuiInformation(playerid, "Informacja", "Nie posiadasz �adnych pojazd�w.");

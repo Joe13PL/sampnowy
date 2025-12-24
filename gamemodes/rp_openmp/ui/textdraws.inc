@@ -70,6 +70,10 @@ static g_HUDFlags[MAX_PLAYERS];
 static g_NotifyTimer[MAX_PLAYERS];
 // Global timer to update HUD (clock)
 static g_HUDUpdateTimer = 0;
+// Minute-aligned timer to update clock exactly on minute boundaries
+static g_HUDMinuteTimer = 0;
+// Cache of last minute shown per player to avoid redundant updates
+static g_HUDPrevMinute[MAX_PLAYERS] = {-1, ...};
 
 // ===========================================================================
 // ===========================================================================
@@ -90,10 +94,21 @@ stock Textdraws_CreateGlobal()
     TextDrawSetShadow(g_GlobalTextdraws[0], 0);
     TextDrawAlignment(g_GlobalTextdraws[0], 3);
 
-    // Start global HUD update timer (updates clock every second)
+    // Start global HUD update timer (1s tick, clock updates only when minute changes)
     if(g_HUDUpdateTimer == 0)
     {
+        // 1,000 ms = 1 second
         g_HUDUpdateTimer = SetTimerEx("HUD_GlobalTimer", 1000, true);
+    }
+
+    // Schedule a minute-aligned timer so clocks update exactly on the minute boundary.
+    if(g_HUDMinuteTimer == 0)
+    {
+        new hour, minute, second; gettime(hour, minute, second);
+        new ms_to_next = (60 - second) * 1000;
+        if(ms_to_next <= 0) ms_to_next = 1000; // fallback
+        g_HUDMinuteTimer = SetTimerEx("HUD_MinuteTimer_OneShot", ms_to_next, false);
+        printf("[HUD] Scheduled minute timer in %d ms", ms_to_next);
     }
 
     return 1;
@@ -158,6 +173,19 @@ stock HUD_Create(playerid)
 
     // Debug: log created player textdraw ids
     printf("[HUD_CREATE] pid=%d clock_td=%d date_td=%d", playerid, g_PlayerHUD[playerid][HUD_CLOCK], g_PlayerHUD[playerid][HUD_DATE]);
+
+    // Ensure the clock is initialized for this player
+    HUD_UpdateClockOnly(playerid);
+
+    // If minute timer is not scheduled yet, schedule a one-shot aligned to the next minute
+    if(g_HUDMinuteTimer == 0)
+    {
+        new hour, minute, second; gettime(hour, minute, second);
+        new ms_to_next = (60 - second) * 1000;
+        if(ms_to_next <= 0) ms_to_next = 1000;
+        g_HUDMinuteTimer = SetTimerEx("HUD_MinuteTimer_OneShot", ms_to_next, false);
+        printf("[HUD_CREATE] Scheduled minute timer in %d ms", ms_to_next);
+    }
 
     // === PIENIĄDZE ===
     new td_money = CreatePlayerTextDraw(playerid, 635.0, 60.0, "0");
@@ -320,6 +348,7 @@ stock HUD_Destroy(playerid)
 // Global timer callback to update HUDs (refresh clock every second)
 stock HUD_GlobalTimer()
 {
+    // Global tick; call HUD_Update on visible players
     for(new i = 0; i < MAX_PLAYERS; i++)
     {
         if(IsPlayerConnected(i) && !(g_HUDFlags[i] & HUD_FLAG_HIDDEN))
@@ -328,6 +357,31 @@ stock HUD_GlobalTimer()
         }
     }
 
+    return 1;
+}
+
+// One-shot timer that fires at the next minute boundary; it will set up a repeating 60s timer afterwards
+forward HUD_MinuteTimer_OneShot();
+public HUD_MinuteTimer_OneShot()
+{
+    // One-shot triggered at next minute boundary. Do a clock-only update and then schedule repeating timer.
+    for(new i = 0; i < MAX_PLAYERS; i++) if(IsPlayerConnected(i) && !(g_HUDFlags[i] & HUD_FLAG_HIDDEN)) HUD_UpdateClockOnly(i);
+
+    // Schedule repeating timer every 60 seconds
+    if(g_HUDMinuteTimer != 0)
+    {
+        KillTimer(g_HUDMinuteTimer);
+        g_HUDMinuteTimer = 0;
+    }
+    g_HUDMinuteTimer = SetTimerEx("HUD_MinuteTimer", 60000, true);
+    printf("[HUD_MINUTE] Repeating minute timer scheduled (60000ms)");
+    return 1;
+}
+
+forward HUD_MinuteTimer();
+public HUD_MinuteTimer()
+{
+    for(new i = 0; i < MAX_PLAYERS; i++) if(IsPlayerConnected(i) && !(g_HUDFlags[i] & HUD_FLAG_HIDDEN)) HUD_UpdateClockOnly(i);
     return 1;
 }
 
@@ -521,24 +575,43 @@ stock HUD_Update(playerid)
 
     new text[64];
 
-    // Clock
+    // Clock (update only on minute change)
     new hour, minute, second;
     gettime(hour, minute, second);
-    format(text, sizeof(text), "%02d:%02d", hour, minute);
     new set_ok_clock = 0;
-    if(g_PlayerHUD[playerid][HUD_CLOCK] != PlayerText:INVALID_TEXT_DRAW && g_PlayerHUD[playerid][HUD_CLOCK] != 0)
-    {
-        set_ok_clock = PlayerTextDrawSetString(playerid, g_PlayerHUD[playerid][HUD_CLOCK], text);
-    }
-    else
+
+    // Log tick and previous minute for debugging
+    printf("[HUD_TIMER] pid=%d tick h=%d m=%d prev=%d td=%d", playerid, hour, minute, g_HUDPrevMinute[playerid], g_PlayerHUD[playerid][HUD_CLOCK]);
+
+    // Only update the clock text when the minute changed to avoid redundant updates
+    if(g_PlayerHUD[playerid][HUD_CLOCK] == PlayerText:INVALID_TEXT_DRAW || g_PlayerHUD[playerid][HUD_CLOCK] == 0)
     {
         if(HUD_EnsureClockCreated(playerid))
         {
-            set_ok_clock = PlayerTextDrawSetString(playerid, g_PlayerHUD[playerid][HUD_CLOCK], text);
+            // Force update on creation by setting prev minute to invalid
+            g_HUDPrevMinute[playerid] = -1;
+            new textInit[6]; format(textInit, sizeof(textInit), "%02d:%02d", hour, minute);
+            set_ok_clock = PlayerTextDrawSetString(playerid, g_PlayerHUD[playerid][HUD_CLOCK], textInit);
             PlayerTextDrawShow(playerid, g_PlayerHUD[playerid][HUD_CLOCK]);
+            printf("[HUD_TIMER] pid=%d created clock set='%s' set_ok=%d td=%d", playerid, textInit, set_ok_clock, g_PlayerHUD[playerid][HUD_CLOCK]);
+        }
+        else
+        {
+            printf("[HUD_TIMER] pid=%d failed to create clock td=%d", playerid, g_PlayerHUD[playerid][HUD_CLOCK]);
         }
     }
-    printf("[HUD_UPDATE] pid=%d clock='%s' set_ok=%d td=%d", playerid, text, set_ok_clock, g_PlayerHUD[playerid][HUD_CLOCK]);
+    else
+    {
+        if(g_HUDPrevMinute[playerid] != minute)
+        {
+            new textClock[6]; format(textClock, sizeof(textClock), "%02d:%02d", hour, minute);
+            set_ok_clock = PlayerTextDrawSetString(playerid, g_PlayerHUD[playerid][HUD_CLOCK], textClock);
+            printf("[HUD_TIMER] pid=%d update attempt set='%s' set_ok=%d td=%d", playerid, textClock, set_ok_clock, g_PlayerHUD[playerid][HUD_CLOCK]);
+            if(set_ok_clock) g_HUDPrevMinute[playerid] = minute;
+            else printf("[HUD_TIMER] pid=%d update FAILED for td=%d", playerid, g_PlayerHUD[playerid][HUD_CLOCK]);
+        }
+    }
+    printf("[HUD_UPDATE] pid=%d clock set_ok=%d td=%d minute=%d", playerid, set_ok_clock, g_PlayerHUD[playerid][HUD_CLOCK], minute);
 
     // Date - leave this (clock removed)
     new year, month, day;
@@ -580,6 +653,39 @@ stock HUD_Update(playerid)
     printf("[HUD_UPDATE] pid=%d thirst='%s' set_ok=%d td=%d", playerid, text, set_ok_thirst, g_PlayerHUD[playerid][HUD_THIRST]);
 
     return 1;
+}
+
+/**
+ * Force direct HUD clock update and return whether direct set succeeded (1) or not (0)
+ */
+stock HUD_ForceUpdate(playerid)
+{
+    if(!IsValidPlayerId(playerid)) return 0;
+    return HUD_UpdateClockOnly(playerid);
+}
+
+/**
+ * Update only the clock text for a single player. Used by minute-aligned timer.
+ */
+stock HUD_UpdateClockOnly(playerid)
+{
+    if(!IsValidPlayerId(playerid)) return 0;
+    if(g_HUDFlags[playerid] & HUD_FLAG_HIDDEN) return 0;
+
+    if(g_PlayerHUD[playerid][HUD_CLOCK] == PlayerText:INVALID_TEXT_DRAW || g_PlayerHUD[playerid][HUD_CLOCK] == 0)
+    {
+        if(!HUD_EnsureClockCreated(playerid)) return 0;
+    }
+
+    new hour, minute, second;
+    gettime(hour, minute, second);
+
+    new textClock[6]; format(textClock, sizeof(textClock), "%02d:%02d", hour, minute);
+    new ok = PlayerTextDrawSetString(playerid, g_PlayerHUD[playerid][HUD_CLOCK], textClock);
+    if(ok) PlayerTextDrawShow(playerid, g_PlayerHUD[playerid][HUD_CLOCK]);
+
+    g_HUDPrevMinute[playerid] = minute;
+    return ok;
 }
 
 // ===========================================================================

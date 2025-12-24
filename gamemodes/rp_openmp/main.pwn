@@ -156,6 +156,7 @@ Essential Roleplay Roleplay - open.mp Refactored Version
 
 // Commands - Komendy graczy (musi byc przed dialog_handlers z powodu Player_ShowStats)
 #include "player/player_commands.inc"
+#include "ui/car_shop.inc"
 
 // Dialog handlers
 #include "ui/dialog_handlers.inc"

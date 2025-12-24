@@ -164,6 +164,18 @@ hook OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
             return Dialog_HandleVehicleOptions(playerid, response, listitem);
         }
 
+        case DIALOG_CARSHOP_CATEGORIES:
+        {
+            if(!response) return 1;
+            return CarShop_OnCategorySelected(playerid, listitem);
+        }
+
+        case DIALOG_CARSHOP_VEHICLES:
+        {
+            if(!response) return 1;
+            return CarShop_OnVehicleSelected(playerid, listitem);
+        }
+
         // =========================================================
         // DIALOGI STATS MENU
         // =========================================================
@@ -1483,6 +1495,15 @@ Dialog_HandleCreateGangConfirm(playerid, response)
 static g_ConfirmCallback[MAX_PLAYERS][64];
 static g_ConfirmData[MAX_PLAYERS][256];
 
+// Forward declarations
+forward Dialog_ShowPendingConfirm(playerid);
+
+// Pending delayed confirm data (used when we need to delay showing a dialog to avoid click-races)
+static g_PendingConfirmCallback[MAX_PLAYERS][64];
+static g_PendingConfirmTitle[MAX_PLAYERS][64];
+static g_PendingConfirmMessage[MAX_PLAYERS][256];
+static g_PendingConfirmData[MAX_PLAYERS][256];
+
 ShowConfirmDialogEx(playerid, const callback[], const title[], const message[], const data[] = "")
 {
     // Store callback and data safely per-player
@@ -1491,6 +1512,47 @@ ShowConfirmDialogEx(playerid, const callback[], const title[], const message[], 
     printf("[DBG] ShowConfirmDialogEx: player=%d callback='%s' data='%s'\n", playerid, g_ConfirmCallback[playerid], g_ConfirmData[playerid]);
 
     ShowConfirmDialog(playerid, DIALOG_CONFIRM, title, message);
+
+    return 1;
+}
+
+/**
+ * Show confirm dialog after a small delay to avoid click-races between menus
+ * Example: when clicking a model preview the click can also act as a dialog confirmation
+ */
+stock ShowConfirmDialogExDelayed(playerid, const callback[], const title[], const message[], const data[] = "", delay_ms = 250)
+{
+    if(!IsPlayerConnected(playerid)) return 0;
+
+    // Save pending data
+    strcopy(g_PendingConfirmCallback[playerid], callback, sizeof g_PendingConfirmCallback[]);
+    strcopy(g_PendingConfirmTitle[playerid], title, sizeof g_PendingConfirmTitle[]);
+    strcopy(g_PendingConfirmMessage[playerid], message, sizeof g_PendingConfirmMessage[]);
+    strcopy(g_PendingConfirmData[playerid], data, sizeof g_PendingConfirmData[]);
+
+    // Schedule a one-shot timer to show the dialog
+    SetTimerEx("Dialog_ShowPendingConfirm", delay_ms, false, "i", playerid);
+    printf("[DBG] ShowConfirmDialogExDelayed: player=%d callback='%s' delay=%d\n", playerid, g_PendingConfirmCallback[playerid], delay_ms);
+    return 1;
+}
+
+public Dialog_ShowPendingConfirm(playerid)
+{
+    if(!IsPlayerConnected(playerid)) return 0;
+
+    // Double-check we still have pending data
+    if(g_PendingConfirmCallback[playerid][0] == EOS)
+    {
+        return 0;
+    }
+
+    ShowConfirmDialogEx(playerid, g_PendingConfirmCallback[playerid], g_PendingConfirmTitle[playerid], g_PendingConfirmMessage[playerid], g_PendingConfirmData[playerid]);
+
+    // Clear pending
+    g_PendingConfirmCallback[playerid][0] = EOS;
+    g_PendingConfirmTitle[playerid][0] = EOS;
+    g_PendingConfirmMessage[playerid][0] = EOS;
+    g_PendingConfirmData[playerid][0] = EOS;
 
     return 1;
 }
@@ -1543,10 +1605,188 @@ Dialog_HandleConfirm(playerid, response)
             printf("[DBG] Dialog_HandleConfirm: failed to parse id from '%s'\n", g_ConfirmData[playerid]);
         }
     }
+    else if(strcmp(g_ConfirmCallback[playerid], "carshop_buy") == 0)
+    {
+        // Data format: "cat;index"
+        new cat, idx;
+
+        // Robust parse to avoid sscanf warnings and failures
+        new tmp[64];
+        strcopy(tmp, g_ConfirmData[playerid], sizeof(tmp));
+        new pos = strfind(tmp, ";", true);
+        if(pos == -1)
+        {
+            SendClientMessage(playerid, COLOR_ERROR, "Bad carshop data.");
+            printf("[DBG] Dialog_HandleConfirm: failed to parse carshop data '%s'\n", g_ConfirmData[playerid]);
+        }
+        else
+        {
+            tmp[pos] = EOS;
+            cat = strval(tmp);
+            idx = strval(tmp[pos + 1]);
+
+            if(cat < 0 || cat >= CAR_CAT_MAX)
+            {
+                SendClientMessage(playerid, COLOR_ERROR, "Invalid car selection.");
+            }
+            else
+            {
+                printf("[DBG] Dialog_HandleConfirm: parsed carshop data cat=%d idx=%d\n", cat, idx);
+                CarShop_HandleBuy(playerid, cat, idx);
+            }
+        }
+    }
 
     // clear callback data
     g_ConfirmCallback[playerid][0] = EOS;
     g_ConfirmData[playerid][0] = EOS;
+
+    return 1;
+}
+
+// Forward declaration for CarShop handler
+forward CarShop_HandleBuy(playerid, cat, idx);
+forward CarShop_OnInsert(playerid);
+
+// Pending carshop purchase data (populated while async DB insert completes)
+new CarShop_PendingFlag[MAX_PLAYERS];
+new CarShop_PendingModel[MAX_PLAYERS];
+new CarShop_PendingPrice[MAX_PLAYERS];
+new Float:CarShop_PendingFX[MAX_PLAYERS];
+new Float:CarShop_PendingFY[MAX_PLAYERS];
+new Float:CarShop_PendingFZ[MAX_PLAYERS];
+new Float:CarShop_PendingFA[MAX_PLAYERS];
+
+
+// Handle the actual car purchase flow
+public CarShop_HandleBuy(playerid, cat, idx)
+{
+    if(!IsPlayerConnected(playerid)) return 0;
+
+    new name[64]; new price; new modelid;
+    if(!CarShop_GetVehicleInfo(cat, idx, name, sizeof(name), price, modelid))
+    {
+        SendClientMessage(playerid, COLOR_ERROR, "Invalid car selection.");
+        return 1;
+    }
+
+    if(price <= 0)
+    {
+        SendClientMessage(playerid, COLOR_ERROR, "Invalid car price.");
+        return 1;
+    }
+
+    if(!Player_GiveMoney(playerid, -price))
+    {
+        SendClientMessage(playerid, COLOR_ERROR, "Operation failed: insufficient funds or invalid amount.");
+        return 1;
+    }
+
+    new Float:fx, Float:fy, Float:fz, Float:fa;
+    if(!CarShop_PickParkingSpot(playerid, fx, fy, fz, fa))
+    {
+        GetPlayerPos(playerid, fx, fy, fz);
+        fa = pInfo[playerid][player_pos_a];
+    }
+
+    new ownerUid = pInfo[playerid][player_id];
+
+    // Clear any previous pending purchase for safety
+    CarShop_PendingFlag[playerid] = 0;
+
+    new valuesStr[256];
+    // Match the schema in database/schema.sql (veh_model, veh_pos_x, veh_pos_y, veh_pos_z, veh_pos_a, veh_color1, veh_color2, veh_owner_type, veh_owner, veh_fuel)
+    format(valuesStr, sizeof(valuesStr), "%d, %f, %f, %f, %f, %d, %d, %d, %d, %f",
+        modelid, fx, fy, fz, fa, -1, -1, VEHICLE_OWNER_TYPE_PLAYER, ownerUid, 100.0);
+
+    // Debug the formatted values string to ensure all fields are present
+    printf("[DBG] CarShop: valuesStr='%s'\n", valuesStr);
+
+    // Build the full query locally and execute with mysql_tquery to avoid MySQL_ExecuteFormat arg-limit issues
+    new query[512];
+    format(query, sizeof(query), "INSERT INTO `vehicles` (`veh_model`,`veh_pos_x`,`veh_pos_y`,`veh_pos_z`,`veh_pos_a`,`veh_color1`,`veh_color2`,`veh_owner_type`,`veh_owner`,`veh_fuel`) VALUES (%s)", valuesStr);
+    // Store pending data and execute query with a callback so we can finalize when DB returns the insert id
+    CarShop_PendingFlag[playerid] = 1;
+    CarShop_PendingModel[playerid] = modelid;
+    CarShop_PendingPrice[playerid] = price;
+    CarShop_PendingFX[playerid] = fx;
+    CarShop_PendingFY[playerid] = fy;
+    CarShop_PendingFZ[playerid] = fz;
+    CarShop_PendingFA[playerid] = fa;
+    mysql_tquery(mySQLconnection, query, "CarShop_OnInsert", "d", playerid);
+
+    // Notify player that purchase is processing (final message will come when DB insert completes)
+    SendClientMessage(playerid, COLOR_YELLOW, "Processing purchase... saving vehicle to database.");
+    return 1;
+}
+
+public CarShop_OnInsert(playerid)
+{
+    // This is invoked by the MySQL plugin when the previous INSERT completes
+    if(!CarShop_PendingFlag[playerid])
+    {
+        printf("[DBG] CarShop_OnInsert: no pending purchase for pid=%d\n", playerid);
+        return 1;
+    }
+
+    new uid = cache_insert_id();
+    new modelid = CarShop_PendingModel[playerid];
+    new price = CarShop_PendingPrice[playerid];
+    new Float:fx = CarShop_PendingFX[playerid];
+    new Float:fy = CarShop_PendingFY[playerid];
+    new Float:fz = CarShop_PendingFZ[playerid];
+    new Float:fa = CarShop_PendingFA[playerid];
+    // Name not stored per-request; use model id in messaging if needed
+    new name[32]; format(name, sizeof(name), "model %d", modelid);
+
+    // Clear pending flag immediately to avoid reentrancy
+    CarShop_PendingFlag[playerid] = 0;
+
+    if(uid <= 0)
+    {
+        // Refund
+        Player_GiveMoney(playerid, price);
+        if(IsPlayerConnected(playerid))
+        {
+            SendClientMessage(playerid, COLOR_ERROR, "Operation failed: could not save vehicle to DB. Funds refunded.");
+        }
+        printf("[DBG] CarShop_OnInsert: DB insert uid invalid for pid=%d model=%d price=%d mysql_errno=%d\n", playerid, modelid, price, mysql_errno(mySQLconnection));
+        return 1;
+    }
+
+    // Try spawn
+    if(IsPlayerConnected(playerid))
+    {
+        new vid = Vehicle_Create(modelid, fx, fy, fz, fa, -1, -1, OWNER_PLAYER, pInfo[playerid][player_id]);
+        if(vid == INVALID_VEHICLE_ID)
+        {
+            SendClientMessage(playerid, COLOR_SUCCESS, "Purchased %s for $%d. Vehicle saved in DB (UID: %d) but failed to spawn in-game (no space).", name, price, uid);
+            Player_SaveData(playerid, "purchase");
+            Dialog_ShowPlayerVehicles(playerid);
+            return 1;
+        }
+
+        new slot = Vehicle_GetSlot(vid);
+        if(slot != -1)
+        {
+            VehicleDbUid[slot] = uid;
+            vInfo[slot][veh_spawn_x] = fx;
+            vInfo[slot][veh_spawn_y] = fy;
+            vInfo[slot][veh_spawn_z] = fz;
+            vInfo[slot][veh_spawn_a] = fa;
+        }
+
+        Vehicle_SetSpawnPos(vid, fx, fy, fz, fa);
+        Vehicle_SetLocked(vid, true);
+        Player_SaveData(playerid, "purchase");
+        SendClientMessage(playerid, COLOR_SUCCESS, "Purchased %s for $%d. Vehicle spawned on parking (UID: %d, ID: %d).", name, price, uid, vid);
+        Dialog_ShowPlayerVehicles(playerid);
+    }
+    else
+    {
+        // Player disconnected between purchase and DB callback; leave DB record only
+        printf("[DBG] CarShop_OnInsert: player disconnected after purchase pid=%d uid=%d\n", playerid, uid);
+    }
 
     return 1;
 }

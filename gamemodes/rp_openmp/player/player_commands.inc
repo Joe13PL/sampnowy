@@ -866,6 +866,21 @@ YCMD:time(playerid, params[], help)
 }
 
 /**
+ * /forceclock - Force immediate HUD clock update (debug)
+ */
+YCMD:forceclock(playerid, params[], help)
+{
+    CMD_GUARDS();
+
+    // Trigger HUD_Update and report
+    new res = HUD_ForceUpdate(playerid);
+    SendClientMessage(playerid, COLOR_INFO, "HUD forced update invoked. Check server logs for [HUD] messages.");
+    printf("[CMD] pid=%d invoked /forceclock -> HUD_ForceUpdate res=%d", playerid, res);
+
+    return 1;
+}
+
+/**
  * /pos - Pokazuje aktualne koordynaty z VW i interior
  */
 YCMD:pos(playerid, params[], help)

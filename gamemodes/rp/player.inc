@@ -2,7 +2,7 @@ stock OnPlayerLoginHere(playerid)
 {
 	new rows, fields;
 
-	pInfo[playerid][player_cache] = mysql_query(mySQLconnection, sprintf("SELECT * FROM ipb_characters WHERE `char_uid` = %d LIMIT 1", pInfo[playerid][player_id]));
+	pInfo[playerid][player_cache] = mysql_query(mySQLconnection, sprintf("SELECT * FROM characters WHERE `char_uid` = %d LIMIT 1", pInfo[playerid][player_id]));
 	cache_get_data(rows, fields);
 
 	pInfo[playerid][player_hours] 		= cache_get_row_int(0, 3);
@@ -49,8 +49,8 @@ stock OnPlayerLoginHere(playerid)
 	// ShowPlayerProgressBar(playerid, pInfo[playerid][player_health_bar]);
 
 	pInfo[playerid][player_online_time] = pInfo[playerid][player_hours] * 3600 + pInfo[playerid][player_minutes] * 60;
-	if( pInfo[playerid][player_bw] > 0 ) pInfo[playerid][player_bw_end_time] = pInfo[playerid][player_bw] + gettime();  
-	
+	if( pInfo[playerid][player_bw] > 0 ) pInfo[playerid][player_bw_end_time] = pInfo[playerid][player_bw] + gettime();
+
 	if(pInfo[playerid][player_active] == 1)
 	{
 		for(new i;i<50;i++) SendClientMessage(playerid, -1, " ");
@@ -58,7 +58,7 @@ stock OnPlayerLoginHere(playerid)
 		Kick(playerid);
 		return 1;
 	}
-	
+
 	for(new w = 0; (w < 10) && (w != 7 && w != 8 && w != 9); w++) SetPlayerSkillLevel(playerid, w, 1);
 
 	if(pInfo[playerid][player_weapon_skill] > 1)
@@ -72,7 +72,7 @@ stock OnPlayerLoginHere(playerid)
 		SetPlayerSkillLevel(playerid, WEAPONSKILL_SHOTGUN, wlevel);
 		SetPlayerSkillLevel(playerid, WEAPONSKILL_SNIPERRIFLE, wlevel);
 	}
-	
+
 	UpdatePlayerLabel(playerid);
 	SetPlayerMoney(playerid, pInfo[playerid][player_money]);
 	SetPlayerScore(playerid, pGlobal[playerid][glo_score]);
@@ -85,17 +85,17 @@ stock OnPlayerLoginHere(playerid)
 	pInfo[playerid][player_last_join] = gettime();
 	pInfo[playerid][player_last_skin] = pInfo[playerid][player_skin];
 
-	mysql_query(mySQLconnection, sprintf("INSERT INTO `ipb_logged_players` (char_uid, user_id, seen) VALUES (%d, %d, %d)", pInfo[playerid][player_id], pGlobal[playerid][glo_id], pInfo[playerid][player_last_join]));
-	mysql_query(mySQLconnection, sprintf("UPDATE `ipb_characters` SET char_online = 1 WHERE char_uid = %d", pInfo[playerid][player_id]));
-	
+	mysql_query(mySQLconnection, sprintf("INSERT INTO `logged_players` (char_uid, user_id, seen) VALUES (%d, %d, %d)", pInfo[playerid][player_id], pGlobal[playerid][glo_id], pInfo[playerid][player_last_join]));
+	mysql_query(mySQLconnection, sprintf("UPDATE `characters` SET char_online = 1 WHERE char_uid = %d", pInfo[playerid][player_id]));
+
 	new IP[16];
 	GetPlayerIp(playerid, IP, sizeof(IP));
-	mysql_query(mySQLconnection, sprintf("INSERT INTO `ipb_game_sessions` (session_uid, session_type, session_ip, session_owner, session_start) VALUES (null, %d, '%s', %d, %d)", SESSION_TYPE_LOGIN, IP, pInfo[playerid][player_id], gettime()));
+	mysql_query(mySQLconnection, sprintf("INSERT INTO `game_sessions` (session_uid, session_type, session_ip, session_owner, session_start) VALUES (null, %d, '%s', %d, %d)", SESSION_TYPE_LOGIN, IP, pInfo[playerid][player_id], gettime()));
 	pInfo[playerid][player_session] = cache_insert_id();
 
 	scrp_SpawnPlayer(playerid, false);
 	TogglePlayerSpectating(playerid, false);
-	
+
 	pInfo[playerid][player_logged] = true;
 
 	new groupsLoaded = LoadPlayerGroupData(playerid);
@@ -106,21 +106,21 @@ stock OnPlayerLoginHere(playerid)
 	LoadGlobalPenalties(playerid);
 
 	SetPlayerFightingStyle(playerid, pInfo[playerid][player_fight_style]);
-	
+
 	ShowPlayerZones(playerid);
 	PlayerTextDrawShow(playerid, ZoneName);
 	PlayerTextDrawShow(playerid, TextDrawSanNews);
 
-	SendFormattedClientMessage(playerid, COLOR_GREY, "Witaj %s (GID: %d). Zalogowano na posta� %s (UID: %d). Mi�ej gry!", pGlobal[playerid][glo_name], pGlobal[playerid][glo_id], pInfo[playerid][player_name], pInfo[playerid][player_id], playerid);  
+	SendFormattedClientMessage(playerid, COLOR_GREY, "Witaj %s (GID: %d). Zalogowano na posta� %s (UID: %d). Mi�ej gry!", pGlobal[playerid][glo_name], pGlobal[playerid][glo_id], pInfo[playerid][player_name], pInfo[playerid][player_id], playerid);
 	logprintf(LOG_PLAYER, "[load] Wczytano dane postaci %s (UID: %d). [Grupy: %d] [Przedmioty: %d]", pInfo[playerid][player_name], pInfo[playerid][player_id], groupsLoaded, itemsLoaded);
-	
+
 	if(pGlobal[playerid][glo_premium] != 0 && pGlobal[playerid][glo_premium] < gettime())
 	{
-		mysql_query(mySQLconnection, sprintf("UPDATE ipb_members SET member_premium_time = 0 WHERE member_id = %d", pGlobal[playerid][glo_id]));
+		mysql_query(mySQLconnection, sprintf("UPDATE members SET member_premium_time = 0 WHERE member_id = %d", pGlobal[playerid][glo_id]));
 		SendClientMessage(playerid, COLOR_GOLD, "Czas twojego konta premium dobieg� ko�ca, dzi�kujemy za wspomaganie serwera.");
 		pGlobal[playerid][glo_premium] = 0;
 	}
-	
+
 	EnablePlayerCameraTarget(playerid, true);
 
 	cache_delete(pInfo[playerid][player_cache]);
@@ -130,16 +130,16 @@ stock OnPlayerLoginHere(playerid)
 stock LoadPlayerItemData(playerid)
 {
 	new rows, fields;
-	mysql_query(mySQLconnection, sprintf("SELECT item_uid, item_type, item_value1, item_value2, item_used, item_extraid, item_weight, item_model, item_name, item_condition FROM ipb_items WHERE item_ownertype = %d AND item_owner = %d", ITEM_OWNER_TYPE_PLAYER, pInfo[playerid][player_id]));
+	mysql_query(mySQLconnection, sprintf("SELECT item_uid, item_type, item_value1, item_value2, item_used, item_extraid, item_weight, item_model, item_name, item_condition FROM items WHERE item_ownertype = %d AND item_owner = %d", ITEM_OWNER_TYPE_PLAYER, pInfo[playerid][player_id]));
 	cache_get_data(rows, fields);
 
 	new i_id = -1;
-	
+
 	for(new row = 0; row != rows; row++)
 	{
 		i_id = Iter_Free(PlayerItems[playerid]);
 		Iter_Add(PlayerItems[playerid], i_id);
-		
+
 		PlayerItem[playerid][i_id][player_item_uid] = cache_get_row_int(row, 0);
 		PlayerItem[playerid][i_id][player_item_type] = cache_get_row_int(row, 1);
 		PlayerItem[playerid][i_id][player_item_value1] = cache_get_row_int(row, 2);
@@ -158,10 +158,10 @@ stock LoadPlayerItemData(playerid)
 
 stock AddAchievement(playerid, achiev_bit, achiev_score)
 {
-	mysql_query(mySQLconnection, sprintf("INSERT INTO ipb_char_achievements (achiev_score, achiev_bit, achiev_owner, achiev_date) VALUES (%d, %d, %d, %d)", achiev_score, achiev_bit, pInfo[playerid][player_id], gettime()));
-	
+	mysql_query(mySQLconnection, sprintf("INSERT INTO char_achievements (achiev_score, achiev_bit, achiev_owner, achiev_date) VALUES (%d, %d, %d, %d)", achiev_score, achiev_bit, pInfo[playerid][player_id], gettime()));
+
 	pInfo[playerid][player_achievements] += achiev_bit;
-	mysql_query(mySQLconnection, sprintf("UPDATE ipb_characters SET char_achievements = %d WHERE char_uid = %d", pInfo[playerid][player_achievements], pInfo[playerid][player_id]));
+	mysql_query(mySQLconnection, sprintf("UPDATE characters SET char_achievements = %d WHERE char_uid = %d", pInfo[playerid][player_achievements], pInfo[playerid][player_id]));
 
 	pGlobal[playerid][glo_score] += achiev_score;
 	SetPlayerScore(playerid, pGlobal[playerid][glo_score]);
@@ -221,36 +221,36 @@ stock InteractionKey(playerid)
 
 		if(GroupHasFlag(gid, GROUP_FLAG_CUFFS))
 		{
-			DynamicGui_AddRow(playerid, DG_INTERACTION_CUFF);	
+			DynamicGui_AddRow(playerid, DG_INTERACTION_CUFF);
 			format(interaction_list, sizeof(interaction_list), "%s\n6. Skuj", interaction_list);
 		}
 
 		if(GroupHasFlag(gid, GROUP_FLAG_KEEP) && GetPlayerVirtualWorld(playerid) != 0)
 		{
-			DynamicGui_AddRow(playerid, DG_INTERACTION_KEEP);	
+			DynamicGui_AddRow(playerid, DG_INTERACTION_KEEP);
 			format(interaction_list, sizeof(interaction_list), "%s\n7. Przetrzymaj", interaction_list);
 		}
 
 		switch(Group[gid][group_type])
 		{
-			case GROUP_TYPE_LSPD: 
+			case GROUP_TYPE_LSPD:
 			{
 				DynamicGui_AddRow(playerid, DG_INTERACTION_TAKE);
 				DynamicGui_AddRow(playerid, DG_INTERACTION_TAKELIC);
-				DynamicGui_AddRow(playerid, DG_INTERACTION_TICKET);		
+				DynamicGui_AddRow(playerid, DG_INTERACTION_TICKET);
 				format(interaction_list, sizeof(interaction_list), "%s\n8. Zabierz przedmiot\n9. Zabierz prawo jazdy\n10. Wlep mandat", interaction_list);
 			}
-			case GROUP_TYPE_GANG: 
+			case GROUP_TYPE_GANG:
 			{
-				DynamicGui_AddRow(playerid, DG_INTERACTION_TIE);	
+				DynamicGui_AddRow(playerid, DG_INTERACTION_TIE);
 				format(interaction_list, sizeof(interaction_list), "%s\n8. Zwi��", interaction_list);
 
 				if(IsPlayerLeadingTarget(playerid, targetid, gid) && pInfo[targetid][player_bw] > 0) format(interaction_list, sizeof(interaction_list), "%s\n9. Zabij", interaction_list);
 				DynamicGui_AddRow(playerid, DG_INTERACTION_KILL);
 			}
-			case GROUP_TYPE_MEDIC: 
+			case GROUP_TYPE_MEDIC:
 			{
-				DynamicGui_AddRow(playerid, DG_INTERACTION_HEAL);	
+				DynamicGui_AddRow(playerid, DG_INTERACTION_HEAL);
 				format(interaction_list, sizeof(interaction_list), "%s\n8. Ulecz", interaction_list);
 			}
 		}
@@ -305,7 +305,7 @@ stock InteractionKey(playerid)
 				format(interact_list, sizeof(interact_list), "%s\n3. Skorzystaj z bankomatu", interact_list);
 				DynamicGui_AddRow(playerid, DG_INTERACTION_BANK);
 			}
-			case OBJECT_BUSSTOP: 
+			case OBJECT_BUSSTOP:
 			{
 				format(interact_list, sizeof(interact_list), "%s\n3. Skorzystaj z autobusu", interact_list);
 				DynamicGui_AddRow(playerid, DG_INTERACTION_BUS);
@@ -363,7 +363,7 @@ stock IsPlayerInSouthCentral(playerid)
 	{
 	    return 1;
 	}
-	
+
 	return 0;
 }
 
@@ -374,7 +374,7 @@ stock SetupPlayerCapacity(playerid)
 	foreach (new item : PlayerItems[playerid])
 	{
 		pInfo[playerid][player_capacity] -= PlayerItem[playerid][item][player_item_weight];
-		
+
 	}
 }
 
@@ -421,12 +421,12 @@ stock GetPlayerByUid(p_uid)
 	{
 		if( pInfo[p][player_id] == p_uid ) return p;
 	}
-	
+
 	return -1;
 }
 
 stock ShowPlayerPayment(playerid)
-{	
+{
 	ShowPlayerDialog(playerid, DIALOG_PAYMENT, DIALOG_STYLE_LIST, "Spos�b p�atno�ci", "Got�wka\nKarta kredytowa", "Wybierz", "Anuluj");
 }
 
@@ -439,7 +439,7 @@ stock OnPlayerPaymentResponse(playerid, type, response)
 stock AddPlayerBankMoney(playerid, amount)
 {
 	pInfo[playerid][player_bank_money] += amount;
-	
+
 	mysql_query(mySQLconnection, sprintf("UPDATE `ipb_characters` SET `char_bankcash` = %d WHERE `char_uid` = %d", pInfo[playerid][player_bank_money], pInfo[playerid][player_id]));
 }
 
@@ -455,11 +455,11 @@ stock LoadPlayerGroupData(playerid)
 	new rows, fields;
 	mysql_query(mySQLconnection, sprintf("SELECT * FROM ipb_char_groups WHERE `char_uid` = %d LIMIT 5", pInfo[playerid][player_id]));
 	cache_get_data(rows, fields);
-	
+
 	for(new row = 0; row != rows; row++)
-	{		
+	{
 		pGroup[playerid][row][pg_id] = GetGroupByUid(cache_get_row_int(row, 2));
-		
+
 		cache_get_row(row, 4, pGroup[playerid][row][pg_rank_title], mySQLconnection, 32);
 		pGroup[playerid][row][pg_rank_skin] = cache_get_row_int(row, 6);
 		pGroup[playerid][row][pg_rank_payment] = cache_get_row_int(row, 5);
@@ -480,21 +480,21 @@ stock SendPlayerInformation(playerid, const text[], showTime = 2000)
 	{
 		new str[300];
 		format(str, sizeof(str), "~w~%s", text);
-		
+
 		TextDrawSetString(Tutorial[playerid], str);
 		TextDrawShowForPlayer(playerid, Tutorial[playerid]);
 
 		pInfo[playerid][player_info_td_id] = showTime/1000;
 	}
 	else HideInformationTextdraw(playerid, pInfo[playerid][player_info_td_id]);
-	
+
 	return 1;
 }
 
 stock IsPlayerVip(playerid)
 {
 	if( pGlobal[playerid][glo_premium] > 0 ) return 1;
-	
+
 	return 0;
 }
 
@@ -503,7 +503,7 @@ stock GetPlayerNameByUid(uid, string[25])
 	new rows, fields;
 	mysql_query(mySQLconnection, sprintf("SELECT `char_name` FROM `ipb_characters` WHERE `char_uid` = %d", uid));
 	cache_get_data(rows, fields);
-	
+
 	cache_get_row(0, 0, string);
 
 	return true;
@@ -526,13 +526,13 @@ stock static Callback_IsVehicleInPoint(vehicleid, Float:range, Float:x, Float:y,
         Float:fY,
         Float:fZ
     ;
- 
+
     GetVehiclePos(vehicleid, fX, fY, fZ);
- 
+
     fX -= x;
     fY -= y;
     fZ -= z;
- 
+
     return ((fX * fX) + (fY * fY) + (fZ * fZ)) < (range * range);
 }
 
@@ -585,7 +585,7 @@ stock GetPlayerJob(playerid)
 stock OnPlayerVirtualWorldChange(playerid, vw)
 {
 	new d_id = GetDoorByUid(vw);
-	
+
 	if( d_id == -1 ) StopAudioStreamForPlayer(playerid);
 	else
 	{
@@ -616,7 +616,7 @@ stock scrp_SpawnPlayer(playerid, bool:withSpawn = true)
 	{
 		if( pInfo[playerid][player_spawn_type] == SPAWN_TYPE_HOUSE) return scrp_SpawnPlayerInHouse(playerid, withSpawn);
 		if( pInfo[playerid][player_spawn_type] == SPAWN_TYPE_HOTEL) return scrp_SpawnPlayerInHouse(playerid, withSpawn);
-		
+
 		if( !Iter_Count(GlobalSpawns) )
 		{
 			SendGuiInformation(playerid, ""guiopis"Informacja", "Serwer nie wczyta� globalnych spawn�w, powiadom raydexa.");
@@ -638,11 +638,11 @@ stock scrp_SpawnPlayer(playerid, bool:withSpawn = true)
 			SetSpawnInfo(playerid, 255, pInfo[playerid][player_skin], GlobalSpawn[r_gspawn][gspawn_pos][0], GlobalSpawn[r_gspawn][gspawn_pos][1], GlobalSpawn[r_gspawn][gspawn_pos][2], GlobalSpawn[r_gspawn][gspawn_pos][3], 0, 0, 0, 0, 0, 0 );
 			SetPlayerVirtualWorld(playerid, 0);
 			SetPlayerInterior(playerid, 0);
-		}	
+		}
 	}
 	SetCameraBehindPlayer(playerid);
 	if( withSpawn ) SpawnPlayer(playerid);
-	
+
 	return 1;
 }
 
@@ -658,14 +658,14 @@ stock scrp_SpawnPlayerInHouse(playerid, bool:withSpawn = true)
 		SetPlayerInterior(playerid, 0);
 		mysql_query(mySQLconnection, sprintf("UPDATE ipb_characters SET char_spawn = 0, char_spawn_type = 1 WHERE char_uid = %d", pInfo[playerid][player_id]));
 
-		if( withSpawn ) SpawnPlayer(playerid);	
+		if( withSpawn ) SpawnPlayer(playerid);
 		return 1;
 	}
 
 	SetSpawnInfo(playerid, 255, pInfo[playerid][player_skin], Door[d_id][door_spawn_pos][0], Door[d_id][door_spawn_pos][1], Door[d_id][door_spawn_pos][2], 0, 0, 0, 0, 0, 0, 0 );
 	SetPlayerVirtualWorld(playerid, Door[d_id][door_spawn_vw]);
 	SetPlayerInterior(playerid, Door[d_id][door_spawn_int]);
-	if( withSpawn ) SpawnPlayer(playerid);	
+	if( withSpawn ) SpawnPlayer(playerid);
 	return 1;
 }
 
@@ -676,8 +676,8 @@ stock scrp_SpawnPlayerWithBW(playerid, bool:withSpawn = true)
 	SetSpawnInfo(playerid, 1, pInfo[playerid][player_last_skin], pInfo[playerid][player_quit_pos][0], pInfo[playerid][player_quit_pos][1], pInfo[playerid][player_quit_pos][2]-0.2, pInfo[playerid][player_quit_pos][3], 0, 0, 0, 0, 0, 0);
 	SetPlayerHealth(playerid, 19);
 	TogglePlayerControllable(playerid, false);
-	
-	if( withSpawn ) SpawnPlayer(playerid);	
+
+	if( withSpawn ) SpawnPlayer(playerid);
 	return 1;
 }
 
@@ -685,7 +685,7 @@ stock scrp_SpawnPlayerInAJ(playerid, bool:withSpawn = true)
 {
 	SetSpawnInfo(playerid, 1, pInfo[playerid][player_skin], 154.0880,-1951.6383,47.8750, 0, 0, 0, 0, 0, 0, 0);
 	SetPlayerVirtualWorld(playerid, 1000+playerid);
-	if( withSpawn ) SpawnPlayer(playerid);	
+	if( withSpawn ) SpawnPlayer(playerid);
 	return 1;
 }
 
@@ -697,19 +697,19 @@ stock SavePlayer(playerid)
 	}
 	mysql_query(mySQLconnection, sprintf("UPDATE `ipb_members` SET `member_game_points` = %d WHERE `member_id` = %d", pGlobal[playerid][glo_score], pGlobal[playerid][glo_id]));
 	mysql_query(mySQLconnection, sprintf("UPDATE `ipb_characters` SET `char_hours` = %d, `char_minutes` = %d, `char_health` = '%f', `char_bw` = %d, `char_strength` = '%f', `char_skill` = '%f' WHERE `char_uid` = %d", pInfo[playerid][player_hours], pInfo[playerid][player_minutes], pInfo[playerid][player_health], pInfo[playerid][player_bw], pInfo[playerid][player_strength], pInfo[playerid][player_weapon_skill], pInfo[playerid][player_id]));
-	mysql_query(mySQLconnection, sprintf("DELETE FROM `ipb_logged_players` WHERE `char_uid` = %d", pInfo[playerid][player_id]));
-	
+	mysql_query(mySQLconnection, sprintf("DELETE FROM `logged_players` WHERE `char_uid` = %d", pInfo[playerid][player_id]));
+
 	logprintf(LOG_PLAYER, "[save] Zapisywanie gracza %s (UID: %d)", pInfo[playerid][player_name], pInfo[playerid][player_id]);
 }
 
 stock UpdatePlayerColor(playerid)
-{	
+{
 	if( !pInfo[playerid][player_logged] )
 	{
 		SetPlayerColor(playerid, 0x00000000);
 		return;
 	}
-	
+
 	if( IsPlayerVip(playerid) ) SetPlayerColor(playerid, 0xFFFFFF80);
 	else SetPlayerColor(playerid, 0xADADAD80);
 }
@@ -722,13 +722,13 @@ stock PreloadAnimLib(playerid, const animlib[])
 stock UpdatePlayerLabel(playerid)
 {
 	new nick_part[40], status_part[256], f_label[256];
-	
-	if( GetPlayerUsedItem(playerid, ITEM_TYPE_MASKA) > -1 ) format(nick_part, sizeof(nick_part), "%s", pInfo[playerid][player_name]);	
+
+	if( GetPlayerUsedItem(playerid, ITEM_TYPE_MASKA) > -1 ) format(nick_part, sizeof(nick_part), "%s", pInfo[playerid][player_name]);
 	else format(nick_part, sizeof(nick_part), "%s (%d)", pInfo[playerid][player_name], playerid);
 	SetPlayerName(playerid, pInfo[playerid][player_name]);
-	strreplace(pInfo[playerid][player_name], '_', ' ');	
-	strreplace(nick_part, '_', ' ');	
-	
+	strreplace(pInfo[playerid][player_name], '_', ' ');
+	strreplace(nick_part, '_', ' ');
+
 	// Format status
 	sortIntegers( pInfo[playerid][player_status], 0, 5 );
 	new comma[5], status_count, last_status;
@@ -746,18 +746,18 @@ stock UpdatePlayerLabel(playerid)
 		{
 			format(comma, 5, "");
 			if( status_count > 1 && last_status != i ) format(comma, 5, ", ");
-						
+
 			switch( pInfo[playerid][player_status][i] )
 			{
 				case PLAYER_STATUS_AFK:
 				{
 					new afkHour, afkMinute, temp;
 					TimestampToDate(pInfo[playerid][player_last_activity], temp, temp, temp, afkHour, afkMinute, temp, 1);
-					
+
 					if( afkHour == 24 ) afkHour = 0;
 					format(status_part, sizeof(status_part), "%sAFK od %02d:%02d%s", status_part, afkHour+1, afkMinute, comma);
 				}
-				
+
 				case PLAYER_STATUS_BELT:
 				{
 					format(status_part, sizeof(status_part), "%spasy%s", status_part, comma);
@@ -776,12 +776,12 @@ stock UpdatePlayerLabel(playerid)
 				case PLAYER_STATUS_EXTRA:
     			{
      				format(status_part, sizeof(status_part), "%s%s%s", status_part, pInfo[playerid][player_extra_status], comma);
-    			}	
+    			}
                case PLAYER_STATUS_NEW:
 				{
 					format(status_part, sizeof(status_part), "%snowy gracz%s", status_part, comma);
 				}
-				
+
 				case PLAYER_STATUS_BW:
 				{
 					if(pInfo[playerid][player_sex] == 0)
@@ -793,7 +793,7 @@ stock UpdatePlayerLabel(playerid)
 						format(status_part, sizeof(status_part), "%snieprzytomny%s", status_part, comma);
 					}
 				}
-				
+
 				case PLAYER_STATUS_DEALING:
 				{
 					format(status_part, sizeof(status_part), "%shandluje%s", status_part, comma);
@@ -864,12 +864,12 @@ stock UpdatePlayerLabel(playerid)
 			}
 		}
 	}
-	
+
 	if( status_count > 0 ) format(status_part, sizeof(status_part), "(%s)", status_part);
 
 	if( isnull(status_part) ) format(f_label, sizeof(f_label), "%s", nick_part);
 	else format(f_label, sizeof(f_label), "%s\n%s", nick_part, status_part);
-	
+
 	if( pInfo[playerid][player_taken_damage] > 0 ) Update3DTextLabelText(pInfo[playerid][player_label], LABEL_NICK_DAMAGED_COLOR, f_label);
 	else
 	{
@@ -897,9 +897,9 @@ stock AddPlayerStatus(playerid, type)
 		if( pInfo[playerid][player_status][s] == 0 && free_slot == -1 ) free_slot = s;
 		if( pInfo[playerid][player_status][s] == type ) return;
 	}
-	
+
 	if( free_slot == -1 ) return;
-	
+
 	pInfo[playerid][player_status][free_slot] = type;
 	UpdatePlayerLabel(playerid);
 }
@@ -908,9 +908,9 @@ stock RemovePlayerStatus(playerid, type)
 {
 	for(new s; s < 5; s++)
 	{
-		if( pInfo[playerid][player_status][s] == 0 ) continue;	
+		if( pInfo[playerid][player_status][s] == 0 ) continue;
 		if( pInfo[playerid][player_status][s] == type ) pInfo[playerid][player_status][s] = 0;
-	}	
+	}
 	UpdatePlayerLabel(playerid);
 }
 
@@ -930,11 +930,11 @@ stock ApplyCommandAnim(playerid, alias[])
 	{
 		mysql_query(sprintf("SELECT * FROM `ipb_anim` WHERE `anim_command` = '%s'", alias));
 		mysql_store_result();
-		
+
 		if( mysql_num_rows() == 1 )
 		{
 			new anim_action = mysql_fetch_field_int("anim_action");
-			
+
 			if( anim_action > 0 )
 			{
 				SetPlayerSpecialAction(playerid, anim_action);
@@ -944,17 +944,17 @@ stock ApplyCommandAnim(playerid, alias[])
 				new anim_lib[20], anim_name[20];
 				mysql_fetch_field("anim_lib", anim_lib);
 				mysql_fetch_field("anim_name", anim_name);
-				
+
 				pInfo[playerid][player_looped_anim] = true;
-				
-				ApplyAnimation(playerid, anim_lib, anim_name, mysql_fetch_field_float("anim_speed"), mysql_fetch_field_int("anim_opt1"), mysql_fetch_field_int("anim_opt2"), mysql_fetch_field_int("anim_opt3"), mysql_fetch_field_int("anim_opt4"), mysql_fetch_field_int("anim_opt5"), 1);	
+
+				ApplyAnimation(playerid, anim_lib, anim_name, mysql_fetch_field_float("anim_speed"), mysql_fetch_field_int("anim_opt1"), mysql_fetch_field_int("anim_opt2"), mysql_fetch_field_int("anim_opt3"), mysql_fetch_field_int("anim_opt4"), mysql_fetch_field_int("anim_opt5"), 1);
 			}
 		}
 		else
 		{
 			PlayerPlaySound(playerid, 1055, 0.0, 0.0, 0.0);
 		}
-		
+
 		mysql_free_result();
 	}
 	else
@@ -1003,7 +1003,7 @@ stock GetPlayerFreeAttachSlot(playerid)
 			if( !IsPlayerAttachedObjectSlotUsed(playerid, i) ) return i;
 	    }
 	}
-	
+
     return -1;
 }
 
@@ -1054,7 +1054,7 @@ stock IsPlayerCop(playerid)
 {
 	if(IsPlayerConnected(playerid))
 	{
-		if(GetPlayerSkin(playerid)== 281 || 
+		if(GetPlayerSkin(playerid)== 281 ||
 		GetPlayerSkin(playerid)== 265 ||
 		GetPlayerSkin(playerid)== 266 ||
 		GetPlayerSkin(playerid)== 267 ||
@@ -1064,7 +1064,7 @@ stock IsPlayerCop(playerid)
 		GetPlayerSkin(playerid)== 284 ||
 		GetPlayerSkin(playerid)== 285 ||
 		GetPlayerSkin(playerid)== 286 ||
-		GetPlayerSkin(playerid)== 288) 
+		GetPlayerSkin(playerid)== 288)
 		{
 			return 1;
 		}
@@ -1093,17 +1093,17 @@ stock CleanPlayerData(playerid)
 {
 	new Text3D:tmp_label = pInfo[playerid][player_label];
 	new Text3D:tmp_label2 = pInfo[playerid][player_description_label];
-	
+
 	for(new z=0; e_players_info:z != e_players_info; z++)
     {
 		pInfo[playerid][e_players_info:z] = 0;
     }
-	
+
 	for(new x=0; e_player_offer:x != e_player_offer; x++)
 	{
 		pOffer[playerid][e_player_offer:x] = 0;
 	}
-	
+
 	for(new y;y<13;y++)
 	{
 		pWeapon[playerid][y][pw_itemid] = -1;
@@ -1113,7 +1113,7 @@ stock CleanPlayerData(playerid)
 	}
 
 	CleanPlayerDamages(playerid);
-	
+
 	pInfo[playerid][player_gym_carnet] = 10;
 	pInfo[playerid][player_label] = tmp_label;
 	pInfo[playerid][player_description_label] = tmp_label2;
@@ -1148,10 +1148,10 @@ stock CleanPlayerGroup(playerid, slot, bool:do_reload = true)
     {
 		pGroup[playerid][slot][e_player_groups:z] = 0;
     }
-	
+
 	pGroup[playerid][slot][pg_id] = -1;
 	pGroup[playerid][slot][pg_rank_skin] = -1;
-	
+
 	if( do_reload )
 	{
 		ReloadPlayerGroupData(playerid);
@@ -1167,7 +1167,7 @@ stock ReloadPlayerGroupData(playerid)
 			if( pGroup[playerid][i+1][pg_id] != -1 )
 			{
 				pGroup[playerid][i][pg_id] = pGroup[playerid][i+1][pg_id];
-				
+
 				pGroup[playerid][i][pg_rank_skin] = pGroup[playerid][i+1][pg_rank_skin];
 				pGroup[playerid][i][pg_rank_payment] = pGroup[playerid][i+1][pg_rank_payment];
 				pGroup[playerid][i][pg_rank_perm] = pGroup[playerid][i+1][pg_rank_perm];
@@ -1175,9 +1175,9 @@ stock ReloadPlayerGroupData(playerid)
 				pGroup[playerid][i][pg_duty] = pGroup[playerid][i+1][pg_duty];
 				pGroup[playerid][i][pg_duty_time] = pGroup[playerid][i+1][pg_duty_time];
 				pGroup[playerid][i][pg_payday_count] = pGroup[playerid][i+1][pg_payday_count];
-				
+
 				strcopy(pGroup[playerid][i][pg_rank_title], pGroup[playerid][i+1][pg_rank_title], 32);
-				
+
 				CleanPlayerGroup(playerid, i+1, false);
 			}
 		}
@@ -1206,11 +1206,11 @@ stock SellDrug(playerid, price, itemid)
 
 		pInfo[playerid][player_capacity] += PlayerItem[playerid][itemid][player_item_weight];
 		mysql_query(mySQLconnection, sprintf("UPDATE ipb_items SET item_value2 = %d, item_weight = %d WHERE item_uid = %d AND item_owner = %d", PlayerItem[playerid][itemid][player_item_value2], PlayerItem[playerid][itemid][player_item_value2], PlayerItem[playerid][itemid][player_item_uid], pInfo[playerid][player_id]));
-		
+
 		if(cache_affected_rows(mySQLconnection))
 		{
 			GivePlayerMoney(playerid, price);
-			
+
 			new str[64];
 			format(str, sizeof(str), "~w~Udalo ci sie sprzedac dzialke towaru. Otrzymujesz ~p~$%d~w~.", price);
 			SendPlayerInformation(playerid, str, 5000);
@@ -1226,7 +1226,7 @@ stock SellDrug(playerid, price, itemid)
 stock UpdatePlayerBWTextdraw(playerid)
 {
 	new bstring[50], Float:TimeInMin = floatdiv((pInfo[playerid][player_bw_end_time] - gettime()), 60);
-	format(bstring, sizeof(bstring), "~w~koniec ~y~bw~w~: ~y~%d ~w~min.", floatround(TimeInMin, floatround_ceil));	
+	format(bstring, sizeof(bstring), "~w~koniec ~y~bw~w~: ~y~%d ~w~min.", floatround(TimeInMin, floatround_ceil));
 	GameTextForPlayer(playerid,  bstring, 5000, 1);
 }
 
@@ -1314,7 +1314,7 @@ task PlayerLoop[1000]()
 			{
 				pInfo[playerid][player_bus_time]--;
 				TogglePlayerControllable(playerid, false);
-				
+
 				if(pInfo[playerid][player_bus_time] == 0)
 				{
 					new Float:x, Float:y, Float:z;
@@ -1496,7 +1496,7 @@ task PlayerLoop[1000]()
 						pInfo[playerid][player_rob_stage] = STAGE_ROBBING;
 						ApplyAnimation(playerid, "ROB_BANK", "CAT_Safe_Rob", 4.0, true, false, false, false, 0, 1);
 						PlayerPlaySound(playerid, 25602, 0, 0, 0);
-						
+
 						new g_id = GetClosestObjectType(playerid, OBJECT_SAFE_DOOR);
 					    if(g_id != INVALID_OBJECT_ID)
 					    {
@@ -1536,7 +1536,7 @@ task PlayerLoop[1000]()
 					    	defer ExplodeObject[10000](safe_door);
 						    GameTextForPlayer(playerid, "~w~Wybuch za ~r~~h~10 ~w~sekund", 4000, 1);
 						    GetPlayerPos(playerid, x, y, z);
-						    
+
 						    new g_id = GetClosestObjectType(playerid, OBJECT_OPEN_SAFE);
 					    	if(g_id != INVALID_OBJECT_ID) Object[g_id][object_robbed] = true;
 
@@ -1643,7 +1643,7 @@ task PlayerLoop[1000]()
 
 						pInfo[playerid][player_dialog_tmp4] = 0;
 						TextDrawHideForPlayer(playerid, Tutorial[playerid]);
-						
+
 						SellDrug(playerid, drug_price, itemid);
 						pInfo[playerid][player_dealing] = false;
 					}
@@ -1718,7 +1718,7 @@ task PlayerLoop[1000]()
 	  					if(pInfo[playerid][player_repair_time] <= 0)
 	  					{
 	  						new price = pInfo[playerid][player_fixprice];
-	  						
+
 	  					   	Vehicle[vehid][vehicle_damage][0] = 0;
 	  					    Vehicle[vehid][vehicle_damage][1] = 0;
 	  					    Vehicle[vehid][vehicle_damage][2] = 0;
@@ -1726,7 +1726,7 @@ task PlayerLoop[1000]()
 
   					    	Vehicle[vehid][vehicle_health] = 1000.00;
   					    	SetVehicleHealth(vehid, 1000);
-	  					    
+
 	  					    Vehicle[vehid][vehicle_destroyed] = false;
 
 	  					    UpdateVehicleDamageStatus(vehid, Vehicle[vehid][vehicle_damage][0], Vehicle[vehid][vehicle_damage][1], Vehicle[vehid][vehicle_damage][2], Vehicle[vehid][vehicle_damage][3]);
@@ -1783,29 +1783,29 @@ task PlayerLoop[1000]()
                     {
                         format(str, sizeof(str), "Trwa monta� komponentu (%ds)", pInfo[playerid][player_montage_time]);
                         format(string, sizeof(string), "~w~Pozostalo: ~y~%d ~w~sekund do konca montazu.", pInfo[playerid][player_montage_time]);
- 
+
                         pInfo[playerid][player_montage_time] --;
- 
+
                         UpdateDynamic3DTextLabelText(Vehicle[vehid][vehicle_state_label], COLOR_CAR_STATE, str);
                         TextDrawSetString(Tutorial[playerid], string);
                         TextDrawShowForPlayer(playerid, Tutorial[playerid]);
- 
+
                         if(pInfo[playerid][player_montage_time] <= 0)
                         {
                             new itemid = GetPlayerUsedItem(playerid, ITEM_TYPE_ACCESS);
                             new compid = pInfo[playerid][player_montage_comp];
- 
+
                             Vehicle[vehid][vehicle_accessories] += compid;
-                           
+
                             mysql_query(mySQLconnection, sprintf("UPDATE ipb_vehicles SET vehicle_access = '%d' WHERE vehicle_uid = %d", Vehicle[vehid][vehicle_accessories], Vehicle[vehid][vehicle_uid]));
- 
+
                             SendGuiInformation(playerid,"Informacja", "Sukces! Komponent zosta� zamontowany w poje�dzie.");
- 
+
                             pInfo[playerid][player_montage_car] = INVALID_VEHICLE_ID;
                             pInfo[playerid][player_montage_time] = 0;
- 
+
                             DeleteItem(itemid, true, playerid);
- 
+
                             TextDrawHideForPlayer(playerid, Tutorial[playerid]);
                             UpdateDynamic3DTextLabelText(Vehicle[vehid][vehicle_state_label], COLOR_CAR_STATE, "");
                             pInfo[playerid][player_tuning] = 0;
@@ -1857,7 +1857,7 @@ task PlayerLoop[1000]()
 	  						new comp11 = Vehicle[vehid][vehicle_component][11];
 	  						new comp12 = Vehicle[vehid][vehicle_component][12];
 	  						new comp13 = Vehicle[vehid][vehicle_component][13];
-	  						
+
 	  					    new visual_tuning[128];
 							format(visual_tuning, sizeof(visual_tuning), "%d %d %d %d %d %d %d %d %d %d %d %d %d %d", comp0, comp1, comp2, comp3, comp4, comp5, comp6, comp7,comp8, comp9, comp10, comp11, comp12, comp13);
 	  					    mysql_query(mySQLconnection, sprintf("UPDATE ipb_vehicles SET vehicle_component = '%s' WHERE vehicle_uid = %d", visual_tuning, Vehicle[vehid][vehicle_uid]));
@@ -1942,9 +1942,9 @@ task PlayerLoop[1000]()
 						{
 							new spraytime = pInfo[playerid][player_spraying_time];
 							format(str, sizeof(str), "Pojazd w trakcie malowania (%d%%)", spraytime);
-							
-					        pInfo[playerid][player_spraying_time] += 2;        	
-					       
+
+					        pInfo[playerid][player_spraying_time] += 2;
+
 					        UpdateDynamic3DTextLabelText(Vehicle[vehid][vehicle_state_label], COLOR_CAR_STATE, str);
 
 		  					if(pInfo[playerid][player_spraying_time] >= 100)
@@ -1971,7 +1971,7 @@ task PlayerLoop[1000]()
 					}
 			    }
 			}
-			
+
 			if( pInfo[playerid][player_taken_damage] > 0 && gettime() - pInfo[playerid][player_taken_damage] >= 2 )
 			{
 				pInfo[playerid][player_taken_damage] = 0;
@@ -1984,32 +1984,32 @@ task PlayerLoop[1000]()
 
 				switch(pInfo[playerid][player_flash])
 				{
-					case 10: 
+					case 10:
 					{
 						PlayerTextDrawColor(playerid, WhiteScreen, 0xFFFFFFCC);
 						PlayerTextDrawBoxColor(playerid, WhiteScreen, 0xFFFFFFCC);
 					}
-					case 9:	
+					case 9:
 					{
 						PlayerTextDrawColor(playerid, WhiteScreen, 0xFFFFFFBB);
 						PlayerTextDrawBoxColor(playerid, WhiteScreen, 0xFFFFFFBB);
 					}
-					case 8: 
+					case 8:
 					{
 						PlayerTextDrawColor(playerid, WhiteScreen, 0xFFFFFFAA);
 						PlayerTextDrawBoxColor(playerid, WhiteScreen, 0xFFFFFFAA);
 					}
-					case 7: 
+					case 7:
 					{
 						PlayerTextDrawColor(playerid, WhiteScreen, 0xFFFFFF99);
 						PlayerTextDrawBoxColor(playerid, WhiteScreen, 0xFFFFFF99);
 					}
-					case 6: 
+					case 6:
 					{
 						PlayerTextDrawColor(playerid, WhiteScreen, 0xFFFFFF88);
 						PlayerTextDrawBoxColor(playerid, WhiteScreen, 0xFFFFFF88);
 					}
-					case 5: 
+					case 5:
 					{
 						PlayerTextDrawColor(playerid, WhiteScreen, 0xFFFFFF77);
 						PlayerTextDrawBoxColor(playerid, WhiteScreen, 0xFFFFFF77);
@@ -2018,13 +2018,13 @@ task PlayerLoop[1000]()
 					{
 						PlayerTextDrawColor(playerid, WhiteScreen, 0xFFFFFF66);
 						PlayerTextDrawBoxColor(playerid, WhiteScreen, 0xFFFFFF66);
-					} 
-					case 3: 
+					}
+					case 3:
 					{
 						PlayerTextDrawColor(playerid, WhiteScreen, 0xFFFFFF55);
 						PlayerTextDrawBoxColor(playerid, WhiteScreen, 0xFFFFFF55);
 					}
-					case 2: 
+					case 2:
 					{
 						PlayerTextDrawColor(playerid, WhiteScreen, 0xFFFFFF33);
 						PlayerTextDrawBoxColor(playerid, WhiteScreen, 0xFFFFFF33);
@@ -2124,7 +2124,7 @@ task PlayerLoop[1000]()
 		    		}
 				}
 			}
-			
+
 			if( pInfo[playerid][player_bw] > 0 )
 			{
 				if( pInfo[playerid][player_bw_end_time] <= gettime() )
@@ -2133,7 +2133,7 @@ task PlayerLoop[1000]()
 					pInfo[playerid][player_bw] = 0;
 					pInfo[playerid][player_bw_end_time] = 0;
 					mysql_query(mySQLconnection, sprintf("UPDATE `ipb_characters` SET `char_bw` = 0 WHERE `char_uid` = %d", pInfo[playerid][player_id]));
-					
+
 					RemovePlayerStatus(playerid, PLAYER_STATUS_BW);
 					SetPlayerHealth(playerid, 20);
 					TogglePlayerControllable(playerid, true);
@@ -2149,7 +2149,7 @@ task PlayerLoop[1000]()
 					UpdatePlayerBWTextdraw(playerid);
 				}
 			}
-			
+
 			if(pInfo[playerid][player_bw] > 0)
 			{
 				if(GetPlayerSpeed(playerid) > 2)
@@ -2178,13 +2178,13 @@ task PlayerLoop[1000]()
 				KickAc(playerid, -1, "Unfreeze");
 				continue;
 			}
-			
+
 			/*if( pInfo[playerid][player_health_changed] ) pInfo[playerid][player_health_changed] = false;
 			else
 			{
 				new Float:health;
 				GetPlayerHealth(playerid, health);
-				if( health > pInfo[playerid][player_health] ) 
+				if( health > pInfo[playerid][player_health] )
 				{
 					SetPlayerHealth(playerid, floatround(pInfo[playerid][player_health]));
 				}
@@ -2195,7 +2195,7 @@ task PlayerLoop[1000]()
 			{
 				new Float:armour;
 				GetPlayerArmour(playerid, armour);
-				if( armour > pInfo[playerid][player_armour] ) 
+				if( armour > pInfo[playerid][player_armour] )
 				{
 					SetPlayerArmour(playerid, floatround(pInfo[playerid][player_armour]));
 				}

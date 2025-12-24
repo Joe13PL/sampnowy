@@ -1,22 +1,22 @@
 stock ListPlayerItems(playerid)
 {
 	new count, string[1024], header[64];
-		
+
 	DynamicGui_Init(playerid);
-	
+
 	format(string, sizeof(string), "%sNazwa\tWaga\tUID\n", string);
 	format(header, sizeof(header), "Lista dost�pnych przedmiot�w [Ud�wig: %dg]", pInfo[playerid][player_capacity]);
 
 	foreach (new item : PlayerItems[playerid])
 	{
-		new prefix[16]; 
+		new prefix[16];
 		if( PlayerItem[playerid][item][player_item_used] ) prefix = "{D6EE76}";
 
 		format(string, sizeof(string), "%s %s%s\t%dg\t%d\n", string, prefix, PlayerItem[playerid][item][player_item_name],PlayerItem[playerid][item][player_item_weight], PlayerItem[playerid][item][player_item_uid]);
-		DynamicGui_AddRow(playerid, DG_ITEMS_ITEM_ROW, item);	
+		DynamicGui_AddRow(playerid, DG_ITEMS_ITEM_ROW, item);
 		count++;
 	}
-	
+
 	if( count == 0 ) SendGuiInformation(playerid, ""guiopis"Informacja", "Niestety nie posiadasz �adnych przedmiot�w!\nAby naby� pocz�tkowe przedmioty udaj si� do sklepu 24/7.");
 	else ShowPlayerDialog(playerid, DIALOG_PLAYER_ITEMS, DIALOG_STYLE_TABLIST_HEADERS, header, string, "U�yj", "Opcje");
 	return 1;
@@ -70,12 +70,12 @@ stock ListPlayerGroundItems(playerid)
         	SendGuiInformation(playerid, "Informacja", "Brak przedmiot�w w pobli�u.");
         	return 1;
         }
-        
+
         new rows, fields;
-        
+
         mysql_query(mySQLconnection, main_query);
        	cache_get_data(rows, fields);
-       	
+
 		for(new row = 0; row != rows; row++)
 		{
 			ground_item_uid = cache_get_row_int(row, 0);
@@ -84,7 +84,7 @@ stock ListPlayerGroundItems(playerid)
 			format(list_items, sizeof(list_items), "%s\n%d\t%s", list_items, ground_item_uid, ground_item_name);
 			DynamicGui_AddRow(playerid, DG_ITEMS_PICKUP_ROW, ground_item_uid);
 		}
-		
+
 		if(strlen(list_items) > 0)
 		{
 			ShowPlayerDialog(playerid, DIALOG_ITEMS_PICKUP, DIALOG_STYLE_LIST, "Przedmioty w pobli�u:", list_items, "Podnie�", "Anuluj");
@@ -146,11 +146,11 @@ stock ListPlayerGroundItems(playerid)
 stock LoadPlayerItem(playerid, limit[] = "", bool:return_id = false)
 {
 	new rows, fields;
-	mysql_query(mySQLconnection, sprintf("SELECT * FROM `ipb_items` %s", limit));  
+	mysql_query(mySQLconnection, sprintf("SELECT * FROM `ipb_items` %s", limit));
 	cache_get_data(rows, fields);
-	
+
 	new i_id = -1, ownertype;
-	
+
 	for(new row = 0; row != rows; row++)
 	{
 		ownertype = cache_get_row_int(row, 14);
@@ -159,20 +159,20 @@ stock LoadPlayerItem(playerid, limit[] = "", bool:return_id = false)
 		{
 			i_id = Iter_Free(PlayerItems[playerid]);
 			Iter_Add(PlayerItems[playerid], i_id);
-			
+
 			PlayerItem[playerid][i_id][player_item_uid] = cache_get_row_int(row, 0);
 			PlayerItem[playerid][i_id][player_item_type] = cache_get_row_int(row, 4);
 			PlayerItem[playerid][i_id][player_item_value1] = cache_get_row_int(row, 2);
 			PlayerItem[playerid][i_id][player_item_value2] = cache_get_row_int(row, 3);
 			PlayerItem[playerid][i_id][player_item_used] = cache_get_row_int(row, 19);
-			
+
 			PlayerItem[playerid][i_id][player_item_model] = cache_get_row_int(row, 18);
-			
+
 			PlayerItem[playerid][i_id][player_item_extraid] = cache_get_row_int(row, 23);
 			PlayerItem[playerid][i_id][player_item_weight] = cache_get_row_int(row, 13);
 			PlayerItem[playerid][i_id][player_item_created] = cache_get_row_int(row, 20);
 			PlayerItem[playerid][i_id][player_item_condition] = cache_get_row_float(row, 24);
-			
+
 			cache_get_row(row, 1, PlayerItem[playerid][i_id][player_item_name], mySQLconnection, 40);
 
 			SetupPlayerItemWeight(playerid, i_id);
@@ -182,7 +182,7 @@ stock LoadPlayerItem(playerid, limit[] = "", bool:return_id = false)
 			return 1;
 		}
 	}
-	
+
 	if( return_id ) return i_id;
 	return 1;
 }
@@ -190,11 +190,11 @@ stock LoadPlayerItem(playerid, limit[] = "", bool:return_id = false)
 stock LoadItem(limit[] = "", bool:return_id = false, bool:force_date = false)
 {
 	new rows, fields;
-	mysql_query(mySQLconnection, sprintf("SELECT * FROM `ipb_items` %s", limit));  
+	mysql_query(mySQLconnection, sprintf("SELECT * FROM `ipb_items` %s", limit));
 	cache_get_data(rows, fields);
-	
+
 	new i_id = -1, ownertype;
-	
+
 	for(new row = 0; row != rows; row++)
 	{
 		ownertype = cache_get_row_int(row, 14);
@@ -203,16 +203,16 @@ stock LoadItem(limit[] = "", bool:return_id = false, bool:force_date = false)
 		{
 			i_id = Iter_Free(Items);
 			Iter_Add(Items, i_id);
-			
+
 			Item[i_id][item_uid] = cache_get_row_int(row, 0);
 			Item[i_id][item_type] = cache_get_row_int(row, 4);
 			Item[i_id][item_value1] = cache_get_row_int(row, 2);
 			Item[i_id][item_value2] = cache_get_row_int(row, 3);
-			
+
 			Item[i_id][item_owner_type] = cache_get_row_int(row, 14);
 			Item[i_id][item_owner] = cache_get_row_int(row, 15);
 			Item[i_id][item_group] = cache_get_row_int(row, 17);
-			
+
 			Item[i_id][item_model] = cache_get_row_int(row, 18);
 
 			Item[i_id][item_price] = cache_get_row_int(row, 21);
@@ -220,7 +220,7 @@ stock LoadItem(limit[] = "", bool:return_id = false, bool:force_date = false)
 
 			Item[i_id][item_extraid] = cache_get_row_int(row, 23);
 			Item[i_id][item_weight] = cache_get_row_int(row, 13);
-			
+
 			cache_get_row(row, 1, Item[i_id][item_name], mySQLconnection, 40);
 		}
 
@@ -244,7 +244,7 @@ stock LoadItem(limit[] = "", bool:return_id = false, bool:force_date = false)
 					ground_rx = cache_get_row_float(row, 8);
 					ground_ry = cache_get_row_float(row, 9);
 					ground_rz = cache_get_row_float(row, 10);
-					
+
 					ground_interior = cache_get_row_int(row, 12);
 
 					ground_object = CreateDynamicObject(ground_model, ground_x, ground_y, ground_z, ground_rx, ground_ry, ground_rz, ground_world, ground_interior, -1, 100.0);
@@ -290,7 +290,7 @@ stock LoadItem(limit[] = "", bool:return_id = false, bool:force_date = false)
 			}
 		}
 	}
-	
+
 	if( return_id ) return i_id;
 	return rows;
 }
@@ -312,7 +312,7 @@ stock DeleteItem(itemid, bool:from_db = false, playerid = INVALID_PLAYER_ID)
 	{
 		if( from_db ) mysql_query(mySQLconnection, sprintf("DELETE FROM `ipb_items` WHERE `item_uid` = %d", Item[itemid][item_uid]));
 		Iter_Remove(Items, itemid);
-	
+
 		for(new z=0; e_items:z != e_items; z++)
 	    {
 			Item[itemid][e_items:z] = 0;
@@ -329,7 +329,7 @@ stock Item_FastUsage(playerid, const sub_cmd[], param[])
 	 	if(strfind(PlayerItem[playerid][item][player_item_name], sub_cmd, true) >= 0)
 	 	{
 	 		sscanf(param, "s[40]dd", last_param, targetid, price);
-			
+
 			if( !strcmp(last_param, "daj") )
 			{
 				if(!IsPlayerConnected(targetid)) SendGuiInformation(playerid, "Informacja", "Niepoprawne id gracza.");
@@ -346,7 +346,7 @@ stock Item_FastUsage(playerid, const sub_cmd[], param[])
 			{
 				if(!IsPlayerConnected(targetid)) SendGuiInformation(playerid, "Informacja", "Niepoprawne id gracza.");
 				break;
-			}	
+			}
 
  			if(PlayerItem[playerid][item][player_item_used])
  			{
@@ -360,7 +360,7 @@ stock Item_FastUsage(playerid, const sub_cmd[], param[])
 	 		 		SendPlayerInformation(playerid, "~w~Probujac wyjac bron za pomoca komendy ~p~/p~w~ podaj dodaktowy parametr. Miejsce z ktorego chcesz wyjac przedmiot.~n~~n~Przyklad: /p glock zza paska.", 8000);
 	 		 		return 1;
 	 		 	}
-	 		 	
+
 	 		 	Item_Use(item, playerid, true, param);
 	 		 	break;
 	 		 }
@@ -370,7 +370,7 @@ stock Item_FastUsage(playerid, const sub_cmd[], param[])
 }
 
 stock Item_Use(itemid, playerid = INVALID_PLAYER_ID, bool:via_cmd = false, addparam[]="")
-{	
+{
 	switch( PlayerItem[playerid][itemid][player_item_type] )
 	{
 		case ITEM_TYPE_WEAPON:
@@ -378,7 +378,7 @@ stock Item_Use(itemid, playerid = INVALID_PLAYER_ID, bool:via_cmd = false, addpa
 			if( PlayerItem[playerid][itemid][player_item_used] )
 			{
 				new wslot = GetWeaponSlot(PlayerItem[playerid][itemid][player_item_value1]);
-				
+
 				if(PlayerItem[playerid][itemid][player_item_value1] == 41)
 				{
 					new tmp, ammo;
@@ -389,23 +389,23 @@ stock Item_Use(itemid, playerid = INVALID_PLAYER_ID, bool:via_cmd = false, addpa
 				{
 					PlayerItem[playerid][itemid][player_item_value2] = pWeapon[playerid][wslot][pw_ammo];
 				}
-				
+
 				PlayerItem[playerid][itemid][player_item_used] = false;
-				
+
 				if( pWeapon[playerid][wslot][pw_object_index] > -1 ) RemovePlayerAttachedObject(playerid, pWeapon[playerid][wslot][pw_object_index]);
-				
+
 				pWeapon[playerid][wslot][pw_itemid] = -1;
 				pWeapon[playerid][wslot][pw_id] = -1;
 				pWeapon[playerid][wslot][pw_ammo] = -1;
 				pWeapon[playerid][wslot][pw_object_index] = -1;
-				
+
 				ResetPlayerWeapons(playerid);
-				
+
 				for(new i;i<13;i++)
 				{
 					if( pWeapon[playerid][i][pw_itemid] > -1 ) GivePlayerWeapon(playerid, pWeapon[playerid][i][pw_id], pWeapon[playerid][i][pw_ammo]);
 				}
-				
+
 				mysql_query(mySQLconnection, sprintf("UPDATE `ipb_items` SET `item_value2` = %d, `item_condition` = %f WHERE `item_uid` = %d", PlayerItem[playerid][itemid][player_item_value2], PlayerItem[playerid][itemid][player_item_condition], PlayerItem[playerid][itemid][player_item_uid]));
 
 				SetPVarInt(playerid, "taser", 0);
@@ -434,24 +434,24 @@ stock Item_Use(itemid, playerid = INVALID_PLAYER_ID, bool:via_cmd = false, addpa
 
 				// Sprawdzamy czy ma godziny
 				if( pInfo[playerid][player_hours] < 1 ) return SendGuiInformation(playerid, ""guiopis"Powiadomienie", "Musisz przegra� conajmniej godzin� na serwerze aby u�y� broni.");
-				
+
 				// Sprawdzamy czy jest amunicja
 				if( PlayerItem[playerid][itemid][player_item_value2] == 0 ) return SendGuiInformation(playerid, ""guiopis"Powiadomienie", "W tej broni amunicja zosta�a ca�kowicie zu�yta.");
 
 				if( PlayerItem[playerid][itemid][player_item_condition] <= 0 ) return SendGuiInformation(playerid, ""guiopis"Powiadomienie", "Ta bro� jest ca�kowicie zniszczona.");
-				
+
 				// Sprawdzamy czy czasem nie ma juz broni tego samego typu
 				new wtype = GetWeaponType(PlayerItem[playerid][itemid][player_item_value1]);
 				for(new i;i<13;i++)
 				{
 					if( pWeapon[playerid][i][pw_itemid] > -1 && GetWeaponType(pWeapon[playerid][i][pw_id]) == wtype ) return SendGuiInformation(playerid, ""guiopis"Powiadomienie", "Aktualnie u�ywasz broni tego typu.\nSchowaj obecn�, a nast�pnie spr�buj ponownie.");
 				}
-				
+
 				if( GetPlayerUsedItem(playerid, ITEM_TYPE_GLOVES) == -1 )
 				{
 					mysql_query(mySQLconnection, sprintf("INSERT INTO `ipb_fingerprints` (finger_owner, finger_person) VALUES ('%d', '%d')", PlayerItem[playerid][itemid][player_item_uid], pInfo[playerid][player_id]));
 				}
-				
+
 				if( PlayerItem[playerid][itemid][player_item_extraid] == 1)
 				{
 					new gid = pInfo[playerid][player_duty_gid];
@@ -502,12 +502,12 @@ stock Item_Use(itemid, playerid = INVALID_PLAYER_ID, bool:via_cmd = false, addpa
 					}
 				}
 
-				
+
 				pWeapon[playerid][wslot][pw_itemid] = itemid;
 				pWeapon[playerid][wslot][pw_id] = PlayerItem[playerid][itemid][player_item_value1];
 				pWeapon[playerid][wslot][pw_ammo] = PlayerItem[playerid][itemid][player_item_value2];
 				GivePlayerWeapon(playerid, PlayerItem[playerid][itemid][player_item_value1], PlayerItem[playerid][itemid][player_item_value2]);
-				
+
 				PlayerItem[playerid][itemid][player_item_used] = true;
 
 				if(via_cmd == false)
@@ -532,8 +532,8 @@ stock Item_Use(itemid, playerid = INVALID_PLAYER_ID, bool:via_cmd = false, addpa
         		if(VehicleHasAccessory(vid, VEHICLE_ACCESSORY_AUDIO)) return SendGuiInformation(playerid, "Informacja", "Ten pojazd posiada ju� radio.");
 
         		Vehicle[vid][vehicle_accessories] += VEHICLE_ACCESSORY_AUDIO;
-                           
-                mysql_query(mySQLconnection, sprintf("UPDATE ipb_vehicles SET vehicle_access = '%d' WHERE vehicle_uid = %d", Vehicle[vid][vehicle_accessories], Vehicle[vid][vehicle_uid]));
+
+                mysql_query(mySQLconnection, sprintf("UPDATE vehicles SET vehicle_access = '%d' WHERE vehicle_uid = %d", Vehicle[vid][vehicle_accessories], Vehicle[vid][vehicle_uid]));
 
                 SendGuiInformation(playerid,"Informacja", "Radio zosta�o pomy�lnie zamontowane w twoim poje�dzie.");
                 cmd_ame(playerid, "montuje radio w samochodzie.");
@@ -649,7 +649,7 @@ stock Item_Use(itemid, playerid = INVALID_PLAYER_ID, bool:via_cmd = false, addpa
 					mysql_query(mySQLconnection, sprintf("INSERT INTO `ipb_game_cameras` (camera_door, camera_suspects) VALUES ('%d', '%s')", Door[d_id][door_uid], suspects_list));
 				}
 			}
-			
+
 			DeleteItem(itemid, true, playerid);
 		}
 
@@ -722,7 +722,7 @@ stock Item_Use(itemid, playerid = INVALID_PLAYER_ID, bool:via_cmd = false, addpa
 				PlayerItem[playerid][itemid][player_item_used]=false;
 
 				UpdatePlayerLabel(playerid);
-				
+
 				SendGuiInformation(playerid, ""guiopis"Powiadomienie", "Maska zosta�a zdj�ta.\nTw�j nick wraca do normalnego stanu.");
 			}
 			else
@@ -746,7 +746,7 @@ stock Item_Use(itemid, playerid = INVALID_PLAYER_ID, bool:via_cmd = false, addpa
 					strcopy(pInfo[playerid][player_name], nazwa, MAX_PLAYER_NAME+1);
 
 					UpdatePlayerLabel(playerid);
-					
+
 					PlayerItem[playerid][itemid][player_item_value1] --;
 					mysql_query(mySQLconnection, sprintf("UPDATE `ipb_items` SET `item_value1` = %d WHERE `item_uid` = %d", PlayerItem[playerid][itemid][player_item_value1], PlayerItem[playerid][itemid][player_item_uid]));
 					SendGuiInformation(playerid, ""guiopis"Powiadomienie", "Maska zosta�a za�o�ona.");
@@ -776,19 +776,19 @@ stock Item_Use(itemid, playerid = INVALID_PLAYER_ID, bool:via_cmd = false, addpa
                 if(GetPlayerState(playerid) == PLAYER_STATE_PASSENGER || GetPlayerState(playerid) == PLAYER_STATE_DRIVER)
                 {
                     new vehid = GetPlayerVehicleID(playerid), rows, fields;
- 					
+
  					if( !CanPlayerUseVehicle(playerid, vehid) ) return SendGuiInformation(playerid, "Informacja", "Brak uprawnie� do zarz�dzania tym pojazdem.");
  					if( !VehicleHasAccessory(vehid, VEHICLE_ACCESSORY_AUDIO)) return SendGuiInformation(playerid, "Informacja", "Ten pojazd nie posiada radia.\nMo�esz je kupi� w ka�dym 24/7.");
 
                     mysql_query(mySQLconnection, sprintf("SELECT cd_link FROM `ipb_cds` WHERE `cd_item` = %d", PlayerItem[playerid][itemid][player_item_uid]));
                    	cache_get_data(rows, fields);
- 
+
                     new cdlink[128];
                     cache_get_row(0, 0, cdlink, mySQLconnection, 128);
- 
+
                     Vehicle[vehid][vehicle_streaming] = 1;
                     strmid(Vehicle[vehid][vehicle_stream], cdlink, 0, strlen(cdlink), 128);
- 
+
                     foreach(new p: Player)
                     {
                         if(GetPlayerVehicleID(p) == vehid)
@@ -815,12 +815,12 @@ stock Item_Use(itemid, playerid = INVALID_PLAYER_ID, bool:via_cmd = false, addpa
 
                     	mysql_query(mySQLconnection, sprintf("SELECT cd_link FROM `ipb_cds` WHERE `cd_item` = %d", PlayerItem[playerid][itemid][player_item_uid]));
 	                   	cache_get_data(rows, fields);
-	 
+
 	                    new cdlink[128];
 	                    cache_get_row(0, 0, cdlink, mySQLconnection, 128);
-	 
+
 	                    strmid(Door[did][door_audio], cdlink, 0, strlen(cdlink), 128);
-	 
+
 	                   	foreach(new p : Player)
 						{
 							if( GetPlayerVirtualWorld(p) == Door[did][door_spawn_vw] )
@@ -842,7 +842,7 @@ stock Item_Use(itemid, playerid = INVALID_PLAYER_ID, bool:via_cmd = false, addpa
                     new vehid = GetPlayerVehicleID(playerid);
                     Vehicle[vehid][vehicle_streaming] = 0;
                     StopAudioStreamForPlayer(playerid);
- 
+
                     foreach(new p: Player)
                     {
                         if(GetPlayerVehicleID(p) == vehid)
@@ -850,7 +850,7 @@ stock Item_Use(itemid, playerid = INVALID_PLAYER_ID, bool:via_cmd = false, addpa
                             StopAudioStreamForPlayer(p);
                         }
                     }
- 
+
                     ProxMessage(playerid, "wyjmuje p�yt� z odtwarzacza w samochodzie.", PROX_ME);
                     PlayerItem[playerid][itemid][player_item_used]=false;
                 }
@@ -894,7 +894,7 @@ stock Item_Use(itemid, playerid = INVALID_PLAYER_ID, bool:via_cmd = false, addpa
                 PlayerItem[playerid][itemid][player_item_used] = true;
             }
         }
-		
+
 		case ITEM_TYPE_GLOVES:
 		{
 			if( PlayerItem[playerid][itemid][player_item_used] )
@@ -1008,7 +1008,7 @@ stock Item_Use(itemid, playerid = INVALID_PLAYER_ID, bool:via_cmd = false, addpa
 	        	SendGuiInformation(playerid, ""guiopis"Informacja", "W tej torbie nie ma �adnego przedmiotu.");
 			}
 		}
-		
+
 		case ITEM_TYPE_AMMO:
 		{
 			if( !PlayerItem[playerid][itemid][player_item_used] )
@@ -1024,7 +1024,7 @@ stock Item_Use(itemid, playerid = INVALID_PLAYER_ID, bool:via_cmd = false, addpa
 				{
 					if(!(pInfo[playerid][player_documents] & DOCUMENT_WEAPON)) return SendGuiInformation(playerid, "Informacja", "Nie posiadasz licencji na bro�.");
 				}
-				
+
 				DynamicGui_Init(playerid);
 				DynamicGui_SetDialogValue(playerid, itemid);
 				new count, string[200];
@@ -1041,7 +1041,7 @@ stock Item_Use(itemid, playerid = INVALID_PLAYER_ID, bool:via_cmd = false, addpa
 				else ShowPlayerDialog(playerid, DIALOG_USE_AMMO, DIALOG_STYLE_LIST, "Wybierz bro� do kt�rej chcesz za�adowa� amunicj�:", string, "Wybierz", "Zamknij");
 			}
 		}
-		
+
 		case ITEM_TYPE_PHONE:
 		{
 			if( PlayerItem[playerid][itemid][player_item_used] )
@@ -1051,26 +1051,26 @@ stock Item_Use(itemid, playerid = INVALID_PLAYER_ID, bool:via_cmd = false, addpa
 			else
 			{
 				if( GetPlayerUsedItem(playerid, ITEM_TYPE_PHONE) > -1 ) return SendGuiInformation(playerid, ""guiopis"Powiadomienie", "Masz ju� w��czony inny telefon.");
-			
+
 				if( PlayerItem[playerid][itemid][player_item_value1] == 0 )
 				{
 					new str[7];
 					format(str, sizeof(str), "%04d", pInfo[playerid][player_id]);
-					
+
 					new length = 6 - strlen(str);
-					
+
 					if( length == 2 ) format(str, sizeof(str), "%02d%s", rand(10, 99), str);
 					else if( length == 1 ) format(str, sizeof(str), "%d%s", rand(1, 9), str);
-					
+
 					PlayerItem[playerid][itemid][player_item_value1] = strval(str);
-					
+
 					mysql_query(mySQLconnection, sprintf("UPDATE `ipb_items` SET `item_value1` = %d WHERE `item_uid` = %d", PlayerItem[playerid][itemid][player_item_value1], PlayerItem[playerid][itemid][player_item_uid]));
 				}
-				
+
 				PlayerItem[playerid][itemid][player_item_used] = true;
-				
+
 				mysql_query(mySQLconnection, sprintf("UPDATE `ipb_items` SET `item_used` = 1 WHERE `item_uid` = %d", PlayerItem[playerid][itemid][player_item_uid]));
-				
+
 				GameTextForPlayer(playerid, "~w~Telefon ~g~wlaczony", 3000, 3);
 
 				pInfo[playerid][player_phone_model] = PlayerItem[playerid][itemid][player_item_model];
@@ -1243,7 +1243,7 @@ stock Item_Use(itemid, playerid = INVALID_PLAYER_ID, bool:via_cmd = false, addpa
 
 			pInfo[playerid][player_dialog_tmp2] = d_id;
 			pInfo[playerid][player_dialog_tmp4] = itemid;
-			
+
 			ShowPlayerDialog(playerid, DIALOG_GRENADE, DIALOG_STYLE_LIST, "Rzut granatem", "Daleki rzut - efekt otrzymaj� osoby w promieniu 2-15m od drzwi\nKr�tki rzut - efekt otrzymaj� osoby w promieniu 7m od drzwi", "OK", "Anuluj");
 		}
 
@@ -1298,7 +1298,7 @@ stock Item_Use(itemid, playerid = INVALID_PLAYER_ID, bool:via_cmd = false, addpa
 				SendGuiInformation(playerid, ""guiopis"Powiadomienie", "Na chwile obecn� przedmiot nie ma �adnego zastosowania.");
 			}
 		}
-		
+
 		case ITEM_TYPE_DRUG:
 		{
 			if(pInfo[playerid][player_dealing]) return SendGuiInformation(playerid, "Informacja", "Poczekaj na zako�czenie handlu.");
@@ -1501,7 +1501,7 @@ stock Item_Use(itemid, playerid = INVALID_PLAYER_ID, bool:via_cmd = false, addpa
     		}
 
 			if(GetPlayerVirtualWorld(playerid) == 0) return SendGuiInformation(playerid, "Informacja", "Nie znajdujesz si� w �adnym budynku.");
-			
+
 			new d_id = GetDoorByUid(GetPlayerVirtualWorld(playerid));
 			if(d_id == -1) return SendGuiInformation(playerid, "Informacja", "Nie znajdujesz si� w �adnym budynku.");
 
@@ -1520,7 +1520,7 @@ stock Item_Use(itemid, playerid = INVALID_PLAYER_ID, bool:via_cmd = false, addpa
 			if(pInfo[playerid][player_robbery] == -1) return SendGuiInformation(playerid, "Informacja", "Nie bierzesz udzia�u w �adnym napadzie.");
 			if(pInfo[playerid][player_rob_time] > 0) return SendGuiInformation(playerid, "Informacja", "Akcja nieodozwolona. Bierzesz ju� udzia� w kradzie�y.");
 			if(Robbery[pInfo[playerid][player_robbery]][robbery_actors] > Robbery[pInfo[playerid][player_robbery]][robbery_aimed_actors]) return SendGuiInformation(playerid, "Informacja", "Najpierw obezw�adnij zak�adnik�w.");
-			
+
 			new safe = GetClosestObjectType(playerid, OBJECT_CASH_REG);
 			if(safe != INVALID_OBJECT_ID)
 			{
@@ -1596,10 +1596,10 @@ stock Item_Use(itemid, playerid = INVALID_PLAYER_ID, bool:via_cmd = false, addpa
 					    {
 					    	DeleteItem(itemid, true, playerid);
 					    	cmd_ame(playerid, "pod��cza elektronike do sejfu.");
-					    	
+
 					    	TextDrawSetString(DoorInfo[playerid], "Wlamywanie do ~y~sejfu~w~ w toku.~n~Pozostaly czas: ~y~60s");
 					    	TextDrawShowForPlayer(playerid, DoorInfo[playerid]);
-					    	
+
 					    	TogglePlayerControllable(playerid, false);
 					    	ApplyAnimation(playerid, "COP_AMBIENT", "COPBROWSE_LOOP", 4.0, true, false, false, false, 0);
 					    	pInfo[playerid][player_rob_time] = 60;
@@ -1626,9 +1626,9 @@ stock Item_Use(itemid, playerid = INVALID_PLAYER_ID, bool:via_cmd = false, addpa
 				}
 			    return 1;
 			}
-			
+
 			SendGuiInformation(playerid, "Informacja", "Nie znajdujesz si� w pobli�u sejfu lub drzwi.");
-			
+
 		}
 
 		case ITEM_TYPE_TOOLBOX:
@@ -1639,7 +1639,7 @@ stock Item_Use(itemid, playerid = INVALID_PLAYER_ID, bool:via_cmd = false, addpa
 			if(vid == -1) return SendGuiInformation(playerid, "Informacja", "Nie znajdujesz si� w pobli�u �adnego pojazdu.");
 
 			if(Vehicle[vid][vehicle_destroyed] == false) return SendGuiInformation(playerid, "Informacja", "Ten samoch�d nie jest ca�kowicie zniszczony.");
-			
+
 			new Float:x, Float:y, Float:z;
 			GetVehicleHood(vid, x, y, z);
 
@@ -1670,7 +1670,7 @@ stock Item_Use(itemid, playerid = INVALID_PLAYER_ID, bool:via_cmd = false, addpa
 					DeleteItem(itemid, true, playerid);
 					return 1;
 				}
-				
+
 				if(pInfo[playerid][player_gym_carnet] == 0) return SendGuiInformation(playerid, "Informacja", "Wyczerpa�e� limit trening�w na dzi�.");
 				SendClientMessage(playerid, COLOR_GOLD, "Karnet zosta� u�yty, udaj sie do maszyny na kt�rej chcesz �wiczyc i u�yj /trenuj.");
 
@@ -1684,7 +1684,7 @@ stock Item_Use(itemid, playerid = INVALID_PLAYER_ID, bool:via_cmd = false, addpa
 			}
 		}
 	}
-	
+
 	return 1;
 }
 
@@ -1716,19 +1716,19 @@ stock GetItemByData(i_type, i_value1 = -1, i_value2 = -1, &player, &item)
 				{
 					if( PlayerItem[playerid][itemid][player_item_value1] != i_value1 ) item_good = false;
 				}
-				
+
 				if( i_value2 > -1 )
 				{
 					if( PlayerItem[playerid][itemid][player_item_value2] != i_value2 ) item_good = false;
 				}
 			}
-			else 
+			else
 			{
 				item_good = false;
 				item = -1;
 				player = INVALID_PLAYER_ID;
 			}
-			
+
 			if( item_good )
 			{
 				item = itemid;
@@ -1737,7 +1737,7 @@ stock GetItemByData(i_type, i_value1 = -1, i_value2 = -1, &player, &item)
 			}
 		}
 	}
-	
+
 	return 1;
 }
 
@@ -1748,7 +1748,7 @@ stock GetPlayerUsedItem(playerid, i_type)
 	{
 		if( PlayerItem[playerid][itemid][player_item_type] == i_type && PlayerItem[playerid][itemid][player_item_used] ) return itemid;
 	}
-	
+
 	return -1;
 }
 
@@ -1756,7 +1756,7 @@ stock Item_Drop(itemid, playerid = INVALID_PLAYER_ID, bool:with_message = true)
 {
     if( playerid == INVALID_PLAYER_ID) return 1;
     if( PlayerItem[playerid][itemid][player_item_used] ) return SendGuiInformation(playerid, ""guiopis"Powiadomienie", "Nie mo�esz od�o�y� przedmiotu, kt�ry jest w u�yciu.");
-   	
+
     if( !IsPlayerInAnyVehicle(playerid) )
     {
         if( playerid != INVALID_PLAYER_ID )
@@ -1765,12 +1765,12 @@ stock Item_Drop(itemid, playerid = INVALID_PLAYER_ID, bool:with_message = true)
 
         	new Float:x, Float:y, Float:z, iuid;
             GetPointInAngleOfPlayer(playerid, x, y, z, 1.0, 0.0);
-           
+
             z = floatadd(z, -0.973339);
-          
+
             RefreshPlayer(playerid);
             ApplyAnimation(playerid, "BOMBER", "BOM_Plant", 4.0, false, false, false, false, 0, 1);
-           
+
       		iuid = PlayerItem[playerid][itemid][player_item_uid];
 
             new str[400];
@@ -1783,7 +1783,7 @@ stock Item_Drop(itemid, playerid = INVALID_PLAYER_ID, bool:with_message = true)
 
             DeleteItem(itemid, false, playerid);
             LoadItem(sprintf("WHERE item_uid = %d", iuid));
-           	
+
            	if(with_message == true)
            	{
             	cmd_ame(playerid, "odk�ada co� na ziemie.");
@@ -1807,7 +1807,7 @@ stock Item_Drop(itemid, playerid = INVALID_PLAYER_ID, bool:with_message = true)
         cache_get_data(rows, fields);
 
         /*new capacity = VehicleTrunkCapacity[model-400];
-       	
+
        	if(rows >= capacity)
        	{
        		SendGuiInformation(playerid, ""guiopis"Powiadomienie", "Ten pojazd nie zmie�ci wi�cej przedmiot�w.");
@@ -1826,7 +1826,7 @@ stock Item_Drop(itemid, playerid = INVALID_PLAYER_ID, bool:with_message = true)
         	cmd_ame(playerid, "odk�ada co� w poje�dzie.");
         }
     }
-   
+
     return 1;
 }
 
@@ -1840,7 +1840,7 @@ stock Item_Pickup(itemuid, playerid = INVALID_PLAYER_ID)
 	new weight = cache_get_row_int(0, 0);
 
 	if(pInfo[playerid][player_capacity] < weight) return SendGuiInformation(playerid, "Informacja", "Przedmiot, kt�ry pr�bujesz podnie�� jest zbyt ci�ki.");
-	
+
 	new ownertype = cache_get_row_int(0, 1);
 	new itype = cache_get_row_int(0, 3);
 	new itname[40];
@@ -1854,7 +1854,7 @@ stock Item_Pickup(itemuid, playerid = INVALID_PLAYER_ID)
 		if(object_id != INVALID_OBJECT_ID)
 		{
 			DestroyDynamicObject(object_id);
-		}	
+		}
 		cmd_ame(playerid, sprintf("podnosi %s z ziemi.", itname));
 		printf("[ITEM] %s (UID %d) podni�s� przedmiot z ziemi - UID %d. (%s)", pInfo[playerid][player_name], pInfo[playerid][player_id], itemuid, itname);
 	}
@@ -1868,11 +1868,11 @@ stock Item_Pickup(itemuid, playerid = INVALID_PLAYER_ID)
 		cmd_ame(playerid, sprintf("wyci�ga %s ze schowka.", itname));
 		printf("[ITEM] %s (UID %d) wyci�gn�� przedmiot ze schowka - UID %d. (%s)", pInfo[playerid][player_name], pInfo[playerid][player_id], itemuid, itname);
 	}
-	
+
 	pInfo[playerid][player_capacity] -= weight;
-	
+
 	ApplyAnimation(playerid, "BOMBER", "BOM_Plant", 4.0, false, false, false, false, 0, 1);
-	
+
 	if(itype == ITEM_TYPE_WEAPON || itype == ITEM_TYPE_DRUG)
 	{
 		if( GetPlayerUsedItem(playerid, ITEM_TYPE_GLOVES) == -1 )
@@ -1882,7 +1882,7 @@ stock Item_Pickup(itemuid, playerid = INVALID_PLAYER_ID)
 	}
 
 	mysql_query(mySQLconnection, sprintf("UPDATE `ipb_items` SET `item_ownertype` = %d, `item_owner` = %d, `item_posx` = 0.0, `item_posy` = 0.0, `item_posz` = 0.0, `item_rotx` = 0.0, `item_roty` = 0.0, `item_rotz` = 0.0, `item_world` = 0, `item_interior` = 0  WHERE `item_uid` = %d AND item_ownertype != %d", ITEM_OWNER_TYPE_PLAYER, pInfo[playerid][player_id], itemuid, ITEM_OWNER_TYPE_PLAYER ));
-	
+
 	if(cache_affected_rows(mySQLconnection))
 	{
 		LoadPlayerItem(playerid, sprintf("WHERE item_uid = %d", itemuid));
@@ -1901,7 +1901,7 @@ stock Item_Create(owner_type, owner_id, i_type, i_model, i_val1, i_val2, const i
 		{
 			mysql_query(mySQLconnection, sprintf("INSERT INTO `ipb_items` (`item_uid`,`item_model`,`item_ownertype`,`item_owner`,`item_type`,`item_value1`,`item_value2`,`item_name`,`item_created`, `item_extraid` ) VALUES (null, %d, %d, %d, %d, %d, %d,'%s', %d, %d)", i_model, owner_type, pInfo[playerid][player_id], i_type, i_val1, i_val2, i_name, gettime(), i_extra));
 			new uid = cache_insert_id();
-			
+
 			itemid = LoadPlayerItem(playerid, sprintf("WHERE `item_uid` = %d", uid), true);
 		}
 	}
@@ -1909,7 +1909,7 @@ stock Item_Create(owner_type, owner_id, i_type, i_model, i_val1, i_val2, const i
 	{
 		mysql_query(mySQLconnection, sprintf("INSERT INTO `ipb_items` (`item_uid`,`item_model`,`item_ownertype`,`item_owner`,`item_type`,`item_value1`,`item_value2`,`item_name`,`item_created`,`item_extraid`, `item_group`, `item_count`) VALUES (null, %d, %d, %d, %d, %d, %d,'%s', %d, %d, %d, %d)", i_model, owner_type, owner_id, i_type, i_val1, i_val2, i_name, gettime(), i_extra, owner_id, i_count));
 		new uid = cache_insert_id();
-		
+
 		itemid = LoadItem(sprintf("WHERE `item_uid` = %d", uid), true);
 		SetupItemWeight(itemid);
 	}
@@ -1922,7 +1922,7 @@ stock GetItemByUid(itemuid, playerid)
 	{
 		if( PlayerItem[playerid][item][player_item_uid] == itemuid ) return item;
 	}
-	
+
 	return -1;
 }
 
@@ -1935,7 +1935,7 @@ stock GetItemByGlobalUid(itemuid)
 			if( PlayerItem[playerid][item][player_item_uid] == itemuid ) return item;
 		}
 	}
-	
+
 	return -1;
 }
 
@@ -1973,7 +1973,7 @@ stock GetGroupItemByUid(itemuid)
 	{
 		if( Item[item][item_uid] == itemuid ) return item;
 	}
-	
+
 	return -1;
 }
 
@@ -2006,11 +2006,11 @@ stock SetupItemWeight(itemid)
 		case ITEM_TYPE_MASKA:
 		{
 			Item[itemid][item_weight] = 500;
-		}  
+		}
 		case ITEM_TYPE_PHONE:
 		{
 			Item[itemid][item_weight] = 120;
-		} 
+		}
 		case ITEM_TYPE_WATCH:
 		{
 			Item[itemid][item_weight] = 75;
@@ -2018,63 +2018,63 @@ stock SetupItemWeight(itemid)
 		case ITEM_TYPE_FOOD:
 		{
 			Item[itemid][item_weight] = 50;
-		}  
+		}
 		case ITEM_TYPE_CIGGY:
 		{
 			Item[itemid][item_weight] = 35;
-		} 
+		}
 		case ITEM_TYPE_CUBE:
 		{
 			Item[itemid][item_weight] = 5;
-		} 
+		}
 		case ITEM_TYPE_CLOTH:
 		{
 			Item[itemid][item_weight] = 250;
-		} 
+		}
 		case ITEM_TYPE_CANISTER:
 		{
 			Item[itemid][item_weight] = 900;
-		} 
+		}
 		case ITEM_TYPE_LINE:
 		{
 			Item[itemid][item_weight] = 350;
-		} 
+		}
 		case ITEM_TYPE_TUNING:
 		{
 			Item[itemid][item_weight] = 3500;
-		} 
+		}
 		case ITEM_TYPE_BAG:
 		{
 			Item[itemid][item_weight] = 500;
-		} 
+		}
 		case ITEM_TYPE_DRINK:
 		{
 			Item[itemid][item_weight] = 50;
-		} 
+		}
 		case ITEM_TYPE_DRUG:
 		{
 			Item[itemid][item_weight] = Item[itemid][item_value2];
-		} 
+		}
 		case ITEM_TYPE_ATTACH:
 		{
 			Item[itemid][item_weight] = 225;
-		} 
+		}
 		case ITEM_TYPE_ACCESS:
 		{
 			Item[itemid][item_weight] = 750;
-		} 
+		}
 		case ITEM_TYPE_PLATE:
 		{
 			Item[itemid][item_weight] = 35;
-		} 
+		}
 		case ITEM_TYPE_ARMOUR:
 		{
 			Item[itemid][item_weight] = 1000;
-		} 
+		}
 		case ITEM_TYPE_GLOVES:
 		{
 			Item[itemid][item_weight] = 250;
-		} 
+		}
 		case ITEM_TYPE_CORPSE:
 		{
 			Item[itemid][item_weight] = 5000;
@@ -2120,7 +2120,7 @@ stock SetupPlayerItemWeight(playerid, itemid)
 		{
 			case ITEM_TYPE_AMMO: PlayerItem[playerid][itemid][player_item_weight] = 250;
 
-			case ITEM_TYPE_WEAPON: 
+			case ITEM_TYPE_WEAPON:
 			{
 				switch(PlayerItem[playerid][itemid][player_item_value1])
 				{
@@ -2176,7 +2176,7 @@ stock SetupPlayerItemWeight(playerid, itemid)
 			case ITEM_TYPE_CANISTER: PlayerItem[playerid][itemid][player_item_weight] = 900;
 			case ITEM_TYPE_LINE: PlayerItem[playerid][itemid][player_item_weight] = 350;
 			case ITEM_TYPE_TUNING: PlayerItem[playerid][itemid][player_item_weight] = 3500;
-			case ITEM_TYPE_BAG: PlayerItem[playerid][itemid][player_item_weight] = 500; 
+			case ITEM_TYPE_BAG: PlayerItem[playerid][itemid][player_item_weight] = 500;
 			case ITEM_TYPE_DRINK: PlayerItem[playerid][itemid][player_item_weight] = 50;
 			case ITEM_TYPE_DRUG: PlayerItem[playerid][itemid][player_item_weight] = PlayerItem[playerid][itemid][player_item_value2];
 			case ITEM_TYPE_ATTACH: PlayerItem[playerid][itemid][player_item_weight] = 225;

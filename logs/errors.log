@@ -1,0 +1,8 @@
+[24.12.2025 23:43:09] [plugins/mysql] mysql_format: invalid connection handle '0'
+[24.12.2025 23:43:09] [plugins/mysql] mysql_tquery: invalid connection handle '0'
+[24.12.2025 23:43:09] [plugins/mysql] mysql_format: invalid connection handle '0'
+[24.12.2025 23:43:09] [plugins/mysql] mysql_tquery: invalid connection handle '0'
+[24.12.2025 23:43:42] [plugins/mysql] error #1054 while executing query "UPDATE `vehicles` SET vehicle_posx = 1900.000000, vehicle_posy = -1400.000000, vehicle_posz = 10.000000, vehicle_posa = 0.000000 WHERE vehicle_uid = 4": Unknown column 'vehicle_posx' in 'SET'
+[24.12.2025 23:43:42] [plugins/mysql] mysql_escape_string: invalid connection handle '65'
+[24.12.2025 23:43:42] [plugins/mysql] mysql_escape_string: invalid connection handle '65'
+[24.12.2025 23:43:42] [plugins/mysql] mysql_escape_string: invalid connection handle '65'

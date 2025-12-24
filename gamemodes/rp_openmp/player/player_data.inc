@@ -2,7 +2,7 @@
  * =============================================================================
  *  PLAYER DATA - System danych gracza
  * =============================================================================
- *  
+ *
  *  Modu??: player/player_data.inc
  *  Opis: Obs??uga danych gracza, cache i synchronizacja
  *
@@ -26,6 +26,9 @@
 
 #define PLAYER_DATA_SAVE_INTERVAL   300000  // Auto-save co 5 minut
 
+// Maximum amount of money a player may have to avoid overflows
+#define MAX_PLAYER_MONEY            1000000000
+
 // Tryby wczytywania
 enum E_PLAYER_LOAD_MODE
 {
@@ -48,15 +51,15 @@ stock Player_InitData(playerid)
     {
         return 0;
     }
-    
+
     // Resetuj struktury danych gracza
     Player_ResetData(playerid);
-    
+
     // Pobierz podstawowe informacje
     GetPlayerName(playerid, pInfo[playerid][player_name], MAX_PLAYER_NAME);
     GetPlayerIp(playerid, pInfo[playerid][player_ip], 20);
     gpci(playerid, pInfo[playerid][player_serial], 128);
-    
+
     // Ustaw domy??lne warto??ci
     pInfo[playerid][player_spawn_armor] = 0.0;
     pInfo[playerid][player_money] = 0;
@@ -64,12 +67,12 @@ stock Player_InitData(playerid)
     pInfo[playerid][player_spawned] = false;
     pInfo[playerid][player_afk] = false;
     pInfo[playerid][player_admin_duty] = false;
-    
+
     // Inicjalizuj timery/flagi
     pInfo[playerid][player_connect_time] = gettime();
     pInfo[playerid][player_last_activity] = gettime();
     pInfo[playerid][player_y_flood] = 0;
-    
+
     return 1;
 }
 
@@ -83,15 +86,15 @@ stock Player_ResetData(playerid)
     {
         return 0;
     }
-    
+
     // Resetuj g????wn?? struktur??
     static const emptyInfo[e_players_info];
     pInfo[playerid] = emptyInfo;
-    
+
     // Resetuj dane globalne konta
     static const emptyGlobal[e_global_account_info];
     pGlobal[playerid] = emptyGlobal;
-    
+
     // Resetuj bronie
     for(new i = 0; i < 13; i++)
     {
@@ -99,10 +102,10 @@ stock Player_ResetData(playerid)
         pWeapon[playerid][i][pw_ammo] = 0;
         pWeapon[playerid][i][pw_visible] = true;
     }
-    
+
     // Resetuj dodatkowe flagi
     SetPlayerColor(playerid, COLOR_WHITE);
-    
+
     return 1;
 }
 
@@ -116,16 +119,16 @@ stock Player_ClearData(playerid)
     {
         return 0;
     }
-    
+
     // Anuluj aktywne dialogi
     ShowPlayerDialog(playerid, -1, DIALOG_STYLE_MSGBOX, " ", " ", " ", "");
-    
+
     // Usu?? z iteratora
     Iter_Remove(Player, playerid);
-    
+
     // Wyczy???? dane
     Player_ResetData(playerid);
-    
+
     return 1;
 }
 
@@ -147,7 +150,7 @@ stock Player_GetName(playerid, output[], size = MAX_PLAYER_NAME + 1)
         output[0] = EOS;
         return 0;
     }
-    
+
     // U??ywamy cache zamiast natywnej funkcji
     strcopy(output, pInfo[playerid][player_name], size);
     return 1;
@@ -167,10 +170,10 @@ stock Player_GetRPName(playerid, output[], size = MAX_PLAYER_NAME + 1)
         output[0] = EOS;
         return 0;
     }
-    
+
     // Pobierz nick i zamie?? _ na spacj??
     strcopy(output, pInfo[playerid][player_name], size);
-    
+
     for(new i = 0; output[i] != EOS; i++)
     {
         if(output[i] == '_')
@@ -178,7 +181,7 @@ stock Player_GetRPName(playerid, output[], size = MAX_PLAYER_NAME + 1)
             output[i] = ' ';
         }
     }
-    
+
     return 1;
 }
 
@@ -190,16 +193,16 @@ stock Player_GetRPName(playerid, output[], size = MAX_PLAYER_NAME + 1)
 stock Player_RPName(playerid)
 {
     static output[MAX_PLAYER_NAME + 1];
-    
+
     if(!IsValidPlayerId(playerid))
     {
         output[0] = EOS;
         return output;
     }
-    
+
     // Pobierz nick i zamie?? _ na spacj??
     strcopy(output, pInfo[playerid][player_name], sizeof(output));
-    
+
     for(new i = 0; output[i] != EOS; i++)
     {
         if(output[i] == '_')
@@ -207,7 +210,7 @@ stock Player_RPName(playerid)
             output[i] = ' ';
         }
     }
-    
+
     return output;
 }
 
@@ -225,7 +228,7 @@ stock Player_GetIP(playerid, output[], size = 20)
         output[0] = EOS;
         return 0;
     }
-    
+
     strcopy(output, pInfo[playerid][player_ip], size);
     return 1;
 }
@@ -245,7 +248,7 @@ stock bool:Player_IsLoggedIn(playerid)
     {
         return false;
     }
-    
+
     return pInfo[playerid][player_logged];
 }
 
@@ -260,7 +263,7 @@ stock bool:Player_IsSpawned(playerid)
     {
         return false;
     }
-    
+
     return pInfo[playerid][player_spawned];
 }
 
@@ -275,7 +278,7 @@ stock bool:Player_IsAFK(playerid)
     {
         return false;
     }
-    
+
     return pInfo[playerid][player_afk];
 }
 
@@ -290,14 +293,14 @@ stock Player_SetAFK(playerid, bool:afk)
     {
         return 0;
     }
-    
+
     pInfo[playerid][player_afk] = afk;
-    
+
     if(afk)
     {
         pInfo[playerid][player_afk_time] = gettime();
     }
-    
+
     return 1;
 }
 
@@ -312,8 +315,8 @@ stock Player_GetPlayTime(playerid)
     {
         return 0;
     }
-    
-    return pInfo[playerid][player_gameTime] + 
+
+    return pInfo[playerid][player_gameTime] +
            ((gettime() - pInfo[playerid][player_connect_time]) / 60);
 }
 
@@ -327,15 +330,15 @@ stock Player_UpdateActivity(playerid)
     {
         return 0;
     }
-    
+
     pInfo[playerid][player_last_activity] = gettime();
-    
+
     // Je??li by?? AFK, wy????cz
     if(pInfo[playerid][player_afk])
     {
         Player_SetAFK(playerid, false);
     }
-    
+
     return 1;
 }
 
@@ -354,7 +357,7 @@ stock Player_GetMoney(playerid)
     {
         return 0;
     }
-    
+
     return pInfo[playerid][player_money];
 }
 
@@ -369,13 +372,19 @@ stock Player_SetMoney(playerid, amount)
     {
         return 0;
     }
-    
+
+    // Clamp amount to a safe range
+    amount = clamp(amount, 0, MAX_PLAYER_MONEY);
+
     pInfo[playerid][player_money] = amount;
-    
+
+    // Mark data as modified so auto-save will persist the change
+    Player_MarkDataModified(playerid);
+
     // Synchronizuj z klientem
     ResetPlayerMoney(playerid);
     GivePlayerMoney(playerid, amount);
-    
+
     return 1;
 }
 
@@ -391,21 +400,31 @@ stock bool:Player_GiveMoney(playerid, amount)
     {
         return false;
     }
-    
+
     new newMoney = pInfo[playerid][player_money] + amount;
-    
-    // Sprawd?? czy gracz ma wystarczaj??co ??rodk??w
+
+    // Sprawdź czy gracz ma wystarczająco środków oraz czy nie przekraczamy maksymalnej wartości
     if(newMoney < 0)
     {
         return false;
     }
-    
+
+    if(newMoney > MAX_PLAYER_MONEY)
+    {
+        // Prevent overflow and invalid states
+        printf("[Player_GiveMoney] Rejecting update: pid=%d would exceed MAX_PLAYER_MONEY (attempted=%d)", playerid, newMoney);
+        return false;
+    }
+
     pInfo[playerid][player_money] = newMoney;
-    
+
+    // Mark data modified so it will be persisted on auto-save/disconnect
+    Player_MarkDataModified(playerid);
+
     // Synchronizuj z klientem
     ResetPlayerMoney(playerid);
     GivePlayerMoney(playerid, newMoney);
-    
+
     return true;
 }
 
@@ -421,7 +440,7 @@ stock bool:Player_HasMoney(playerid, amount)
     {
         return false;
     }
-    
+
     return pInfo[playerid][player_money] >= amount;
 }
 
@@ -440,7 +459,7 @@ stock Float:Player_GetHealth(playerid)
     {
         return 0.0;
     }
-    
+
     new Float:health;
     GetPlayerHealth(playerid, health);
     return health;
@@ -457,7 +476,7 @@ stock Player_SetHealth(playerid, Float:health)
     {
         return 0;
     }
-    
+
     health = clamp(floatround(health), 0, 100);
     SetPlayerHealth(playerid, float(floatround(health)));
     return 1;
@@ -474,13 +493,13 @@ stock Player_GiveHealth(playerid, Float:amount)
     {
         return 0;
     }
-    
+
     new Float:currentHealth;
     GetPlayerHealth(playerid, currentHealth);
-    
+
     new Float:newHealth = float(clamp(floatround(currentHealth + amount), 0, 100));
     SetPlayerHealth(playerid, newHealth);
-    
+
     return 1;
 }
 
@@ -495,7 +514,7 @@ stock Float:Player_GetArmour(playerid)
     {
         return 0.0;
     }
-    
+
     new Float:armour;
     GetPlayerArmour(playerid, armour);
     return armour;
@@ -512,7 +531,7 @@ stock Player_SetArmour(playerid, Float:armour)
     {
         return 0;
     }
-    
+
     armour = Clamp(armour, 0.0, 100.0);
     SetPlayerArmour(playerid, armour);
     return 1;
@@ -537,7 +556,7 @@ stock Player_GetPosition(playerid, &Float:x, &Float:y, &Float:z)
         z = 0.0;
         return 0;
     }
-    
+
     GetPlayerPos(playerid, x, y, z);
     return 1;
 }
@@ -554,14 +573,14 @@ stock Player_SetPosition(playerid, Float:x, Float:y, Float:z, Float:angle = -1.0
     {
         return 0;
     }
-    
+
     SetPlayerPos(playerid, x, y, z);
-    
+
     if(angle >= 0.0)
     {
         SetPlayerFacingAngle(playerid, angle);
     }
-    
+
     return 1;
 }
 
@@ -579,7 +598,7 @@ stock Player_Teleport(playerid, Float:x, Float:y, Float:z, Float:angle, interior
     {
         return 0;
     }
-    
+
     // Je??li w poje??dzie, teleportuj pojazd
     if(IsPlayerInAnyVehicle(playerid))
     {
@@ -594,10 +613,10 @@ stock Player_Teleport(playerid, Float:x, Float:y, Float:z, Float:angle, interior
         SetPlayerPos(playerid, x, y, z);
         SetPlayerFacingAngle(playerid, angle);
     }
-    
+
     SetPlayerInterior(playerid, interior);
     SetPlayerVirtualWorld(playerid, virtualworld);
-    
+
     return 1;
 }
 
@@ -618,22 +637,22 @@ stock Player_GiveWeapon(playerid, weaponid, ammo)
     {
         return 0;
     }
-    
+
     // Okre??l slot broni
     new slot = GetWeaponSlot(weaponid);
-    
+
     if(slot < 0 || slot >= 13)
     {
         return 0;
     }
-    
+
     // Zapisz do ekwipunku
     pWeapon[playerid][slot][pw_id] = weaponid;
     pWeapon[playerid][slot][pw_ammo] += ammo;
-    
+
     // Daj bro??
     GivePlayerWeapon(playerid, weaponid, ammo);
-    
+
     return 1;
 }
 
@@ -649,20 +668,20 @@ stock Player_RemoveWeapon(playerid, weaponid)
     {
         return 0;
     }
-    
+
     new slot = GetWeaponSlot(weaponid);
-    
+
     if(slot < 0 || slot >= 13)
     {
         return 0;
     }
-    
+
     pWeapon[playerid][slot][pw_id] = 0;
     pWeapon[playerid][slot][pw_ammo] = 0;
-    
+
     // Prze??aduj bronie gracza
     Player_RefreshWeapons(playerid);
-    
+
     return 1;
 }
 
@@ -676,19 +695,19 @@ stock Player_RefreshWeapons(playerid)
     {
         return 0;
     }
-    
+
     ResetPlayerWeapons(playerid);
-    
+
     for(new slot = 0; slot < 13; slot++)
     {
-        if(pWeapon[playerid][slot][pw_id] > 0 && 
+        if(pWeapon[playerid][slot][pw_id] > 0 &&
            pWeapon[playerid][slot][pw_ammo] > 0 &&
            pWeapon[playerid][slot][pw_visible])
         {
             GivePlayerWeapon(playerid, pWeapon[playerid][slot][pw_id], pWeapon[playerid][slot][pw_ammo]);
         }
     }
-    
+
     return 1;
 }
 
@@ -711,7 +730,7 @@ stock Player_GetStatusString(playerid, output[], size = 64)
         strcopy(output, "Offline", size);
         return 0;
     }
-    
+
     if(!pInfo[playerid][player_logged])
     {
         strcopy(output, "Niezalogowany", size);
@@ -728,7 +747,7 @@ stock Player_GetStatusString(playerid, output[], size = 64)
     {
         strcopy(output, "Online", size);
     }
-    
+
     return 1;
 }
 

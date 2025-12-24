@@ -371,6 +371,13 @@ Vehicle_SetSpawnPos(vehicleid, Float:x, Float:y, Float:z, Float:angle)
     vInfo[slot][veh_spawn_z] = z;
     vInfo[slot][veh_spawn_a] = angle;
 
+    // If this vehicle is linked to a DB UID, persist its parking pos immediately
+    if(VehicleDbUid[slot] > 0 && MySQL_IsConnected())
+    {
+        MySQL_ExecuteFormat("UPDATE `vehicles` SET vehicle_posx = %f, vehicle_posy = %f, vehicle_posz = %f, vehicle_posa = %f WHERE vehicle_uid = %d",
+            x, y, z, angle, VehicleDbUid[slot]);
+    }
+
     return 1;
 }
 

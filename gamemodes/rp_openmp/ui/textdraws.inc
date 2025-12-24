@@ -68,6 +68,8 @@ static g_HUDFlags[MAX_PLAYERS];
 
 // Timer powiadomie??
 static g_NotifyTimer[MAX_PLAYERS];
+// Global timer to update HUD (clock)
+static g_HUDUpdateTimer = 0;
 
 // ===========================================================================
 // ===========================================================================
@@ -88,6 +90,12 @@ stock Textdraws_CreateGlobal()
     TextDrawSetShadow(g_GlobalTextdraws[0], 0);
     TextDrawAlignment(g_GlobalTextdraws[0], 3);
 
+    // Start global HUD update timer (updates clock every second)
+    if(g_HUDUpdateTimer == 0)
+    {
+        g_HUDUpdateTimer = SetTimerEx("HUD_GlobalTimer", 1000, true);
+    }
+
     return 1;
 }
 
@@ -105,6 +113,13 @@ stock Textdraws_DestroyGlobal()
         }
     }
 
+    // Kill global HUD timer
+    if(g_HUDUpdateTimer != 0)
+    {
+        KillTimer(g_HUDUpdateTimer);
+        g_HUDUpdateTimer = 0;
+    }
+
     return 1;
 }
 
@@ -120,52 +135,97 @@ stock HUD_Create(playerid)
     }
 
     // === ZEGAR ===
-    g_PlayerHUD[playerid][HUD_CLOCK] = CreatePlayerTextDraw(playerid, 635.0, 22.0, "00:00");
-    PlayerTextDrawFont(playerid, g_PlayerHUD[playerid][HUD_CLOCK], 2);
-    PlayerTextDrawLetterSize(playerid, g_PlayerHUD[playerid][HUD_CLOCK], 0.5, 2.0);
-    PlayerTextDrawColour(playerid, g_PlayerHUD[playerid][HUD_CLOCK], 0xFFFFFFFF);
-    PlayerTextDrawSetOutline(playerid, g_PlayerHUD[playerid][HUD_CLOCK], 1);
-    PlayerTextDrawAlignment(playerid, g_PlayerHUD[playerid][HUD_CLOCK], 3);
+    // Removed clock HUD (handled via date) - reserve slot as invalid
+    g_PlayerHUD[playerid][HUD_CLOCK] = PlayerText:INVALID_TEXT_DRAW; // clock removed
 
     // === DATA ===
-    g_PlayerHUD[playerid][HUD_DATE] = CreatePlayerTextDraw(playerid, 635.0, 42.0, "01.01.2024");
-    PlayerTextDrawFont(playerid, g_PlayerHUD[playerid][HUD_DATE], 2);
-    PlayerTextDrawLetterSize(playerid, g_PlayerHUD[playerid][HUD_DATE], 0.2, 0.8);
-    PlayerTextDrawColour(playerid, g_PlayerHUD[playerid][HUD_DATE], 0xCCCCCCFF);
-    PlayerTextDrawSetOutline(playerid, g_PlayerHUD[playerid][HUD_DATE], 1);
-    PlayerTextDrawAlignment(playerid, g_PlayerHUD[playerid][HUD_DATE], 3);
+    // Nudged slightly to the left for spacing
+    new td_date = CreatePlayerTextDraw(playerid, 625.0, 44.0, "01.01.2024");
+    if(td_date == 0)
+    {
+        g_PlayerHUD[playerid][HUD_DATE] = PlayerText:INVALID_TEXT_DRAW;
+        printf("[HUD_CREATE] pid=%d date create FAILED (td=0)", playerid);
+    }
+    else
+    {
+        g_PlayerHUD[playerid][HUD_DATE] = td_date;
+        PlayerTextDrawFont(playerid, g_PlayerHUD[playerid][HUD_DATE], 2);
+        PlayerTextDrawLetterSize(playerid, g_PlayerHUD[playerid][HUD_DATE], 0.2, 0.8);
+        PlayerTextDrawColour(playerid, g_PlayerHUD[playerid][HUD_DATE], 0xCCCCCCFF);
+        PlayerTextDrawSetOutline(playerid, g_PlayerHUD[playerid][HUD_DATE], 1);
+        PlayerTextDrawAlignment(playerid, g_PlayerHUD[playerid][HUD_DATE], 3);
+    }
 
-    // === PIENI??DZE ===
-    g_PlayerHUD[playerid][HUD_MONEY] = CreatePlayerTextDraw(playerid, 635.0, 60.0, "0");
-    PlayerTextDrawFont(playerid, g_PlayerHUD[playerid][HUD_MONEY], 2);
-    PlayerTextDrawLetterSize(playerid, g_PlayerHUD[playerid][HUD_MONEY], 0.35, 1.4);
-    PlayerTextDrawColour(playerid, g_PlayerHUD[playerid][HUD_MONEY], 0x2ECC71FF);
-    PlayerTextDrawSetOutline(playerid, g_PlayerHUD[playerid][HUD_MONEY], 1);
-    PlayerTextDrawAlignment(playerid, g_PlayerHUD[playerid][HUD_MONEY], 3);
+    // Debug: log created player textdraw ids
+    printf("[HUD_CREATE] pid=%d clock_td=%d date_td=%d", playerid, g_PlayerHUD[playerid][HUD_CLOCK], g_PlayerHUD[playerid][HUD_DATE]);
+
+    // === PIENIĄDZE ===
+    new td_money = CreatePlayerTextDraw(playerid, 635.0, 60.0, "0");
+    if(td_money == 0)
+    {
+        g_PlayerHUD[playerid][HUD_MONEY] = PlayerText:INVALID_TEXT_DRAW;
+        printf("[HUD_CREATE] pid=%d money create FAILED (td=0)", playerid);
+    }
+    else
+    {
+        g_PlayerHUD[playerid][HUD_MONEY] = td_money;
+        PlayerTextDrawFont(playerid, g_PlayerHUD[playerid][HUD_MONEY], 2);
+        PlayerTextDrawLetterSize(playerid, g_PlayerHUD[playerid][HUD_MONEY], 0.35, 1.4);
+        PlayerTextDrawColour(playerid, g_PlayerHUD[playerid][HUD_MONEY], 0x2ECC71FF);
+        PlayerTextDrawSetOutline(playerid, g_PlayerHUD[playerid][HUD_MONEY], 1);
+        PlayerTextDrawAlignment(playerid, g_PlayerHUD[playerid][HUD_MONEY], 3);
+    }
 
     // === PASEK ZDROWIA ===
-    g_PlayerHUD[playerid][HUD_HEALTH] = CreatePlayerTextDraw(playerid, 635.0, 80.0, "HP: 100");
-    PlayerTextDrawFont(playerid, g_PlayerHUD[playerid][HUD_HEALTH], 2);
-    PlayerTextDrawLetterSize(playerid, g_PlayerHUD[playerid][HUD_HEALTH], 0.2, 0.8);
-    PlayerTextDrawColour(playerid, g_PlayerHUD[playerid][HUD_HEALTH], 0xE74C3CFF);
-    PlayerTextDrawSetOutline(playerid, g_PlayerHUD[playerid][HUD_HEALTH], 1);
-    PlayerTextDrawAlignment(playerid, g_PlayerHUD[playerid][HUD_HEALTH], 3);
+    new td_health = CreatePlayerTextDraw(playerid, 635.0, 80.0, "HP: 100");
+    if(td_health == 0)
+    {
+        g_PlayerHUD[playerid][HUD_HEALTH] = PlayerText:INVALID_TEXT_DRAW;
+        printf("[HUD_CREATE] pid=%d health create FAILED (td=0)", playerid);
+    }
+    else
+    {
+        g_PlayerHUD[playerid][HUD_HEALTH] = td_health;
+        PlayerTextDrawFont(playerid, g_PlayerHUD[playerid][HUD_HEALTH], 2);
+        PlayerTextDrawLetterSize(playerid, g_PlayerHUD[playerid][HUD_HEALTH], 0.2, 0.8);
+        PlayerTextDrawColour(playerid, g_PlayerHUD[playerid][HUD_HEALTH], 0xE74C3CFF);
+        PlayerTextDrawSetOutline(playerid, g_PlayerHUD[playerid][HUD_HEALTH], 1);
+        PlayerTextDrawAlignment(playerid, g_PlayerHUD[playerid][HUD_HEALTH], 3);
+    }
 
-    // === G????D ===
-    g_PlayerHUD[playerid][HUD_HUNGER] = CreatePlayerTextDraw(playerid, 635.0, 92.0, "~y~Glod: 100%");
-    PlayerTextDrawFont(playerid, g_PlayerHUD[playerid][HUD_HUNGER], 2);
-    PlayerTextDrawLetterSize(playerid, g_PlayerHUD[playerid][HUD_HUNGER], 0.2, 0.8);
-    PlayerTextDrawColour(playerid, g_PlayerHUD[playerid][HUD_HUNGER], 0xF39C12FF);
-    PlayerTextDrawSetOutline(playerid, g_PlayerHUD[playerid][HUD_HUNGER], 1);
-    PlayerTextDrawAlignment(playerid, g_PlayerHUD[playerid][HUD_HUNGER], 3);
+    // === GŁÓD ===
+    new td_hunger = CreatePlayerTextDraw(playerid, 635.0, 92.0, "~y~Glod: 100%");
+    if(td_hunger == 0)
+    {
+        g_PlayerHUD[playerid][HUD_HUNGER] = PlayerText:INVALID_TEXT_DRAW;
+        printf("[HUD_CREATE] pid=%d hunger create FAILED (td=0)", playerid);
+    }
+    else
+    {
+        g_PlayerHUD[playerid][HUD_HUNGER] = td_hunger;
+        PlayerTextDrawFont(playerid, g_PlayerHUD[playerid][HUD_HUNGER], 2);
+        PlayerTextDrawLetterSize(playerid, g_PlayerHUD[playerid][HUD_HUNGER], 0.2, 0.8);
+        PlayerTextDrawColour(playerid, g_PlayerHUD[playerid][HUD_HUNGER], 0xF39C12FF);
+        PlayerTextDrawSetOutline(playerid, g_PlayerHUD[playerid][HUD_HUNGER], 1);
+        PlayerTextDrawAlignment(playerid, g_PlayerHUD[playerid][HUD_HUNGER], 3);
+    }
 
     // === PRAGNIENIE ===
-    g_PlayerHUD[playerid][HUD_THIRST] = CreatePlayerTextDraw(playerid, 635.0, 104.0, "~b~Pragnienie: 100%");
-    PlayerTextDrawFont(playerid, g_PlayerHUD[playerid][HUD_THIRST], 2);
-    PlayerTextDrawLetterSize(playerid, g_PlayerHUD[playerid][HUD_THIRST], 0.2, 0.8);
-    PlayerTextDrawColour(playerid, g_PlayerHUD[playerid][HUD_THIRST], 0x3498DBFF);
-    PlayerTextDrawSetOutline(playerid, g_PlayerHUD[playerid][HUD_THIRST], 1);
-    PlayerTextDrawAlignment(playerid, g_PlayerHUD[playerid][HUD_THIRST], 3);
+    new td_thirst = CreatePlayerTextDraw(playerid, 635.0, 104.0, "~b~Pragnienie: 100%");
+    if(td_thirst == 0)
+    {
+        g_PlayerHUD[playerid][HUD_THIRST] = PlayerText:INVALID_TEXT_DRAW;
+        printf("[HUD_CREATE] pid=%d thirst create FAILED (td=0)", playerid);
+    }
+    else
+    {
+        g_PlayerHUD[playerid][HUD_THIRST] = td_thirst;
+        PlayerTextDrawFont(playerid, g_PlayerHUD[playerid][HUD_THIRST], 2);
+        PlayerTextDrawLetterSize(playerid, g_PlayerHUD[playerid][HUD_THIRST], 0.2, 0.8);
+        PlayerTextDrawColour(playerid, g_PlayerHUD[playerid][HUD_THIRST], 0x3498DBFF);
+        PlayerTextDrawSetOutline(playerid, g_PlayerHUD[playerid][HUD_THIRST], 1);
+        PlayerTextDrawAlignment(playerid, g_PlayerHUD[playerid][HUD_THIRST], 3);
+    }
 
     // === BITMASK WOUND (BW) ===
     g_PlayerHUD[playerid][HUD_BW] = CreatePlayerTextDraw(playerid, 320.0, 400.0, "~r~JESTES RANNY~n~~w~Poczekaj na pomoc medyczna");
@@ -224,6 +284,7 @@ stock HUD_Create(playerid)
     g_HUDFlags[playerid] = 0;
     g_NotifyTimer[playerid] = 0;
 
+    // Do not show HUD elements here - show them only after the player has fully spawned
     return 1;
 }
 
@@ -256,6 +317,87 @@ stock HUD_Destroy(playerid)
     return 1;
 }
 
+// Global timer callback to update HUDs (refresh clock every second)
+stock HUD_GlobalTimer()
+{
+    for(new i = 0; i < MAX_PLAYERS; i++)
+    {
+        if(IsPlayerConnected(i) && !(g_HUDFlags[i] & HUD_FLAG_HIDDEN))
+        {
+            HUD_Update(i);
+        }
+    }
+
+    return 1;
+}
+
+/**
+ * Ensure the date textdraw is created for a player. Creates it on-demand after spawn.
+ * @return 1 if exists or created, 0 if creation failed
+ */
+stock HUD_EnsureDateCreated(playerid)
+{
+    if(!IsValidPlayerId(playerid)) return 0;
+
+    if(g_PlayerHUD[playerid][HUD_DATE] != PlayerText:INVALID_TEXT_DRAW && g_PlayerHUD[playerid][HUD_DATE] != 0)
+    {
+        return 1; // already valid
+    }
+
+    // Try to create now (player is spawned when this is called)
+    new td = CreatePlayerTextDraw(playerid, 625.0, 44.0, "01.01.2024");
+    if(td == 0)
+    {
+        printf("[HUD_CREATE] pid=%d date create FAILED on-demand (td=0)", playerid);
+        g_PlayerHUD[playerid][HUD_DATE] = PlayerText:INVALID_TEXT_DRAW;
+        return 0;
+    }
+
+    g_PlayerHUD[playerid][HUD_DATE] = td;
+    PlayerTextDrawFont(playerid, g_PlayerHUD[playerid][HUD_DATE], 2);
+    PlayerTextDrawLetterSize(playerid, g_PlayerHUD[playerid][HUD_DATE], 0.2, 0.8);
+    PlayerTextDrawColour(playerid, g_PlayerHUD[playerid][HUD_DATE], 0xCCCCCCFF);
+    PlayerTextDrawSetOutline(playerid, g_PlayerHUD[playerid][HUD_DATE], 1);
+    PlayerTextDrawAlignment(playerid, g_PlayerHUD[playerid][HUD_DATE], 3);
+
+    printf("[HUD_CREATE] pid=%d date created on-demand td=%d", playerid, g_PlayerHUD[playerid][HUD_DATE]);
+    return 1;
+}
+
+/**
+ * Ensure the clock textdraw is created for a player. Creates it on-demand after spawn.
+ * @return 1 if exists or created, 0 if creation failed
+ */
+stock HUD_EnsureClockCreated(playerid)
+{
+    if(!IsValidPlayerId(playerid)) return 0;
+
+    if(g_PlayerHUD[playerid][HUD_CLOCK] != PlayerText:INVALID_TEXT_DRAW && g_PlayerHUD[playerid][HUD_CLOCK] != 0)
+    {
+        return 1; // already valid
+    }
+
+    // Try to create now (player is spawned when this is called)
+    new td = CreatePlayerTextDraw(playerid, 635.0, 18.0, "00:00");
+    if(td == 0)
+    {
+        printf("[HUD_CREATE] pid=%d clock create FAILED on-demand (td=0)", playerid);
+        g_PlayerHUD[playerid][HUD_CLOCK] = PlayerText:INVALID_TEXT_DRAW;
+        return 0;
+    }
+
+    g_PlayerHUD[playerid][HUD_CLOCK] = td;
+    PlayerTextDrawFont(playerid, g_PlayerHUD[playerid][HUD_CLOCK], 2);
+    PlayerTextDrawLetterSize(playerid, g_PlayerHUD[playerid][HUD_CLOCK], 0.5, 2.0);
+    PlayerTextDrawColour(playerid, g_PlayerHUD[playerid][HUD_CLOCK], 0xFFFFFFFF);
+    PlayerTextDrawSetOutline(playerid, g_PlayerHUD[playerid][HUD_CLOCK], 1);
+    PlayerTextDrawAlignment(playerid, g_PlayerHUD[playerid][HUD_CLOCK], 3);
+
+    printf("[HUD_CREATE] pid=%d clock created on-demand td=%d", playerid, g_PlayerHUD[playerid][HUD_CLOCK]);
+    return 1;
+}
+
+
 // ===========================================================================
 // WY??WIETLANIE HUD
 // ===========================================================================
@@ -271,19 +413,66 @@ stock HUD_Show(playerid)
         return 0;
     }
 
+    // Only show HUD when player is fully logged in and spawned
+    if(!pInfo[playerid][player_logged] || !Player_IsSpawned(playerid))
+    {
+        printf("[HUD] HUD_Show skipped for pid=%d - logged=%d spawned=%d", playerid, pInfo[playerid][player_logged], Player_IsSpawned(playerid));
+        return 0;
+    }
+
     // Pokaż globalne
     TextDrawShowForPlayer(playerid, g_GlobalTextdraws[0]);
 
-    // Poka?? podstawowe elementy
-    PlayerTextDrawShow(playerid, g_PlayerHUD[playerid][HUD_CLOCK]);
-    PlayerTextDrawShow(playerid, g_PlayerHUD[playerid][HUD_DATE]);
-    PlayerTextDrawShow(playerid, g_PlayerHUD[playerid][HUD_HUNGER]);
-    PlayerTextDrawShow(playerid, g_PlayerHUD[playerid][HUD_THIRST]);
+    // Pokaż podstawowe elementy (ensure clock + date exist and show)
+    // Ensure clock exists (create on-demand if necessary)
+    if(g_PlayerHUD[playerid][HUD_CLOCK] == PlayerText:INVALID_TEXT_DRAW || g_PlayerHUD[playerid][HUD_CLOCK] == 0)
+    {
+        if(HUD_EnsureClockCreated(playerid))
+        {
+            new ok_clock = PlayerTextDrawShow(playerid, g_PlayerHUD[playerid][HUD_CLOCK]);
+            printf("[HUD] HUD_Show: clock created on-demand and shown td=%d ok=%d for pid=%d", g_PlayerHUD[playerid][HUD_CLOCK], ok_clock, playerid);
+        }
+        else
+        {
+            printf("[HUD] HUD_Show: clock textdraw INVALID (td=%d) for pid=%d", g_PlayerHUD[playerid][HUD_CLOCK], playerid);
+        }
+    }
+    else
+    {
+        new ok_clock = PlayerTextDrawShow(playerid, g_PlayerHUD[playerid][HUD_CLOCK]);
+        printf("[HUD] HUD_Show: clock_td=%d show_ok=%d for pid=%d", g_PlayerHUD[playerid][HUD_CLOCK], ok_clock, playerid);
+    }
+
+    // Ensure date exists (create on-demand if necessary)
+    if(g_PlayerHUD[playerid][HUD_DATE] == PlayerText:INVALID_TEXT_DRAW || g_PlayerHUD[playerid][HUD_DATE] == 0)
+    {
+        if(HUD_EnsureDateCreated(playerid))
+        {
+            new ok_date2 = PlayerTextDrawShow(playerid, g_PlayerHUD[playerid][HUD_DATE]);
+            printf("[HUD] HUD_Show: date created on-demand and shown td=%d ok=%d for pid=%d", g_PlayerHUD[playerid][HUD_DATE], ok_date2, playerid);
+        }
+        else
+        {
+            printf("[HUD] HUD_Show: date textdraw INVALID (td=%d) for pid=%d", g_PlayerHUD[playerid][HUD_DATE], playerid);
+        }
+    }
+    else
+    {
+        new ok_date = PlayerTextDrawShow(playerid, g_PlayerHUD[playerid][HUD_DATE]);
+        printf("[HUD] HUD_Show: date_td=%d show_ok=%d for pid=%d", g_PlayerHUD[playerid][HUD_DATE], ok_date, playerid);
+    }
+
+    new ok_hunger = PlayerTextDrawShow(playerid, g_PlayerHUD[playerid][HUD_HUNGER]);
+    new ok_thirst = PlayerTextDrawShow(playerid, g_PlayerHUD[playerid][HUD_THIRST]);
+    printf("[HUD] HUD_Show: hunger_td=%d ok=%d, thirst_td=%d ok=%d", g_PlayerHUD[playerid][HUD_HUNGER], ok_hunger, g_PlayerHUD[playerid][HUD_THIRST], ok_thirst);
 
     g_HUDFlags[playerid] &= ~HUD_FLAG_HIDDEN;
 
     // Aktualizuj warto??ci
     HUD_Update(playerid);
+
+    // Debug: log show event for troubleshooting clock disappearance
+    printf("[HUD] HUD_Show called for pid=%d, flags=%d", playerid, g_HUDFlags[playerid]);
 
     return 1;
 }
@@ -313,6 +502,9 @@ stock HUD_Hide(playerid)
 
     g_HUDFlags[playerid] |= HUD_FLAG_HIDDEN;
 
+    // Debug: log hide event
+    printf("[HUD] HUD_Hide called for pid=%d", playerid);
+
     return 1;
 }
 
@@ -329,25 +521,63 @@ stock HUD_Update(playerid)
 
     new text[64];
 
-    // Zegar
+    // Clock
     new hour, minute, second;
     gettime(hour, minute, second);
     format(text, sizeof(text), "%02d:%02d", hour, minute);
-    PlayerTextDrawSetString(playerid, g_PlayerHUD[playerid][HUD_CLOCK], text);
+    new set_ok_clock = 0;
+    if(g_PlayerHUD[playerid][HUD_CLOCK] != PlayerText:INVALID_TEXT_DRAW && g_PlayerHUD[playerid][HUD_CLOCK] != 0)
+    {
+        set_ok_clock = PlayerTextDrawSetString(playerid, g_PlayerHUD[playerid][HUD_CLOCK], text);
+    }
+    else
+    {
+        if(HUD_EnsureClockCreated(playerid))
+        {
+            set_ok_clock = PlayerTextDrawSetString(playerid, g_PlayerHUD[playerid][HUD_CLOCK], text);
+            PlayerTextDrawShow(playerid, g_PlayerHUD[playerid][HUD_CLOCK]);
+        }
+    }
+    printf("[HUD_UPDATE] pid=%d clock='%s' set_ok=%d td=%d", playerid, text, set_ok_clock, g_PlayerHUD[playerid][HUD_CLOCK]);
 
-    // Data
+    // Date - leave this (clock removed)
     new year, month, day;
     getdate(year, month, day);
     format(text, sizeof(text), "%02d.%02d.%d", day, month, year);
-    PlayerTextDrawSetString(playerid, g_PlayerHUD[playerid][HUD_DATE], text);
+    new set_ok_date = 0;
+    if(g_PlayerHUD[playerid][HUD_DATE] != PlayerText:INVALID_TEXT_DRAW && g_PlayerHUD[playerid][HUD_DATE] != 0)
+    {
+        set_ok_date = PlayerTextDrawSetString(playerid, g_PlayerHUD[playerid][HUD_DATE], text);
+    }
+    else
+    {
+        // Try to create lazily (player is spawned when updates happen)
+        if(HUD_EnsureDateCreated(playerid))
+        {
+            set_ok_date = PlayerTextDrawSetString(playerid, g_PlayerHUD[playerid][HUD_DATE], text);
+            // show it now that it exists
+            PlayerTextDrawShow(playerid, g_PlayerHUD[playerid][HUD_DATE]);
+        }
+    }
+    printf("[HUD_UPDATE] pid=%d date='%s' set_ok=%d td=%d", playerid, text, set_ok_date, g_PlayerHUD[playerid][HUD_DATE]);
 
-    // G????d
+    // Głód
     format(text, sizeof(text), "Glod: %d%%", pInfo[playerid][player_hunger]);
-    PlayerTextDrawSetString(playerid, g_PlayerHUD[playerid][HUD_HUNGER], text);
+    new set_ok_hunger = 0;
+    if(g_PlayerHUD[playerid][HUD_HUNGER] != PlayerText:INVALID_TEXT_DRAW && g_PlayerHUD[playerid][HUD_HUNGER] != 0)
+    {
+        set_ok_hunger = PlayerTextDrawSetString(playerid, g_PlayerHUD[playerid][HUD_HUNGER], text);
+    }
+    printf("[HUD_UPDATE] pid=%d hunger='%s' set_ok=%d td=%d", playerid, text, set_ok_hunger, g_PlayerHUD[playerid][HUD_HUNGER]);
 
     // Pragnienie
     format(text, sizeof(text), "Pragnienie: %d%%", pInfo[playerid][player_thirst]);
-    PlayerTextDrawSetString(playerid, g_PlayerHUD[playerid][HUD_THIRST], text);
+    new set_ok_thirst = 0;
+    if(g_PlayerHUD[playerid][HUD_THIRST] != PlayerText:INVALID_TEXT_DRAW && g_PlayerHUD[playerid][HUD_THIRST] != 0)
+    {
+        set_ok_thirst = PlayerTextDrawSetString(playerid, g_PlayerHUD[playerid][HUD_THIRST], text);
+    }
+    printf("[HUD_UPDATE] pid=%d thirst='%s' set_ok=%d td=%d", playerid, text, set_ok_thirst, g_PlayerHUD[playerid][HUD_THIRST]);
 
     return 1;
 }

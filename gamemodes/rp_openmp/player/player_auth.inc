@@ -2,7 +2,7 @@
  * =============================================================================
  *  PLAYER AUTH - System kont i postaci
  * =============================================================================
- *  
+ *
  *  Modul: player/player_auth.inc
  *  Opis: System kont z wieloma postaciami, logowanie, rejestracja
  *
@@ -134,7 +134,7 @@ static stock Auth_ResetAccountData(playerid)
     g_AccountData[playerid][acc_created_at] = 0;
     g_AccountData[playerid][acc_last_login] = 0;
     g_AccountData[playerid][acc_total_playtime] = 0;
-    
+
     for(new i = 0; i < MAX_CHARACTERS_PREMIUM; i++)
     {
         g_CharacterList[playerid][i][0] = EOS;
@@ -152,22 +152,22 @@ stock Auth_Start(playerid)
     {
         return 0;
     }
-    
+
     // Resetuj stan
     g_AuthState[playerid] = AUTH_STATE_CHECKING;
     g_LoginAttempts[playerid] = 0;
     g_TempPassword[playerid][0] = EOS;
     g_CharacterCount[playerid] = 0;
-    
+
     // Wyczysc dane konta
     Auth_ResetAccountData(playerid);
-    
+
     // Sprawdz czy konto istnieje
     Auth_CheckAccount(playerid);
-    
+
     // Ustaw timeout
     g_LoginTimer[playerid] = SetTimerEx("Auth_Timeout", LOGIN_TIMEOUT * 1000, false, "i", playerid);
-    
+
     return 1;
 }
 
@@ -179,12 +179,12 @@ static stock Auth_CheckAccount(playerid)
 {
     new query[256];
     new name[MAX_PLAYER_NAME + 1];
-    
+
     GetPlayerName(playerid, name, sizeof(name));
-    
+
     mysql_format(mySQLconnection, query, sizeof(query),
         "SELECT * FROM `users` WHERE `username` = '%e' LIMIT 1", name);
-    
+
     mysql_tquery(mySQLconnection, query, "Auth_OnAccountCheck", "i", playerid);
 }
 
@@ -195,7 +195,7 @@ public Auth_OnAccountCheck(playerid)
     {
         return 0;
     }
-    
+
     if(cache_num_rows() > 0)
     {
         // Konto istnieje - wczytaj dane
@@ -210,14 +210,14 @@ public Auth_OnAccountCheck(playerid)
         cache_get_value_int(0, "created_at", g_AccountData[playerid][acc_created_at]);
         cache_get_value_int(0, "last_login", g_AccountData[playerid][acc_last_login]);
         cache_get_value_int(0, "total_playtime", g_AccountData[playerid][acc_total_playtime]);
-        
+
         // Sprawdz ban
         if(g_AccountData[playerid][acc_banned])
         {
             Auth_HandleBan(playerid);
             return 0;
         }
-        
+
         // Pokaz dialog logowania
         g_AuthState[playerid] = AUTH_STATE_LOGIN;
         Auth_ShowLoginDialog(playerid, false);
@@ -228,7 +228,7 @@ public Auth_OnAccountCheck(playerid)
         g_AuthState[playerid] = AUTH_STATE_REGISTER;
         Auth_ShowRegisterDialog(playerid);
     }
-    
+
     return 1;
 }
 
@@ -243,10 +243,10 @@ stock Auth_ShowLoginDialog(playerid, bool:wrongPassword = false)
 {
     new name[MAX_PLAYER_NAME];
     GetPlayerName(playerid, name, sizeof(name));
-    
+
     new caption[64];
     format(caption, sizeof(caption), "Logowanie - %s", name);
-    
+
     new info[512];
     if(wrongPassword)
     {
@@ -256,7 +256,7 @@ stock Auth_ShowLoginDialog(playerid, bool:wrongPassword = false)
     {
         format(info, sizeof(info), "{FFFFFF}Witaj ponownie na serwerze!\n\nWprowadz haslo do swojego konta.\n\n{AAAAAA}Konto: {FFFFFF}%s", name);
     }
-    
+
     ShowPlayerDialog(playerid, DIALOG_AUTH_LOGIN, DIALOG_STYLE_PASSWORD, caption, info, "Zaloguj", "Wyjdz");
 }
 
@@ -268,20 +268,20 @@ stock Auth_VerifyPassword(playerid, const password[])
     if(strlen(password) < MIN_PASSWORD_LENGTH)
     {
         g_LoginAttempts[playerid]++;
-        
+
         if(g_LoginAttempts[playerid] >= MAX_LOGIN_ATTEMPTS)
         {
             Player_Kick(playerid, -1, "Przekroczono limit prob logowania");
             return 0;
         }
-        
+
         Auth_ShowLoginDialog(playerid, true);
         return 0;
     }
-    
+
     // Weryfikuj hasło asynchronicznie przez bcrypt
     bcrypt_verify(playerid, "Auth_OnPasswordVerified", password, g_AccountData[playerid][acc_password]);
-    
+
     return 1;
 }
 
@@ -292,7 +292,7 @@ public Auth_OnPasswordVerified(playerid, bool:success)
     {
         return 0;
     }
-    
+
     if(success)
     {
         // Hasło poprawne - załaduj listę postaci
@@ -301,16 +301,16 @@ public Auth_OnPasswordVerified(playerid, bool:success)
     else
     {
         g_LoginAttempts[playerid]++;
-        
+
         if(g_LoginAttempts[playerid] >= MAX_LOGIN_ATTEMPTS)
         {
             Player_Kick(playerid, -1, "Przekroczono limit prob logowania");
             return 0;
         }
-        
+
         Auth_ShowLoginDialog(playerid, true);
     }
-    
+
     return 1;
 }
 
@@ -325,13 +325,13 @@ stock Auth_ShowRegisterDialog(playerid)
 {
     new name[MAX_PLAYER_NAME];
     GetPlayerName(playerid, name, sizeof(name));
-    
+
     new caption[64];
     format(caption, sizeof(caption), "Rejestracja - %s", name);
-    
+
     new info[512];
     format(info, sizeof(info), "{FFFFFF}Witaj na serwerze!\n\nTwoje konto nie istnieje w bazie danych.\nWprowadz haslo, ktore bedziesz uzywac do logowania.\n\n{AAAAAA}Wymagania hasla:\n{FFFFFF}- Minimum %d znakow\n- Maximum %d znakow\n- Zalecane: duze/male litery i cyfry", MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH);
-    
+
     ShowPlayerDialog(playerid, DIALOG_AUTH_REGISTER, DIALOG_STYLE_PASSWORD, caption, info, "Dalej", "Wyjdz");
 }
 
@@ -341,7 +341,7 @@ stock Auth_ShowRegisterDialog(playerid)
 stock Auth_ShowRegisterConfirmDialog(playerid)
 {
     new info[256] = "{FFFFFF}Powtorz wprowadzone haslo, aby potwierdzic rejestracje.\n\n{AAAAAA}Upewnij sie, ze hasla sa identyczne.";
-    
+
     ShowPlayerDialog(playerid, DIALOG_AUTH_REGISTER_CONFIRM, DIALOG_STYLE_PASSWORD, "Potwierdz haslo", info, "Zarejestruj", "Wroc");
 }
 
@@ -352,7 +352,7 @@ stock Auth_CreateAccount(playerid, const password[])
 {
     // Zapisz hasło tymczasowo - bcrypt hashuje asynchronicznie
     strcopy(g_PendingPassword[playerid], password, sizeof(g_PendingPassword[]));
-    
+
     // Hashuj hasło przez bcrypt
     bcrypt_hash(playerid, "Auth_OnPasswordHashed", password, BCRYPT_COST);
 }
@@ -364,25 +364,25 @@ public Auth_OnPasswordHashed(playerid)
     {
         return 0;
     }
-    
+
     new name[MAX_PLAYER_NAME];
     GetPlayerName(playerid, name, sizeof(name));
-    
+
     new ip[16];
     GetPlayerIp(playerid, ip, sizeof(ip));
-    
+
     // Pobierz hash z bcrypt
     new hashedPassword[BCRYPT_HASH_LENGTH];
     bcrypt_get_hash(hashedPassword);
-    
+
     // Wyczyść tymczasowe hasło
     g_PendingPassword[playerid][0] = EOS;
-    
+
     new query[512];
     mysql_format(mySQLconnection, query, sizeof(query), "INSERT INTO `users` (`username`, `password`, `ip`, `created_at`, `last_login`) VALUES ('%e', '%e', '%e', %d, %d)", name, hashedPassword, ip, gettime(), gettime());
-    
+
     mysql_tquery(mySQLconnection, query, "Auth_OnAccountCreated", "i", playerid);
-    
+
     return 1;
 }
 
@@ -393,20 +393,20 @@ public Auth_OnAccountCreated(playerid)
     {
         return 0;
     }
-    
+
     g_AccountData[playerid][acc_id] = cache_insert_id();
-    
+
     new name[MAX_PLAYER_NAME];
     GetPlayerName(playerid, name, sizeof(name));
     strcopy(g_AccountData[playerid][acc_username], name, MAX_PLAYER_NAME);
-    
+
     SendClientMessage(playerid, COLOR_SUCCESS, "Konto zostalo utworzone pomyslnie!");
     SendClientMessage(playerid, COLOR_INFO, "Teraz musisz stworzyc swoja pierwsza postac.");
-    
+
     // Przejdz do tworzenia postaci
     g_CharacterCount[playerid] = 0;
     Auth_ShowCharacterNameDialog(playerid);
-    
+
     return 1;
 }
 
@@ -423,7 +423,7 @@ stock Auth_LoadCharacterList(playerid)
     mysql_format(mySQLconnection, query, sizeof(query),
         "SELECT `id`, `name`, `level`, `money`, `hours` FROM `characters` WHERE `account_id` = %d ORDER BY `last_save` DESC",
         g_AccountData[playerid][acc_id]);
-    
+
     mysql_tquery(mySQLconnection, query, "Auth_OnCharacterListLoaded", "i", playerid);
 }
 
@@ -434,10 +434,10 @@ public Auth_OnCharacterListLoaded(playerid)
     {
         return 0;
     }
-    
+
     new rows = cache_num_rows();
     g_CharacterCount[playerid] = rows;
-    
+
     if(rows == 0)
     {
         // Brak postaci - utworz nowa
@@ -445,17 +445,17 @@ public Auth_OnCharacterListLoaded(playerid)
         Auth_ShowCharacterNameDialog(playerid);
         return 1;
     }
-    
+
     // Wczytaj liste postaci
     for(new i = 0; i < rows && i < MAX_CHARACTERS_PREMIUM; i++)
     {
         cache_get_value_int(i, "id", g_CharacterIds[playerid][i]);
         cache_get_value(i, "name", g_CharacterList[playerid][i], 64);
     }
-    
+
     // Pokaz dialog wyboru
     Auth_ShowCharacterSelectDialog(playerid);
-    
+
     return 1;
 }
 
@@ -465,31 +465,31 @@ public Auth_OnCharacterListLoaded(playerid)
 stock Auth_ShowCharacterSelectDialog(playerid)
 {
     g_AuthState[playerid] = AUTH_STATE_CHARACTER_SELECT;
-    
+
     new content[1024];
     new count = g_CharacterCount[playerid];
     new maxChars = Auth_GetMaxCharacters(playerid);
-    
+
     // Naglowek
     strcopy(content, "Postac\tPoziom\n", sizeof(content));
-    
+
     for(new i = 0; i < count; i++)
     {
         new line[128];
         format(line, sizeof(line), "%s\t-\n", g_CharacterList[playerid][i]);
         strcat(content, line);
     }
-    
+
     // Opcja tworzenia nowej postaci (jesli mozna)
     if(count < maxChars)
     {
         strcat(content, "{2ECC71}+ Stworz nowa postac\t-\n");
     }
-    
+
     new title[64];
     format(title, sizeof(title), "Wybierz postac (%d/%d)", count, maxChars);
-    
-    ShowPlayerDialog(playerid, DIALOG_AUTH_CHAR_SELECT, DIALOG_STYLE_TABLIST_HEADERS, 
+
+    ShowPlayerDialog(playerid, DIALOG_AUTH_CHAR_SELECT, DIALOG_STYLE_TABLIST_HEADERS,
         title, content, "Wybierz", "Wyjdz");
 }
 
@@ -507,12 +507,12 @@ stock Auth_ShowSpawnChoiceDialog(playerid)
 stock Auth_GetMaxCharacters(playerid)
 {
     // Sprawdz czy ma VIP
-    if(g_AccountData[playerid][acc_vip_level] > 0 && 
+    if(g_AccountData[playerid][acc_vip_level] > 0 &&
        g_AccountData[playerid][acc_vip_expire] > gettime())
     {
         return MAX_CHARACTERS_PREMIUM;
     }
-    
+
     return MAX_CHARACTERS_NORMAL;
 }
 
@@ -521,7 +521,7 @@ stock Auth_GetMaxCharacters(playerid)
  */
 stock bool:Auth_HasVIP(playerid)
 {
-    return (g_AccountData[playerid][acc_vip_level] > 0 && 
+    return (g_AccountData[playerid][acc_vip_level] > 0 &&
             g_AccountData[playerid][acc_vip_expire] > gettime());
 }
 
@@ -534,12 +534,12 @@ stock Auth_SelectCharacter(playerid, characterIndex)
     {
         return 0;
     }
-    
+
     new characterId = g_CharacterIds[playerid][characterIndex];
-    
+
     // Wczytaj pelne dane postaci
     Auth_LoadCharacterData(playerid, characterId);
-    
+
     return 1;
 }
 
@@ -551,7 +551,7 @@ static stock Auth_LoadCharacterData(playerid, characterId)
     new query[256];
     mysql_format(mySQLconnection, query, sizeof(query),
         "SELECT * FROM `characters` WHERE `id` = %d LIMIT 1", characterId);
-    
+
     mysql_tquery(mySQLconnection, query, "Auth_OnCharacterDataLoaded", "i", playerid);
 }
 
@@ -562,14 +562,14 @@ public Auth_OnCharacterDataLoaded(playerid)
     {
         return 0;
     }
-    
+
     if(cache_num_rows() == 0)
     {
         SendClientMessage(playerid, COLOR_ERROR, "Blad wczytywania postaci!");
         Auth_ShowCharacterSelectDialog(playerid);
         return 0;
     }
-    
+
     // Wczytaj dane do pInfo
     cache_get_value_int(0, "id", pInfo[playerid][player_uid]);
     pInfo[playerid][player_id] = pInfo[playerid][player_uid];
@@ -585,6 +585,9 @@ public Auth_OnCharacterDataLoaded(playerid)
     cache_get_value_int(0, "minutes", pInfo[playerid][player_minutes]);
     cache_get_value_float(0, "health", pInfo[playerid][player_health]);
     cache_get_value_float(0, "armour", pInfo[playerid][player_armour]);
+    // Mirror loaded armour into spawn_armor so spawn logic applies it
+    pInfo[playerid][player_spawn_armor] = pInfo[playerid][player_armour];
+    printf("[Auth] pid=%d loaded armour=%.2f mirrored to spawn_armor=%.2f", playerid, pInfo[playerid][player_armour], pInfo[playerid][player_spawn_armor]);
     cache_get_value_float(0, "pos_x", pInfo[playerid][player_pos_x]);
     cache_get_value_float(0, "pos_y", pInfo[playerid][player_pos_y]);
     cache_get_value_float(0, "pos_z", pInfo[playerid][player_pos_z]);
@@ -601,21 +604,21 @@ public Auth_OnCharacterDataLoaded(playerid)
     cache_get_value_int(0, "aj_time", pInfo[playerid][player_aj]);
     cache_get_value_int(0, "bw_time", pInfo[playerid][player_bw]);
     cache_get_value_int(0, "penalty_points", pInfo[playerid][player_penalty_points]);
-    
+
     // Skopiuj dane admina z konta
     pInfo[playerid][player_admin] = g_AccountData[playerid][acc_admin_level];
     pInfo[playerid][player_vip] = g_AccountData[playerid][acc_vip_level];
     pInfo[playerid][player_warns] = g_AccountData[playerid][acc_warns];
-    
+
     // WAŻNE: Synchronizuj z pGlobal dla komend admina
     pGlobal[playerid][glo_admin] = g_AccountData[playerid][acc_admin_level];
-    
+
     // WAŻNE: Oznacz dane jako załadowane - bez tego Player_Spawn zwróci 0
     pInfo[playerid][player_loaded] = true;
-    
+
     // Zakoncz autoryzacje
     Auth_CompleteLogin(playerid);
-    
+
     return 1;
 }
 
@@ -629,12 +632,12 @@ public Auth_OnCharacterDataLoaded(playerid)
 stock Auth_ShowCharacterNameDialog(playerid)
 {
     g_AuthState[playerid] = AUTH_STATE_CHARACTER_CREATE_NAME;
-    
+
     new info[512];
     format(info, sizeof(info),
         "{FFFFFF}Wprowadz imie i nazwisko swojej postaci.\n\n{AAAAAA}Wymagania:\n{FFFFFF}- Format: Imie_Nazwisko\n- Tylko litery i podkreslnik\n- Przyklad: Jan_Kowalski\n\n{FF9800}Uwaga: Nazwa musi byc unikalna i realistyczna!");
-    
-    ShowPlayerDialog(playerid, DIALOG_AUTH_CHAR_NAME, DIALOG_STYLE_INPUT, 
+
+    ShowPlayerDialog(playerid, DIALOG_AUTH_CHAR_NAME, DIALOG_STYLE_INPUT,
         "Tworzenie postaci - Imie", info, "Dalej", "Anuluj");
 }
 
@@ -650,7 +653,7 @@ stock Auth_VerifyCharacterName(playerid, const name[])
         Auth_ShowCharacterNameDialog(playerid);
         return 0;
     }
-    
+
     // Sprawdz format (Imie_Nazwisko)
     if(strfind(name, "_") == -1)
     {
@@ -658,7 +661,7 @@ stock Auth_VerifyCharacterName(playerid, const name[])
         Auth_ShowCharacterNameDialog(playerid);
         return 0;
     }
-    
+
     // Sprawdz dozwolone znaki
     for(new i = 0, len = strlen(name); i < len; i++)
     {
@@ -671,16 +674,16 @@ stock Auth_VerifyCharacterName(playerid, const name[])
             return 0;
         }
     }
-    
+
     // Zapisz tymczasowo i sprawdz w bazie
     strcopy(g_TempCharacter[playerid][temp_name], name, MAX_PLAYER_NAME);
-    
+
     new query[256];
     mysql_format(mySQLconnection, query, sizeof(query),
         "SELECT `id` FROM `characters` WHERE `name` = '%e' LIMIT 1", name);
-    
+
     mysql_tquery(mySQLconnection, query, "Auth_OnCharacterNameCheck", "i", playerid);
-    
+
     return 1;
 }
 
@@ -691,17 +694,17 @@ public Auth_OnCharacterNameCheck(playerid)
     {
         return 0;
     }
-    
+
     if(cache_num_rows() > 0)
     {
         SendClientMessage(playerid, COLOR_ERROR, "Ta nazwa jest juz zajeta!");
         Auth_ShowCharacterNameDialog(playerid);
         return 0;
     }
-    
+
     // Nazwa dostepna - przejdz do wyboru plci
     Auth_ShowGenderDialog(playerid);
-    
+
     return 1;
 }
 
@@ -711,11 +714,11 @@ public Auth_OnCharacterNameCheck(playerid)
 stock Auth_ShowGenderDialog(playerid)
 {
     g_AuthState[playerid] = AUTH_STATE_CHARACTER_CREATE_GENDER;
-    
-    new info[256] = 
+
+    new info[256] =
         "{3498DB}? Mezczyzna\n{E91E63}? Kobieta";
-    
-    ShowPlayerDialog(playerid, DIALOG_AUTH_CHAR_GENDER, DIALOG_STYLE_LIST, 
+
+    ShowPlayerDialog(playerid, DIALOG_AUTH_CHAR_GENDER, DIALOG_STYLE_LIST,
         "Tworzenie postaci - Plec", info, "Wybierz", "Wroc");
 }
 
@@ -727,10 +730,10 @@ stock Auth_SetGender(playerid, gender)
 {
     g_TempCharacter[playerid][temp_gender] = gender;
     g_AuthState[playerid] = AUTH_STATE_CHARACTER_CREATE_SKIN;
-    
+
     // Pokaż menu wyboru skina (gracz nadal w spectating)
     SkinSelection_Show(playerid, "Auth_OnSkinSelected");
-    
+
     SendClientMessage(playerid, COLOR_INFO, "Wybierz skin dla swojej postaci.");
 }
 
@@ -755,7 +758,7 @@ public Auth_OnSkinSelected(playerid, skinid)
     {
         return 0;
     }
-    
+
     if(skinid < 0)
     {
         // Anulowano - pokaż menu ponownie (nie można anulować przy rejestracji)
@@ -763,13 +766,13 @@ public Auth_OnSkinSelected(playerid, skinid)
         SkinSelection_Show(playerid, "Auth_OnSkinSelected");
         return 0;
     }
-    
+
     // Zapisz wybrany skin
     g_TempCharacter[playerid][temp_skin] = skinid;
-    
+
     // Utworz postac w bazie (spawn nastąpi po utworzeniu)
     Auth_CreateCharacter(playerid);
-    
+
     return 1;
 }
 
@@ -785,13 +788,13 @@ public Auth_OnSkinSelected(playerid, skinid)
 stock Auth_CreateCharacter(playerid)
 {
     new query[1024];
-    
+
     // Pobierz poczatkowa pozycje spawn z configu
     new Float:spawnX = Setting[setting_spawn_pos_x];
     new Float:spawnY = Setting[setting_spawn_pos_y];
     new Float:spawnZ = Setting[setting_spawn_pos_z];
     new Float:spawnA = Setting[setting_spawn_pos_a];
-    
+
     // Fallback na hardkodowane wartości jeśli coś się nie załadowało z configu
     if(spawnX == 0.0 || spawnY == 0.0 || spawnZ == 0.0)
     {
@@ -800,9 +803,9 @@ stock Auth_CreateCharacter(playerid)
         spawnZ = 10.8203;
         spawnA = 180.0;
     }
-    
+
     printf("[Auth] Tworzenie postaci dla %d - Spawn: %.2f, %.2f, %.2f", playerid, spawnX, spawnY, spawnZ);
-    
+
     mysql_format(mySQLconnection, query, sizeof(query),
         "INSERT INTO `characters` (`account_id`, `name`, `gender`, `skin`, `money`, `bank`, `level`, `health`, `armour`, `pos_x`, `pos_y`, `pos_z`, `pos_angle`, `interior`, `world`, `hunger`, `thirst`, `created_at`, `last_save`) VALUES (%d, '%e', %d, %d, %d, 0, 1, 100.0, 0.0, %f, %f, %f, %f, 0, 0, 100, 100, %d, %d)",
         g_AccountData[playerid][acc_id],
@@ -812,7 +815,7 @@ stock Auth_CreateCharacter(playerid)
         Setting[setting_start_money],
         spawnX, spawnY, spawnZ, spawnA,
         gettime(), gettime());
-    
+
     mysql_tquery(mySQLconnection, query, "Auth_OnCharacterCreate", "i", playerid);
 }
 
@@ -823,15 +826,15 @@ public Auth_OnCharacterCreate(playerid)
     {
         return 0;
     }
-    
+
     new charId = cache_insert_id();
-    
+
     if(charId == 0)
     {
         SendClientMessage(playerid, COLOR_ERROR, "Blad tworzenia postaci!");
         return 0;
     }
-    
+
     // Ustaw podstawowe dane
     pInfo[playerid][player_uid] = charId;
     pInfo[playerid][player_id] = charId;
@@ -867,21 +870,21 @@ public Auth_OnCharacterCreate(playerid)
     pInfo[playerid][player_thirst] = 100;
     pInfo[playerid][player_admin] = g_AccountData[playerid][acc_admin_level];
     pInfo[playerid][player_vip] = g_AccountData[playerid][acc_vip_level];
-    
+
     // WAŻNE: Synchronizuj z pGlobal dla komend admina
     pGlobal[playerid][glo_admin] = g_AccountData[playerid][acc_admin_level];
-    
+
     // WAŻNE: Oznacz dane jako załadowane - bez tego Player_Spawn zwróci 0
     pInfo[playerid][player_loaded] = true;
-    
+
     new msg[128];
-    format(msg, sizeof(msg), "Postac {2ECC71}%s{FFFFFF} zostala utworzona!", 
+    format(msg, sizeof(msg), "Postac {2ECC71}%s{FFFFFF} zostala utworzona!",
         g_TempCharacter[playerid][temp_name]);
     SendClientMessage(playerid, COLOR_WHITE, msg);
-    
+
     // Zakoncz autoryzacje
     Auth_CompleteLogin(playerid);
-    
+
     return 1;
 }
 
@@ -899,58 +902,58 @@ stock Auth_CompleteLogin(playerid)
     {
         return 0;
     }
-    
+
     // Anuluj timer timeout
     if(g_LoginTimer[playerid] != 0)
     {
         KillTimer(g_LoginTimer[playerid]);
         g_LoginTimer[playerid] = 0;
     }
-    
+
     // Zmien stan
     g_AuthState[playerid] = AUTH_STATE_LOGGED;
     pInfo[playerid][player_logged] = true;
-    
+
     // Dodaj do iteratora
     Iter_Add(Player, playerid);
-    
+
     // Zaladuj dodatkowe dane gracza
     Player_LoadItems(playerid);
     Player_LoadWeapons(playerid);
-    
+
     // Zaktualizuj ostatnie logowanie
     new query[256];
         mysql_format(mySQLconnection, query, sizeof(query),
             "UPDATE `users` SET `last_login` = %d WHERE `id` = %d",
         gettime(), g_AccountData[playerid][acc_id]);
     mysql_tquery(mySQLconnection, query);
-    
+
     // Zaktualizuj last_save postaci
     mysql_format(mySQLconnection, query, sizeof(query),
         "UPDATE `characters` SET `last_save` = %d WHERE `id` = %d",
         gettime(), pInfo[playerid][player_uid]);
     mysql_tquery(mySQLconnection, query);
-    
+
     // Spawnuj gracza - użyj Player_Spawn zamiast SpawnPlayer
     // SpawnPlayer wyzwala class selection co powoduje lecenie w chmurach
     Player_Spawn(playerid);
-    
+
     // Ukryj menu wyboru modeli (może zostać widoczne z poprzedniej sesji)
     HideModelSelectionMenu(playerid);
-    
+
     // Pokaz wiadomosc powitalna
     new msg[128];
-    format(msg, sizeof(msg), "Witaj, {2ECC71}%s{FFFFFF}! Pomyslnie zalogowano.", 
+    format(msg, sizeof(msg), "Witaj, {2ECC71}%s{FFFFFF}! Pomyslnie zalogowano.",
         Player_RPName(playerid));
     SendClientMessage(playerid, COLOR_WHITE, msg);
-    
+
     // Log
-    printf("[Auth] Gracz %s (UID: %d, Account: %d) zalogowany pomyslnie", 
+    printf("[Auth] Gracz %s (UID: %d, Account: %d) zalogowany pomyslnie",
         pInfo[playerid][player_name], pInfo[playerid][player_uid], g_AccountData[playerid][acc_id]);
-    
+
     // Wywolaj callback
     CallLocalFunction("OnPlayerLogin", "i", playerid);
-    
+
     return 1;
 }
 
@@ -975,11 +978,11 @@ hook OnDialogResponse@Auth(playerid, dialogid, response, listitem, inputtext[])
                 Player_Kick(playerid, -1, "Odmowiono logowania");
                 return Y_HOOKS_BREAK_RETURN_1;
             }
-            
+
             Auth_VerifyPassword(playerid, inputtext);
             return Y_HOOKS_BREAK_RETURN_1;
         }
-        
+
         case DIALOG_AUTH_REGISTER:
         {
             if(!response)
@@ -987,29 +990,29 @@ hook OnDialogResponse@Auth(playerid, dialogid, response, listitem, inputtext[])
                 Player_Kick(playerid, -1, "Odmowiono rejestracji");
                 return Y_HOOKS_BREAK_RETURN_1;
             }
-            
+
             if(strlen(inputtext) < MIN_PASSWORD_LENGTH)
             {
                 SendClientMessage(playerid, COLOR_ERROR, "Haslo jest za krotkie!");
                 Auth_ShowRegisterDialog(playerid);
                 return Y_HOOKS_BREAK_RETURN_1;
             }
-            
+
             if(strlen(inputtext) > MAX_PASSWORD_LENGTH)
             {
                 SendClientMessage(playerid, COLOR_ERROR, "Haslo jest za dlugie!");
                 Auth_ShowRegisterDialog(playerid);
                 return Y_HOOKS_BREAK_RETURN_1;
             }
-            
+
             // Zapisz haslo tymczasowo
             strcopy(g_TempPassword[playerid], inputtext, sizeof(g_TempPassword[]));
             g_AuthState[playerid] = AUTH_STATE_REGISTER_CONFIRM;
             Auth_ShowRegisterConfirmDialog(playerid);
-            
+
             return Y_HOOKS_BREAK_RETURN_1;
         }
-        
+
         case DIALOG_AUTH_REGISTER_CONFIRM:
         {
             if(!response)
@@ -1017,21 +1020,21 @@ hook OnDialogResponse@Auth(playerid, dialogid, response, listitem, inputtext[])
                 Auth_ShowRegisterDialog(playerid);
                 return Y_HOOKS_BREAK_RETURN_1;
             }
-            
+
             if(strcmp(inputtext, g_TempPassword[playerid]) != 0)
             {
                 SendClientMessage(playerid, COLOR_ERROR, "Hasla nie sa identyczne!");
                 Auth_ShowRegisterDialog(playerid);
                 return Y_HOOKS_BREAK_RETURN_1;
             }
-            
+
             // Utworz konto
             Auth_CreateAccount(playerid, g_TempPassword[playerid]);
             g_TempPassword[playerid][0] = EOS;
-            
+
             return Y_HOOKS_BREAK_RETURN_1;
         }
-        
+
         case DIALOG_AUTH_CHAR_SELECT:
         {
             if(!response)
@@ -1039,9 +1042,9 @@ hook OnDialogResponse@Auth(playerid, dialogid, response, listitem, inputtext[])
                 Player_Kick(playerid, -1, "Odmowiono wyboru postaci");
                 return Y_HOOKS_BREAK_RETURN_1;
             }
-            
+
             new count = g_CharacterCount[playerid];
-            
+
             if(listitem < count)
             {
                 // Wybrano istniejaca postac - zapytaj o spawn
@@ -1061,7 +1064,7 @@ hook OnDialogResponse@Auth(playerid, dialogid, response, listitem, inputtext[])
                     Auth_ShowCharacterNameDialog(playerid);
                 }
             }
-            
+
             return Y_HOOKS_BREAK_RETURN_1;
         }
 
@@ -1091,7 +1094,7 @@ hook OnDialogResponse@Auth(playerid, dialogid, response, listitem, inputtext[])
             g_PendingCharacterIndex[playerid] = -1;
             return Y_HOOKS_BREAK_RETURN_1;
         }
-        
+
         case DIALOG_AUTH_CHAR_NAME:
         {
             if(!response)
@@ -1106,11 +1109,11 @@ hook OnDialogResponse@Auth(playerid, dialogid, response, listitem, inputtext[])
                 }
                 return Y_HOOKS_BREAK_RETURN_1;
             }
-            
+
             Auth_VerifyCharacterName(playerid, inputtext);
             return Y_HOOKS_BREAK_RETURN_1;
         }
-        
+
         case DIALOG_AUTH_CHAR_GENDER:
         {
             if(!response)
@@ -1118,7 +1121,7 @@ hook OnDialogResponse@Auth(playerid, dialogid, response, listitem, inputtext[])
                 Auth_ShowCharacterNameDialog(playerid);
                 return Y_HOOKS_BREAK_RETURN_1;
             }
-            
+
             // 0 = Mezczyzna, 1 = Kobieta
             Auth_SetGender(playerid, listitem);
             return Y_HOOKS_BREAK_RETURN_1;
@@ -1126,7 +1129,7 @@ hook OnDialogResponse@Auth(playerid, dialogid, response, listitem, inputtext[])
 
         // Skin selection now handled via eSelection (see skin_selection.inc)
     }
-    
+
     return 1;
 }
 
@@ -1137,13 +1140,13 @@ hook OnDialogResponse@Auth(playerid, dialogid, response, listitem, inputtext[])
 static stock Auth_HandleBan(playerid)
 {
     new message[512];
-    
+
     format(message, sizeof(message),
         "{FF6B6B}Twoje konto zostalo zbanowane!\n\n{FFFFFF}Jesli uwazasz, ze ban jest niesluszny,\nskontaktuj sie z administracja na forum serwera.");
-    
-    ShowPlayerDialog(playerid, DIALOG_INFO, DIALOG_STYLE_MSGBOX, 
+
+    ShowPlayerDialog(playerid, DIALOG_INFO, DIALOG_STYLE_MSGBOX,
         "Konto zbanowane", message, "Wyjdz", "");
-    
+
     SetTimerEx("DelayedKick", 3000, false, "i", playerid);
 }
 
@@ -1155,13 +1158,13 @@ forward Auth_Timeout(playerid);
 public Auth_Timeout(playerid)
 {
     g_LoginTimer[playerid] = 0;
-    
+
     if(IsPlayerConnected(playerid) && g_AuthState[playerid] != AUTH_STATE_LOGGED)
     {
         SendClientMessage(playerid, COLOR_ERROR, "Przekroczono limit czasu na logowanie!");
         Player_Kick(playerid, -1, "Timeout logowania");
     }
-    
+
     return 1;
 }
 
@@ -1190,7 +1193,7 @@ stock E_AUTH_STATE:Auth_GetState(playerid)
     {
         return AUTH_STATE_NONE;
     }
-    
+
     return g_AuthState[playerid];
 }
 
@@ -1209,7 +1212,7 @@ stock bool:Auth_IsLogged(playerid)
  */
 stock bool:Auth_IsInProgress(playerid)
 {
-    return g_AuthState[playerid] != AUTH_STATE_NONE && 
+    return g_AuthState[playerid] != AUTH_STATE_NONE &&
            g_AuthState[playerid] != AUTH_STATE_LOGGED;
 }
 
@@ -1250,7 +1253,7 @@ hook OnPlayerConnect@Auth(playerid)
     g_CharacterCount[playerid] = 0;
     g_PendingCharacterIndex[playerid] = -1;
     Auth_ResetAccountData(playerid);
-    
+
     return 1;
 }
 
@@ -1262,11 +1265,11 @@ hook OnPlayerDisconnect@Auth(playerid, reason)
         KillTimer(g_LoginTimer[playerid]);
         g_LoginTimer[playerid] = 0;
     }
-    
+
     g_AuthState[playerid] = AUTH_STATE_NONE;
     g_TempPassword[playerid][0] = EOS;
     g_PendingCharacterIndex[playerid] = -1;
-    
+
     return 1;
 }
 

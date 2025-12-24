@@ -217,6 +217,17 @@ hook OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
             return Admin_HandleAbilitiesDialog(playerid, response, listitem);
         }
 
+        case DIALOG_ADMINS_LIST:
+        {
+            return Admin_HandleAdminListDialog(playerid, response, listitem);
+        }
+
+        case DIALOG_ADMIN_INFO:
+        {
+            // Message box; nothing special to handle here
+            return 1;
+        }
+
         // =========================================================
         // DIALOGI PRACY
         // =========================================================

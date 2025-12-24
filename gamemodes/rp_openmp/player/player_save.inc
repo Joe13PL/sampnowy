@@ -2,7 +2,7 @@
  * =============================================================================
  *  PLAYER SAVE - System zapisu danych gracza
  * =============================================================================
- *  
+ *
  *  Modu??: player/player_save.inc
  *  Opis: Zapisywanie i wczytywanie danych gracza z bazy danych
  *
@@ -37,6 +37,8 @@
 
 static g_AutoSaveTimer[MAX_PLAYERS] = {0, ...};
 static bool:g_DataModified[MAX_PLAYERS] = {false, ...};
+// Transient flag used to skip the initial save scheduled on first spawn after loading data
+static bool:g_JustLoaded[MAX_PLAYERS] = {false, ...};
 
 // ===========================================================================
 // WCZYTYWANIE DANYCH
@@ -52,13 +54,13 @@ stock Player_LoadData(playerid)
     {
         return 0;
     }
-    
+
     new query[512];
     mysql_format(mySQLconnection, query, sizeof(query),
         "SELECT * FROM `characters` WHERE `id` = %d LIMIT 1",
         pInfo[playerid][player_id]
     );
-    
+
     mysql_tquery(mySQLconnection, query, "Player_OnDataLoad", "d", playerid);
     return 1;
 }
@@ -70,7 +72,7 @@ public Player_OnDataLoad(playerid)
     {
         return 0;
     }
-    
+
     if(cache_num_rows() == 0)
     {
         // Brak danych - b????d krytyczny
@@ -78,14 +80,14 @@ public Player_OnDataLoad(playerid)
         Player_Kick(playerid, -1, "B????d wczytywania danych");
         return 0;
     }
-    
+
     // === PODSTAWOWE DANE ===
     cache_get_value_int(0, "skin", pInfo[playerid][player_skin]);
     cache_get_value_int(0, "gender", pInfo[playerid][player_sex]);
     cache_get_value_int(0, "age", pInfo[playerid][player_age]);
     cache_get_value_int(0, "money", pInfo[playerid][player_money]);
     cache_get_value_int(0, "bank", pInfo[playerid][player_bank]);
-    
+
     // === POZYCJA ===
     cache_get_value_float(0, "pos_x", pInfo[playerid][player_pos_x]);
     cache_get_value_float(0, "pos_y", pInfo[playerid][player_pos_y]);
@@ -93,60 +95,66 @@ public Player_OnDataLoad(playerid)
     cache_get_value_float(0, "pos_angle", pInfo[playerid][player_pos_a]);
     cache_get_value_int(0, "interior", pInfo[playerid][player_interior]);
     cache_get_value_int(0, "world", pInfo[playerid][player_vw]);
-    
+
     // === ZDROWIE I STATYSTYKI ===
     cache_get_value_float(0, "health", pInfo[playerid][player_health]);
     cache_get_value_float(0, "armour", pInfo[playerid][player_spawn_armor]);
+    // Mirror to current armour cache for consistency
+    pInfo[playerid][player_armour] = pInfo[playerid][player_spawn_armor];
+    printf("[PlayerLoad] pid=%d loaded spawn_armour=%.2f", playerid, pInfo[playerid][player_spawn_armor]);
     cache_get_value_int(0, "bw_time", pInfo[playerid][player_bw]);
     cache_get_value_int(0, "aj_time", pInfo[playerid][player_aj]);
-    
+
     // === CZAS GRY ===
     cache_get_value_int(0, "gametime", pInfo[playerid][player_gameTime]);
     cache_get_value_int(0, "last_login", pInfo[playerid][player_last_login]);
-    
+
     // === GRUPY ===
     cache_get_value_int(0, "group1", pInfo[playerid][player_group][0]);
     cache_get_value_int(0, "group2", pInfo[playerid][player_group][1]);
     cache_get_value_int(0, "group3", pInfo[playerid][player_group][2]);
     cache_get_value_int(0, "group4", pInfo[playerid][player_group][3]);
     cache_get_value_int(0, "group5", pInfo[playerid][player_group][4]);
-    
+
     cache_get_value_int(0, "group1_perm", pInfo[playerid][player_group_perm][0]);
     cache_get_value_int(0, "group2_perm", pInfo[playerid][player_group_perm][1]);
     cache_get_value_int(0, "group3_perm", pInfo[playerid][player_group_perm][2]);
     cache_get_value_int(0, "group4_perm", pInfo[playerid][player_group_perm][3]);
     cache_get_value_int(0, "group5_perm", pInfo[playerid][player_group_perm][4]);
-    
+
     cache_get_value_int(0, "group1_salary", pInfo[playerid][player_group_salary][0]);
     cache_get_value_int(0, "group2_salary", pInfo[playerid][player_group_salary][1]);
     cache_get_value_int(0, "group3_salary", pInfo[playerid][player_group_salary][2]);
     cache_get_value_int(0, "group4_salary", pInfo[playerid][player_group_salary][3]);
     cache_get_value_int(0, "group5_salary", pInfo[playerid][player_group_salary][4]);
-    
+
     // === DODATKOWE DANE ===
     cache_get_value_int(0, "hunger", pInfo[playerid][player_hunger]);
     cache_get_value_int(0, "thirst", pInfo[playerid][player_thirst]);
     cache_get_value_int(0, "strength", pInfo[playerid][player_strength]);
     cache_get_value_int(0, "job", pInfo[playerid][player_job]);
     cache_get_value_int(0, "spawn_door", pInfo[playerid][player_spawn_door]);
-    
+
     // === WCZYTAJ DODATKOWE DANE ===
     Player_LoadWeapons(playerid);
     Player_LoadItems(playerid);
-    
+
     // Ustaw gracza jako gotowego do spawnu
     pInfo[playerid][player_loaded] = true;
-    
+
     // Uruchom auto-save
     g_AutoSaveTimer[playerid] = SetTimerEx("Player_AutoSave", SAVE_INTERVAL, true, "d", playerid);
     g_DataModified[playerid] = false;
-    
-    // Wywo??aj spawn
+
+    // Mark as just loaded so we avoid scheduling a save on the immediate spawn
+    g_JustLoaded[playerid] = true;
+
+    // Wywołaj spawn
     Player_Spawn(playerid);
-    
-    printf("[PlayerSave] Wczytano dane gracza %s (UID: %d)", 
+
+    printf("[PlayerSave] Wczytano dane gracza %s (UID: %d)",
         pInfo[playerid][player_name], pInfo[playerid][player_id]);
-    
+
     return 1;
 }
 
@@ -162,7 +170,7 @@ stock Player_LoadWeapons(playerid)
          FROM `user_weapons` WHERE `weapon_owner` = %d",
         pInfo[playerid][player_id]
     );
-    
+
     mysql_tquery(mySQLconnection, query, "Player_OnWeaponsLoad", "d", playerid);
 }
 
@@ -173,23 +181,23 @@ public Player_OnWeaponsLoad(playerid)
     {
         return 0;
     }
-    
+
     new rows = cache_num_rows();
     new slot, weaponId, ammo;
-    
+
     for(new i = 0; i < rows; i++)
     {
         cache_get_value_int(i, "weapon_slot", slot);
         cache_get_value_int(i, "weapon_id", weaponId);
         cache_get_value_int(i, "weapon_ammo", ammo);
-        
+
         if(slot >= 0 && slot < 13)
         {
             pWeapon[playerid][slot][pw_id] = weaponId;
             pWeapon[playerid][slot][pw_ammo] = ammo;
         }
     }
-    
+
     return 1;
 }
 
@@ -206,7 +214,7 @@ stock Player_LoadItems(playerid)
          ORDER BY `item_id` ASC LIMIT %d",
         pInfo[playerid][player_id], MAX_PLAYER_ITEMS
     );
-    
+
     mysql_tquery(mySQLconnection, query, "Player_OnItemsLoad", "d", playerid);
 }
 
@@ -217,10 +225,10 @@ public Player_OnItemsLoad(playerid)
     {
         return 0;
     }
-    
+
     new rows = cache_num_rows();
     pInfo[playerid][player_item_count] = 0;
-    
+
     for(new i = 0; i < rows && i < MAX_PLAYER_ITEMS; i++)
     {
         cache_get_value_int(i, "item_id", pItem[playerid][i][item_id]);
@@ -270,10 +278,10 @@ public Player_OnItemsLoad(playerid)
             }
         }
         cache_get_value(i, "item_name", pItem[playerid][i][item_name], 32);
-        
+
         pInfo[playerid][player_item_count]++;
     }
-    
+
     return 1;
 }
 
@@ -292,25 +300,36 @@ stock Player_SaveData(playerid, const reason[] = "manual")
     {
         return 0;
     }
-    
+
+    // Guard: avoid overwriting DB-loaded values with an immediate spawn save right after connect/login.
+    // If the save reason is "spawn" and the player connected less than 15 seconds ago, skip the save.
+    if(strcmp(reason, "spawn") == 0)
+    {
+        if(gettime() - pInfo[playerid][player_connect_time] < 15)
+        {
+            printf("[PlayerSave] Skipping initial spawn save: pid=%d elapsed=%d", playerid, gettime() - pInfo[playerid][player_connect_time]);
+            return 0;
+        }
+    }
+
     // Aktualizuj pozycj??
     if(pInfo[playerid][player_spawned])
     {
-        GetPlayerPos(playerid, pInfo[playerid][player_pos_x], 
+        GetPlayerPos(playerid, pInfo[playerid][player_pos_x],
                      pInfo[playerid][player_pos_y], pInfo[playerid][player_pos_z]);
         GetPlayerFacingAngle(playerid, pInfo[playerid][player_pos_a]);
         pInfo[playerid][player_interior] = GetPlayerInterior(playerid);
         pInfo[playerid][player_vw] = GetPlayerVirtualWorld(playerid);
-        
+
         // Aktualizuj zdrowie
         GetPlayerHealth(playerid, pInfo[playerid][player_health]);
         GetPlayerArmour(playerid, pInfo[playerid][player_spawn_armor]);
     }
-    
+
     // Aktualizuj czas gry
     pInfo[playerid][player_gameTime] += (gettime() - pInfo[playerid][player_connect_time]) / 60;
     pInfo[playerid][player_connect_time] = gettime();
-    
+
     // G????wne zapytanie
     new query[2048];
     mysql_format(mySQLconnection, query, sizeof(query),
@@ -331,7 +350,7 @@ stock Player_SaveData(playerid, const reason[] = "manual")
          WHERE `id` = %d",
         pInfo[playerid][player_skin], pInfo[playerid][player_sex], pInfo[playerid][player_age],
         pInfo[playerid][player_money], pInfo[playerid][player_bank],
-        pInfo[playerid][player_pos_x], pInfo[playerid][player_pos_y], 
+        pInfo[playerid][player_pos_x], pInfo[playerid][player_pos_y],
         pInfo[playerid][player_pos_z], pInfo[playerid][player_pos_a],
         pInfo[playerid][player_interior], pInfo[playerid][player_vw],
         pInfo[playerid][player_health], pInfo[playerid][player_spawn_armor],
@@ -348,20 +367,21 @@ stock Player_SaveData(playerid, const reason[] = "manual")
         pInfo[playerid][player_hours], pInfo[playerid][player_minutes], pInfo[playerid][player_kills], pInfo[playerid][player_deaths], pInfo[playerid][player_driven_km], pInfo[playerid][player_penalty_points],
         pInfo[playerid][player_id]
     );
-    
+    printf("[PlayerSave] Saving: pid=%d name=%s armour=%.2f", playerid, pInfo[playerid][player_name], pInfo[playerid][player_spawn_armor]);
+
     mysql_tquery(mySQLconnection, query);
-    
+
     // Zapisz bronie
     Player_SaveWeapons(playerid);
-    
+
     // Zapisz przedmioty
     Player_SaveItems(playerid);
-    
+
     g_DataModified[playerid] = false;
-    
-    printf("[PlayerSave] Zapisano dane gracza %s (UID: %d) - pow??d: %s", 
+
+    printf("[PlayerSave] Zapisano dane gracza %s (UID: %d) - powod: %s",
         pInfo[playerid][player_name], pInfo[playerid][player_id], reason);
-    
+
     return 1;
 }
 
@@ -371,14 +391,14 @@ stock Player_SaveData(playerid, const reason[] = "manual")
  */
 stock Player_SaveWeapons(playerid)
 {
-    // Usu?? stare bronie
+    // Usuń stare bronie
     new query[256];
     mysql_format(mySQLconnection, query, sizeof(query),
         "DELETE FROM `user_weapons` WHERE `weapon_owner` = %d",
         pInfo[playerid][player_id]
     );
     mysql_tquery(mySQLconnection, query);
-    
+
     // Zapisz aktualne bronie
     for(new slot = 0; slot < 13; slot++)
     {
@@ -387,13 +407,13 @@ stock Player_SaveWeapons(playerid)
             mysql_format(mySQLconnection, query, sizeof(query),
                 "INSERT INTO `user_weapons` (`weapon_owner`, `weapon_slot`, `weapon_id`, `weapon_ammo`) \
                  VALUES (%d, %d, %d, %d)",
-                pInfo[playerid][player_id], slot, 
+                pInfo[playerid][player_id], slot,
                 pWeapon[playerid][slot][pw_id], pWeapon[playerid][slot][pw_ammo]
             );
             mysql_tquery(mySQLconnection, query);
         }
     }
-    
+
     return 1;
 }
 
@@ -404,14 +424,14 @@ stock Player_SaveWeapons(playerid)
 stock Player_SaveItems(playerid)
 {
     new query[512];
-    
+
     for(new i = 0; i < MAX_PLAYER_ITEMS; i++)
     {
         if(pItem[playerid][i][item_id] > 0)
         {
             new escapedName[65];
             mysql_escape_string(pItem[playerid][i][item_name], escapedName, mySQLconnection, sizeof(escapedName));
-            
+
             mysql_format(mySQLconnection, query, sizeof(query),
                 "UPDATE `items` SET `item_type` = %d, `item_value` = %d, `item_value2` = %d, `item_name` = '%s' WHERE `item_id` = %d",
                 pItem[playerid][i][item_type], pItem[playerid][i][item_value],
@@ -420,7 +440,7 @@ stock Player_SaveItems(playerid)
             mysql_tquery(mySQLconnection, query);
         }
     }
-    
+
     return 1;
 }
 
@@ -441,13 +461,13 @@ public Player_AutoSave(playerid)
         }
         return 0;
     }
-    
+
     // Zapisz tylko je??li dane zosta??y zmodyfikowane lub min???? okre??lony czas
     if(g_DataModified[playerid])
     {
         Player_SaveData(playerid, "auto-save");
     }
-    
+
     return 1;
 }
 
@@ -475,13 +495,16 @@ hook OnPlayerDisconnect@Save(playerid, reason)
         KillTimer(g_AutoSaveTimer[playerid]);
         g_AutoSaveTimer[playerid] = 0;
     }
-    
-    // Zapisz dane przed wyj??ciem
+
+    // Zapisz dane przed wyjściem
     if(pInfo[playerid][player_logged])
     {
+        // Ensure current armour is captured before save (fix: armour not persisted on logout)
+        GetPlayerArmour(playerid, pInfo[playerid][player_spawn_armor]);
+        printf("[PlayerSave] Disconnect: pid=%d armour=%.2f", playerid, pInfo[playerid][player_spawn_armor]);
         Player_SaveData(playerid, "disconnect");
     }
-    
+
     return 1;
 }
 
@@ -493,17 +516,25 @@ hook OnPlayerDeath@Save(playerid, killerid, reason)
             Player_SaveData(playerid, "death");
         }
     #endif
-    
+
     return 1;
 }
 
 hook OnPlayerSpawn@Save(playerid)
 {
     #if SAVE_ON_SPAWN == true
-        // Op????niony zapis po spawnie
-        SetTimerEx("Player_DelayedSave", 5000, false, "d", playerid);
+        // Skip saving on the initial spawn after loading data (avoids overwriting DB-loaded values)
+        if(g_JustLoaded[playerid])
+        {
+            g_JustLoaded[playerid] = false; // clear the transient flag
+        }
+        else
+        {
+            // Opóźniony zapis po spawnie (np. respawn po śmierci)
+            SetTimerEx("Player_DelayedSave", 5000, false, "d", playerid);
+        }
     #endif
-    
+
     return 1;
 }
 
@@ -531,7 +562,7 @@ stock Player_CreateBackup(playerid)
     {
         return 0;
     }
-    
+
     new query[512];
     mysql_format(mySQLconnection, query, sizeof(query),
         "INSERT INTO `user_backups` \
@@ -543,9 +574,9 @@ stock Player_CreateBackup(playerid)
         pInfo[playerid][player_health],
         pInfo[playerid][player_pos_x], pInfo[playerid][player_pos_y], pInfo[playerid][player_pos_z]
     );
-    
+
     mysql_tquery(mySQLconnection, query);
-    
+
     return 1;
 }
 

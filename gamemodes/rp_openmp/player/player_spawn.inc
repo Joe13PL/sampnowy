@@ -2,7 +2,7 @@
  * =============================================================================
  *  PLAYER SPAWN - System spawnu gracza
  * =============================================================================
- *  
+ *
  *  Modu??: player/player_spawn.inc
  *  Opis: Obs??uga spawnu gracza po zalogowaniu i ??mierci
  *
@@ -95,40 +95,40 @@ stock Player_Spawn(playerid)
         printf("[Player_Spawn] BLOCKED - playerid=%d loaded=%d", playerid, pInfo[playerid][player_loaded]);
         return 0;
     }
-    
+
     // Określ typ spawnu (zachowaj szpitalny jeśli ustawiony)
     if(g_SpawnType[playerid] != SPAWN_HOSPITAL)
     {
         g_SpawnType[playerid] = Player_DetermineSpawnType(playerid);
     }
-    
+
     // Pobierz pozycję spawnu
     new Float:x, Float:y, Float:z, Float:a;
     new interior, vw;
     Player_GetSpawnPosition(playerid, x, y, z, a, interior, vw);
     Player_SanitizeSpawn(x, y, z, a, interior, vw);
-    
+
     // Ustaw skin
     new skin = Player_GetValidSkin(playerid);
 
     // Zabezpiecz Z
     if(z < 1.0) z = 10.0;
-    
+
     printf("[Player_Spawn] Spawning player %d at %.2f, %.2f, %.2f skin=%d", playerid, x, y, z, skin);
-    
+
     // Ustaw spawn info
     SetSpawnInfo(playerid, NO_TEAM, skin, x, y, z, a, 0, 0, 0, 0, 0, 0);
-    
+
     // BEZPOŚREDNI SPAWN - bez spectator tricku
     // Najpierw upewnij się że gracz NIE jest w spectator
     TogglePlayerSpectating(playerid, false);
-    
+
     // Teraz wywołaj SpawnPlayer - to wyzwoli OnPlayerSpawn
     SpawnPlayer(playerid);
-    
+
     // Ukryj menu wyboru modeli z opóźnieniem (może pozostać z poprzedniej sesji/spectating)
     SetTimerEx("Player_HideMenuAfterSpawn", 500, false, "i", playerid);
-    
+
     return 1;
 }
 
@@ -172,19 +172,19 @@ static stock E_SPAWN_TYPE:Player_DetermineSpawnType(playerid)
 
     // Sprawdź czy ma zapisaną poprawną pozycję (nie zero)
     // Jeśli DB ma (0,0,0) to gracz nigdy tam nie był - użyj domyślnego
-    if(pInfo[playerid][player_pos_x] != 0.0 && 
+    if(pInfo[playerid][player_pos_x] != 0.0 &&
        pInfo[playerid][player_pos_y] != 0.0 &&
        pInfo[playerid][player_pos_z] != 0.0)
     {
         // Dodatkowa walidacja - jeśli pozycja jest poza mapą, fallback na default
-        new Float:dist_sq = (pInfo[playerid][player_pos_x] * pInfo[playerid][player_pos_x]) + 
+        new Float:dist_sq = (pInfo[playerid][player_pos_x] * pInfo[playerid][player_pos_x]) +
                             (pInfo[playerid][player_pos_y] * pInfo[playerid][player_pos_y]);
         if(dist_sq < 9000000.0 && pInfo[playerid][player_pos_z] > -50.0 && pInfo[playerid][player_pos_z] < 800.0)
         {
             return SPAWN_LAST_POSITION;
         }
     }
-    
+
     // Domy??lny spawn
     return SPAWN_DEFAULT;
 }
@@ -208,7 +208,7 @@ stock Player_GetSpawnPosition(playerid, &Float:x, &Float:y, &Float:z, &Float:a, 
             a = pInfo[playerid][player_pos_a];
             interior = pInfo[playerid][player_interior];
             vw = pInfo[playerid][player_vw];
-            
+
             // WALIDACJA - jeśli DB ma zerowe koordynaty, fallback
             if(x == 0.0 && y == 0.0 && z == 0.0)
             {
@@ -216,27 +216,27 @@ stock Player_GetSpawnPosition(playerid, &Float:x, &Float:y, &Float:z, &Float:a, 
                 Player_GetSpawnPosition(playerid, x, y, z, a, interior, vw);
             }
         }
-        
+
         case SPAWN_HOSPITAL:
         {
             // Znajd?? najbli??szy szpital
             new bestIdx = 0;
             new Float:bestDist = 99999.0;
-            
+
             for(new i = 0; i < sizeof(g_HospitalSpawns); i++)
             {
                 new Float:dist = GetDistanceBetweenPoints2D(
                     pInfo[playerid][player_pos_x], pInfo[playerid][player_pos_y],
                     g_HospitalSpawns[i][0], g_HospitalSpawns[i][1]
                 );
-                
+
                 if(dist < bestDist)
                 {
                     bestDist = dist;
                     bestIdx = i;
                 }
             }
-            
+
             x = g_HospitalSpawns[bestIdx][0];
             y = g_HospitalSpawns[bestIdx][1];
             z = g_HospitalSpawns[bestIdx][2];
@@ -244,7 +244,7 @@ stock Player_GetSpawnPosition(playerid, &Float:x, &Float:y, &Float:z, &Float:a, 
             interior = 0;
             vw = 0;
         }
-        
+
         default: // SPAWN_DEFAULT
         {
             // Twardy fallback jeśli konfiguracja nie załadowała współrzędnych (0,0,0)
@@ -299,14 +299,14 @@ hook OnPlayerSpawn@Spawn(playerid)
     {
         return 0;
     }
-    
+
     // Pobierz pozycj?? spawnu
     new Float:x, Float:y, Float:z, Float:a;
     new interior, vw;
-    
+
     Player_GetSpawnPosition(playerid, x, y, z, a, interior, vw);
     Player_SanitizeSpawn(x, y, z, a, interior, vw);
-    
+
     // NATYCHMIAST ustaw pozycj?? na wypadek że SetSpawnInfo nie zadziałał
     if(interior == 0)
     {
@@ -319,41 +319,48 @@ hook OnPlayerSpawn@Spawn(playerid)
     SetPlayerFacingAngle(playerid, a);
     SetPlayerInterior(playerid, interior);
     SetPlayerVirtualWorld(playerid, vw);
-    
-    printf("[Spawn] Gracz %d spawned at %.2f, %.2f, %.2f (VW:%d, INT:%d)", 
+
+    printf("[Spawn] Gracz %d spawned at %.2f, %.2f, %.2f (VW:%d, INT:%d)",
         playerid, x, y, z, vw, interior);
-    
+
     // Ustaw zdrowie i pancerz
-    if(g_FirstSpawn[playerid])
+    // Jeśli to pierwszy spawn po połączeniu LUB mamy zapisany pancerz > 0, przywróć go.
+    if(g_FirstSpawn[playerid] || pInfo[playerid][player_spawn_armor] > 0.0)
     {
         SetPlayerHealth(playerid, pInfo[playerid][player_health]);
         SetPlayerArmour(playerid, pInfo[playerid][player_spawn_armor]);
+        // Keep internal cache consistent as well
+        pInfo[playerid][player_armour] = pInfo[playerid][player_spawn_armor];
+        pInfo[playerid][player_armour_changed] = true;
+        printf("[Spawn] pid=%d applied saved armour=%.2f (cached=%.2f)", playerid, pInfo[playerid][player_spawn_armor], pInfo[playerid][player_armour]);
+        // Verify after short delay because some client-side/resync events can reset armour
+        SetTimerEx("Player_VerifyArmour", 500, false, "d", playerid);
         g_FirstSpawn[playerid] = false;
     }
     else
     {
-        // Po ??mierci - pe??ne zdrowie, brak pancerza
+        // Po śmierci lub brak zapisanego pancerza - pełne zdrowie, brak pancerza
         SetPlayerHealth(playerid, 100.0);
         SetPlayerArmour(playerid, 0.0);
     }
-    
+
     // Ustaw skin
     SetPlayerSkin(playerid, Player_GetValidSkin(playerid));
-    
+
     // Przywr???? bronie
     Player_RefreshWeapons(playerid);
-    
+
     // Synchronizuj pieni??dze
     ResetPlayerMoney(playerid);
     GivePlayerMoney(playerid, pInfo[playerid][player_money]);
-    
+
     // Zamro?? na chwil??
     TogglePlayerControllable(playerid, false);
     SetTimerEx("Player_Unfreeze", SPAWN_FREEZE_TIME, false, "d", playerid);
-    
+
     // Ustaw kamer??
     SetCameraBehindPlayer(playerid);
-    
+
     // Oznacz jako zespawnowany
     pInfo[playerid][player_spawned] = true;
 
@@ -361,10 +368,10 @@ hook OnPlayerSpawn@Spawn(playerid)
     SetTimerEx("Player_FixSpawn", 100, false, "d", playerid);
     SetTimerEx("Player_FixSpawn", 500, false, "d", playerid);
     SetTimerEx("Player_FixSpawn", 2000, false, "d", playerid);
-    
+
     // Efekt fade in
     Player_FadeFromBlack(playerid, SPAWN_FADE_TIME);
-    
+
     // Wiadomo???? powitalna przy pierwszym spawnie
     if(g_FirstSpawn[playerid])
     {
@@ -374,7 +381,7 @@ hook OnPlayerSpawn@Spawn(playerid)
         SendClientMessage(playerid, COLOR_YELLOW, "??????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????");
         SendClientMessage(playerid, COLOR_WHITE, "");
     }
-    
+
     return 1;
 }
 
@@ -402,7 +409,7 @@ public Player_FixSpawn(playerid)
 
     // Zawsze resetuj jeśli cokolwiek podejrzanego
     new Float:dist_sq = (x * x) + (y * y);
-    
+
     // Jeśli: blisko (0,0), niebo, pod mapą, poza mapą
     if(dist_sq < 100000.0 && z < 50.0)  // Blisko zera = zły spawn
     {
@@ -417,10 +424,10 @@ public Player_FixSpawn(playerid)
             spz = 10.8203;
             spa = 180.0;
         }
-        
-        printf("[SpawnFix] NAPRAWA - Gracz %d był na %.2f,%.2f,%.2f -> Reset na %.2f,%.2f,%.2f", 
+
+        printf("[SpawnFix] NAPRAWA - Gracz %d był na %.2f,%.2f,%.2f -> Reset na %.2f,%.2f,%.2f",
             playerid, x, y, z, spx, spy, spz);
-        
+
         if(GetPlayerInterior(playerid) == 0)
         {
             SetPlayerPosFindZ(playerid, spx, spy, spz);
@@ -446,10 +453,10 @@ public Player_FixSpawn(playerid)
             spz = 10.8203;
             spa = 180.0;
         }
-        
-        printf("[SpawnFix] POZA MAPĄ - Gracz %d był na %.2f,%.2f,%.2f -> Reset", 
+
+        printf("[SpawnFix] POZA MAPĄ - Gracz %d był na %.2f,%.2f,%.2f -> Reset",
             playerid, x, y, z);
-        
+
         if(GetPlayerInterior(playerid) == 0)
         {
             SetPlayerPosFindZ(playerid, spx, spy, spz);
@@ -479,10 +486,10 @@ stock Player_FadeFromBlack(playerid, time)
 {
     // U??ywamy textdrawa z czarnym t??em
     // Lub GameTextForPlayer z pustym tekstem
-    
+
     // Alternatywnie - flash ekranu
     PlayerPlaySound(playerid, 1056, 0.0, 0.0, 0.0);
-    
+
     return 1;
 }
 
@@ -507,23 +514,23 @@ hook OnPlayerDeath@Spawn(playerid, killerid, reason)
     {
         return 0;
     }
-    
+
     // Zapisz pozycj?? ??mierci
-    GetPlayerPos(playerid, pInfo[playerid][player_pos_x], 
+    GetPlayerPos(playerid, pInfo[playerid][player_pos_x],
                  pInfo[playerid][player_pos_y], pInfo[playerid][player_pos_z]);
-    
+
     // Ustaw spawn na szpital
     g_SpawnType[playerid] = SPAWN_HOSPITAL;
-    
+
     // Oznacz jako nie??ywy
     pInfo[playerid][player_spawned] = false;
-    
+
     // Log ??mierci
     if(killerid != INVALID_PLAYER_ID && IsPlayerConnected(killerid))
     {
         new weaponName[32];
         GetWeaponName(reason, weaponName, sizeof(weaponName));
-        
+
         printf("[Death] %s zosta?? zabity przez %s (bro??: %s)",
             pInfo[playerid][player_name],
             pInfo[killerid][player_name],
@@ -531,10 +538,10 @@ hook OnPlayerDeath@Spawn(playerid, killerid, reason)
     }
     else
     {
-        printf("[Death] %s zmar?? (przyczyna: %d)", 
+        printf("[Death] %s zmar?? (przyczyna: %d)",
             pInfo[playerid][player_name], reason);
     }
-    
+
     return 1;
 }
 
@@ -565,7 +572,7 @@ stock Player_Respawn(playerid, E_SPAWN_TYPE:spawnType = SPAWN_LAST_POSITION)
     {
         return 0;
     }
-    
+
     // Zapisz aktualn?? pozycj?? je??li spawn last position
     if(spawnType == SPAWN_LAST_POSITION)
     {
@@ -575,13 +582,13 @@ stock Player_Respawn(playerid, E_SPAWN_TYPE:spawnType = SPAWN_LAST_POSITION)
         pInfo[playerid][player_interior] = GetPlayerInterior(playerid);
         pInfo[playerid][player_vw] = GetPlayerVirtualWorld(playerid);
     }
-    
+
     g_SpawnType[playerid] = spawnType;
     g_FirstSpawn[playerid] = false;
-    
+
     // Wymu?? respawn
     SpawnPlayer(playerid);
-    
+
     return 1;
 }
 
@@ -592,13 +599,13 @@ stock Player_Respawn(playerid, E_SPAWN_TYPE:spawnType = SPAWN_LAST_POSITION)
 stock Player_SendToHospital(playerid)
 {
     g_SpawnType[playerid] = SPAWN_HOSPITAL;
-    
+
     new Float:x, Float:y, Float:z, Float:a;
     new interior, vw;
-    
+
     Player_GetSpawnPosition(playerid, x, y, z, a, interior, vw);
     Player_Teleport(playerid, x, y, z, a, interior, vw);
-    
+
     return 1;
 }
 
@@ -611,19 +618,19 @@ stock Player_SendToJail(playerid, time)
 {
     pInfo[playerid][player_aj] = time;
     g_SpawnType[playerid] = SPAWN_JAIL;
-    
+
     new Float:x, Float:y, Float:z, Float:a;
     new interior, vw;
-    
+
     Player_GetSpawnPosition(playerid, x, y, z, a, interior, vw);
     Player_Teleport(playerid, x, y, z, a, interior, vw);
-    
+
     // Usu?? bronie
     ResetPlayerWeapons(playerid);
-    
-    SendGuiInformation(playerid, "Aresztowany", 
+
+    SendGuiInformation(playerid, "Aresztowany",
         "Zosta??e?? aresztowany i osadzony w wi??zieniu.\nCzas kary: %d minut.", time);
-    
+
     return 1;
 }
 
@@ -650,7 +657,30 @@ hook OnPlayerDisconnect@Spawn(playerid, reason)
         pInfo[playerid][player_interior] = GetPlayerInterior(playerid);
         pInfo[playerid][player_vw] = GetPlayerVirtualWorld(playerid);
     }
-    
+
+    return 1;
+}
+
+// Verify applied armour after spawn (timer handler)
+forward Player_VerifyArmour(playerid);
+public Player_VerifyArmour(playerid)
+{
+    if(!IsValidPlayerId(playerid) || !pInfo[playerid][player_logged]) return 0;
+
+    new Float:cur;
+    GetPlayerArmour(playerid, cur);
+    if(pInfo[playerid][player_spawn_armor] > 0.0 && floatround(cur) != floatround(pInfo[playerid][player_spawn_armor]))
+    {
+        printf("[Spawn] pid=%d verify mismatch cur=%.2f expected=%.2f - reapplying", playerid, cur, pInfo[playerid][player_spawn_armor]);
+        SetPlayerArmour(playerid, pInfo[playerid][player_spawn_armor]);
+        GetPlayerArmour(playerid, cur);
+        printf("[Spawn] pid=%d after reapply cur=%.2f", playerid, cur);
+    }
+    else
+    {
+        printf("[Spawn] pid=%d verify ok cur=%.2f expected=%.2f", playerid, cur, pInfo[playerid][player_spawn_armor]);
+    }
+
     return 1;
 }
 

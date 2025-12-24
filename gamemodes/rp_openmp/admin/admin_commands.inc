@@ -34,6 +34,13 @@
 #define ADMIN_LEVEL_HEADADMIN   5       // Head Admin
 #define ADMIN_LEVEL_MANAGEMENT  6       // Management
 
+// Dialog IDs used by admin GUI (defined here so other modules can reference them)
+#define DIALOG_ADMINS_LIST      3520
+#define DIALOG_ADMIN_INFO       3521
+
+// Admin module storage
+static g_AdminListMap[MAX_PLAYERS][256]; // mapping for admin list dialog (csv of pids)
+
 // ===========================================================================
 // MACROS FOR CHECKING PERMISSIONS
 // ===========================================================================
@@ -107,6 +114,23 @@ new Admin_GroupAbilities[][] = { {1}, {2}, {4}, {8}, {16}, {32}, {64} };
 new Admin_GroupAbilityNames[][] = { "Kick players", "Ban players", "Manage funds", "Edit jobs", "Edit properties", "Manage servers", "Developer tools" };
 
 /**
+ * Map admin level to ability mask
+ */
+stock Admin_GetAbilitiesForLevel(level)
+{
+    new abilities = 0;
+    if(level >= 1) abilities |= Admin_GroupAbilities[0][0]; // Kick
+    if(level >= 2) abilities |= Admin_GroupAbilities[1][0]; // Ban
+    if(level >= 3) abilities |= Admin_GroupAbilities[2][0]; // Manage funds
+    if(level >= 4) abilities |= Admin_GroupAbilities[3][0]; // Edit jobs
+    if(level >= 5) abilities |= Admin_GroupAbilities[4][0]; // Edit properties
+    if(level >= 6) abilities |= Admin_GroupAbilities[5][0]; // Manage servers
+    // Developer tools reserved for highest level
+    if(level >= 6) abilities |= Admin_GroupAbilities[6][0];
+    return abilities;
+}
+
+/**
  * Logs an administrative action
  * @param adminid Admin ID
  * @param action Action
@@ -135,6 +159,68 @@ stock Admin_LogAction(adminid, const action[])
 // ===========================================================================
 // COMMANDS - HELP
 // ===========================================================================
+
+/**
+ * Handler for admin list selection
+ */
+stock Admin_HandleAdminListDialog(playerid, response, listitem)
+{
+    if(!response) return 1;
+    if(!IsValidPlayerId(playerid)) return 1;
+    if(listitem < 0) return 1;
+
+    // Parse mapping from our map
+    new adminmap[256];
+    strcopy(adminmap, g_AdminListMap[playerid], 256);
+    new idx = 0;
+    new token[8];
+    new ptr = 0;
+    new cur = 0;
+
+    // Find the N-th id (0-based)
+    while(adminmap[ptr] != EOS && cur <= listitem)
+    {
+        new j = 0;
+        while(adminmap[ptr] != EOS && adminmap[ptr] != ',')
+        {
+            token[j] = adminmap[ptr];
+            j++;
+            ptr++;
+        }
+        token[j] = EOS;
+        if(cur == listitem) break;
+        if(adminmap[ptr] == ',') ptr = ptr + 1;
+        cur = cur + 1;
+    }
+
+    if(token[0] == EOS) return 1;
+    new target = strval(token);
+
+    if(!IsValidPlayerId(target) || pGlobal[target][glo_admin] == 0)
+    {
+        SendClientMessage(playerid, COLOR_RED, "Selected player is no longer an admin or offline.");
+        return 1;
+    }
+
+    // Build info content
+    new info[1024]; info[0] = EOS;
+    new rankName[32]; Admin_GetRankName(pGlobal[target][glo_admin], rankName);
+    format(info, sizeof(info), "Name: %s\nLevel: %d (%s)\nDuty: %s\nWarnings: %d\n\nAbilities:\n",
+        Player_RPName(target), pGlobal[target][glo_admin], rankName,
+        pInfo[target][player_admin_duty] ? "On duty" : "Off duty",
+        pInfo[target][player_warnings]);
+
+    new abilities = Admin_GetAbilitiesForLevel(pGlobal[target][glo_admin]);
+    for(new i = 0; i < sizeof(Admin_GroupAbilities); i++)
+    {
+        format(info, sizeof(info), "%s%s\n", info,
+            (abilities & Admin_GroupAbilities[i][0]) ? ("{00FF00}[X] ") : ("{FF0000}[ ] "));
+        strcat(info, Admin_GroupAbilityNames[i]);
+    }
+
+    ShowPlayerDialog(playerid, DIALOG_ADMIN_INFO, DIALOG_STYLE_MSGBOX, "Administrator info", info, "Close", "");
+    return 1;
+}
 
 // Debug command to check admin level
 YCMD:myadmin(playerid, params[], help)
@@ -1498,21 +1584,37 @@ YCMD:admins(playerid, params[], help)
         return 1;
     }
 
-    SendClientMessage(playerid, COLOR_LIGHTER_BLUE, "========== ONLINE ADMINISTRATORS ==========");
+    // Show admins GUI (OOC names) and store mapping in g_DialogData
+    Dialog_ShowAdmins(playerid);
 
+    return 1;
+}
+
+/**
+ * Shows the admins list as a GUI list dialog (OOC names).
+ */
+stock Dialog_ShowAdmins(playerid)
+{
+    if(!IsValidPlayerId(playerid)) return 0;
+
+    new items[2048]; items[0] = EOS;
+    new map[256]; map[0] = EOS; // comma-separated playerids
     new count = 0;
+
     foreach(new i : Player)
     {
         if(pGlobal[i][glo_admin] > 0)
         {
-            new rankName[32];
-            Admin_GetRankName(pGlobal[i][glo_admin], rankName);
+            new name[64];
+            strcopy(name, Player_RPName(i), sizeof(name));
 
-            new msg[128];
-            format(msg, sizeof(msg), "%s (%d) - %s %s",
-                pInfo[i][player_name], i, rankName,
-                pInfo[i][player_admin_duty] ? "{00FF00}[ON DUTY]" : "{FF0000}[OFF DUTY]");
-            SendClientMessage(playerid, COLOR_WHITE, msg);
+            new line[128];
+            format(line, sizeof(line), "%s (%d)\n", name, i);
+            strcat(items, line);
+
+            if(map[0] != EOS) strcat(map, ",");
+            new tmp[8]; format(tmp, sizeof(tmp), "%d", i); strcat(map, tmp);
+
             count++;
         }
     }
@@ -1520,10 +1622,13 @@ YCMD:admins(playerid, params[], help)
     if(count == 0)
     {
         SendClientMessage(playerid, COLOR_GRAY, "No administrators online.");
+        return 1;
     }
 
-    SendClientMessage(playerid, COLOR_LIGHTER_BLUE, "=============================================");
+    // Save mapping for selection handler
+    strcopy(g_AdminListMap[playerid], map, 256);
 
+    ShowListDialog(playerid, DIALOG_ADMINS_LIST, "Online administrators", items, "View", "Close");
     return 1;
 }
 
@@ -2910,6 +3015,10 @@ stock Admin_HandleAbilitiesDialog(playerid, response, listitem)
 #define DIALOG_AP_GIVE_TYPE     3502
 #define DIALOG_AP_GIVE_VALUE    3503
 #define DIALOG_AP_GIVE_NAME     3504
+
+// Admin GUI dialogs
+#define DIALOG_ADMINS_LIST      3520
+#define DIALOG_ADMIN_INFO       3521
 #define DIALOG_AP_CHECK         3505
 #define DIALOG_AP_REMOVE        3506
 

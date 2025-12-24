@@ -943,6 +943,7 @@ YCMD:sethungry(playerid, params[], help)
 
     pInfo[targetid][player_hunger] = amount;
     Player_SaveData(targetid, "admin");
+    HUD_ForceUpdate(targetid);
 
     new msg[128];
     format(msg, sizeof(msg), "Set hunger of player %s to %d.", pInfo[targetid][player_name], amount);
@@ -987,6 +988,7 @@ YCMD:setthirst(playerid, params[], help)
 
     pInfo[targetid][player_thirst] = amount;
     Player_SaveData(targetid, "admin");
+    HUD_ForceUpdate(targetid);
 
     new msg[128];
     format(msg, sizeof(msg), "Set thirst of player %s to %d.", pInfo[targetid][player_name], amount);

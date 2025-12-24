@@ -355,12 +355,16 @@ stock Item_Use(playerid, slot)
         // === JEDZENIE ===
         case ITEM_TYPE_FOOD:
         {
-            // Warto???? = ilo???? g??odu do regeneracji
+            // value1 = amount of hunger restored (0-100)
             pInfo[playerid][player_hunger] += value1;
             if(pInfo[playerid][player_hunger] > 100)
             {
                 pInfo[playerid][player_hunger] = 100;
             }
+
+            // Mark player data modified so auto-save picks this up and refresh HUD immediately
+            Player_MarkDataModified(playerid);
+            HUD_ForceUpdate(playerid);
 
             new msg[128];
             format(msg, sizeof(msg),
@@ -373,11 +377,17 @@ stock Item_Use(playerid, slot)
 
         case ITEM_TYPE_DRINK:
         {
+            // value1 = amount of thirst restored (0-100)
+            // Non-alcoholic drinks should refill thirst and update HUD immediately.
             pInfo[playerid][player_thirst] += value1;
             if(pInfo[playerid][player_thirst] > 100)
             {
                 pInfo[playerid][player_thirst] = 100;
             }
+
+            // Mark player data modified so autosave persists thirst changes
+            Player_MarkDataModified(playerid);
+            HUD_ForceUpdate(playerid);
 
             new msg[128];
             format(msg, sizeof(msg),
@@ -405,11 +415,16 @@ stock Item_Use(playerid, slot)
 
         case ITEM_TYPE_ALCOHOL:
         {
+            // Alcohol refills thirst (like a drink) and increases drunk level (used by drunk checks)
             pInfo[playerid][player_thirst] += value1;
             pInfo[playerid][player_drunk] += value2;
 
             if(pInfo[playerid][player_thirst] > 100)
                 pInfo[playerid][player_thirst] = 100;
+
+            // Persist change and update HUD immediately
+            Player_MarkDataModified(playerid);
+            HUD_ForceUpdate(playerid);
 
             new msg[128];
             format(msg, sizeof(msg),

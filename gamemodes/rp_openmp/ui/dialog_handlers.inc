@@ -1249,11 +1249,11 @@ Dialog_HandleStatsMenu(playerid, response, listitem)
                 new vehicles = Player_CountVehicles(playerid);
                 new housesOk[16], vehiclesOk[16];
 
-                if(houses >= 1) housesOk = "{00FF00}[OK]";
-                else housesOk = "{FF0000}[MISSING]";
+                if(houses >= 1) strcopy(housesOk, "{00FF00}[OK]", sizeof(housesOk));
+                else strcopy(housesOk, "{FF0000}[MISSING]", sizeof(housesOk));
 
-                if(vehicles >= 1) vehiclesOk = "{00FF00}[OK]";
-                else vehiclesOk = "{FF0000}[MISSING]";
+                if(vehicles >= 1) strcopy(vehiclesOk, "{00FF00}[OK]", sizeof(vehiclesOk));
+                else strcopy(vehiclesOk, "{FF0000}[MISSING]", sizeof(vehiclesOk));
 
                 msg[0] = EOS;
                 strcat(msg, "{FF0000}You do not meet the requirements!\n\n", sizeof(msg));

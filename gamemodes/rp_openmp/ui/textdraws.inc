@@ -661,7 +661,8 @@ stock HUD_Update(playerid)
 stock HUD_ForceUpdate(playerid)
 {
     if(!IsValidPlayerId(playerid)) return 0;
-    return HUD_UpdateClockOnly(playerid);
+    // Force a full HUD update (clock, hunger, thirst, etc.) and return success.
+    return HUD_Update(playerid);
 }
 
 /**

@@ -28,7 +28,7 @@ stock SkinSelection_Show(playerid, const callback[])
         AddModelMenuItem(skins, i, label);
     }
 
-    ShowModelSelectionMenu(playerid, "Wyb\243r skina", MODEL_SELECTION_SKIN_MENU, skins);
+    ShowModelSelectionMenu(playerid, "Skin Selection", MODEL_SELECTION_SKIN_MENU, skins);
     return 1;
 }
 
@@ -79,13 +79,13 @@ public OnModelSelectionResponse(playerid, extraid, index, modelid, response)
         }
 
         new msg[128];
-        format(msg, sizeof(msg), "Czy chcesz kupic %s za $%d?", name, price);
+        format(msg, sizeof(msg), "Do you want to buy %s for $%d?", name, price);
         new data[32]; format(data, sizeof(data), "%d;%d", foundCat, idx);
 
         // Hide menu and show confirmation after a short delay to avoid click-race
         HideModelSelectionMenu(playerid);
         printf("[DBG] Scheduling delayed confirm for pid=%d data='%s'\n", playerid, data);
-        ShowConfirmDialogExDelayed(playerid, "carshop_buy", "Potwierdz zakup", msg, data, 250);
+        ShowConfirmDialogExDelayed(playerid, "carshop_buy", "Confirm Purchase", msg, data, 250);
         return 1;
     }
 

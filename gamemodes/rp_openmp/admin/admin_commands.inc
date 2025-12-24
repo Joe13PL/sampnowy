@@ -914,6 +914,95 @@ YCMD:sethp(playerid, params[], help)
     return 1;
 }
 
+// Sets the hunger of a player (0-100)
+YCMD:sethungry(playerid, params[], help)
+{
+    ADMIN_CHECK(ADMIN_LEVEL_MODERATOR);
+
+    if(help)
+    {
+        SendClientMessage(playerid, COLOR_YELLOW, "Sets the hunger of a player (0-100). Usage: /sethungry [ID/Nick] [amount]");
+        return 1;
+    }
+
+    new targetid, amount;
+    if(sscanf(params, "ud", targetid, amount))
+    {
+        return SendClientMessage(playerid, COLOR_GRAY, "Usage: /sethungry [ID/Nick] [amount]");
+    }
+
+    if(!IsPlayerConnected(targetid))
+    {
+        return SendClientMessage(playerid, COLOR_RED, "Player is not connected!");
+    }
+
+    if(amount < 0 || amount > 100)
+    {
+        return SendClientMessage(playerid, COLOR_RED, "Amount must be between 0 and 100.");
+    }
+
+    pInfo[targetid][player_hunger] = amount;
+    Player_SaveData(targetid, "admin");
+
+    new msg[128];
+    format(msg, sizeof(msg), "Set hunger of player %s to %d.", pInfo[targetid][player_name], amount);
+    SendClientMessage(playerid, COLOR_GREEN, msg);
+
+    format(msg, sizeof(msg), "Your hunger was set to %d by an admin.", amount);
+    SendClientMessage(targetid, COLOR_YELLOW, msg);
+
+    new logMsg[128];
+    format(logMsg, sizeof(logMsg), "Set hunger: %s -> %s (%d)", pInfo[playerid][player_name], pInfo[targetid][player_name], amount);
+    Admin_LogAction(playerid, logMsg);
+
+    return 1;
+}
+
+// Sets the thirst of a player (0-100) - alias: /setthrist (user typo)
+YCMD:setthirst(playerid, params[], help)
+{
+    ADMIN_CHECK(ADMIN_LEVEL_MODERATOR);
+
+    if(help)
+    {
+        SendClientMessage(playerid, COLOR_YELLOW, "Sets the thirst of a player (0-100). Usage: /setthirst [ID/Nick] [amount]");
+        return 1;
+    }
+
+    new targetid, amount;
+    if(sscanf(params, "ud", targetid, amount))
+    {
+        return SendClientMessage(playerid, COLOR_GRAY, "Usage: /setthirst [ID/Nick] [amount]");
+    }
+
+    if(!IsPlayerConnected(targetid))
+    {
+        return SendClientMessage(playerid, COLOR_RED, "Player is not connected!");
+    }
+
+    if(amount < 0 || amount > 100)
+    {
+        return SendClientMessage(playerid, COLOR_RED, "Amount must be between 0 and 100.");
+    }
+
+    pInfo[targetid][player_thirst] = amount;
+    Player_SaveData(targetid, "admin");
+
+    new msg[128];
+    format(msg, sizeof(msg), "Set thirst of player %s to %d.", pInfo[targetid][player_name], amount);
+    SendClientMessage(playerid, COLOR_GREEN, msg);
+
+    format(msg, sizeof(msg), "Your thirst was set to %d by an admin.", amount);
+    SendClientMessage(targetid, COLOR_YELLOW, msg);
+
+    new logMsg[128];
+    format(logMsg, sizeof(logMsg), "Set thirst: %s -> %s (%d)", pInfo[playerid][player_name], pInfo[targetid][player_name], amount);
+    Admin_LogAction(playerid, logMsg);
+
+    return 1;
+}
+
+// Backwards-compatible alias: /setskin
 YCMD:setskin(playerid, params[], help)
 {
     ADMIN_CHECK(ADMIN_LEVEL_MODERATOR);

@@ -8291,3 +8291,153 @@ Parsing unknown legacy option crashdetect_log
 [2025-12-24T23:43:09+0100] [Info]   Loading...
 [2025-12-24T23:43:09+0100] [Info] ================================================
 [2025-12-24T23:43:09+0100] [Info] Legacy Network started on port 7777
+[2025-12-24T23:43:19+0100] [Warning] Couldn't announce legacy network to open.mp list.
+[2025-12-24T23:43:19+0100] [Warning] 	 Status: 406
+[2025-12-24T23:43:19+0100] [Warning] 	 Message: {"error":"failed to query server: socket read timed out"}
+[2025-12-24T23:43:19+0100] [Warning] This won't affect the server's behaviour.
+[2025-12-24T23:43:30+0100] [Info] [connection] incoming connection: 127.0.0.1:64649 id: 0
+[2025-12-24T23:43:30+0100] [Info] [join] tester5 has joined the server (0:127.0.0.1)
+[2025-12-24T23:43:30+0100] [Warning] Invalid dialog ID -1 used.  Use `HidePlayerDialog()`.
+[2025-12-24T23:43:30+0100] [Info] [HUD_CREATE] pid=0 date create FAILED (td=0)
+[2025-12-24T23:43:30+0100] [Info] [HUD_CREATE] pid=0 clock_td=65535 date_td=65535
+[2025-12-24T23:43:30+0100] [Info] [HUD_CREATE] pid=0 clock created on-demand td=1
+[2025-12-24T23:43:30+0100] [Info] [HUD_CREATE] Scheduled minute timer in 30000 ms
+[2025-12-24T23:43:33+0100] [Info] [AUTH DEBUG] pid=0 dialog=1500 state=2 resp=1 list=-1
+[2025-12-24T23:43:34+0100] [Info] [AUTH DEBUG] pid=0 dialog=1503 state=5 resp=1 list=0
+[2025-12-24T23:43:34+0100] [Info] [AUTH DEBUG] pid=0 dialog=1507 state=5 resp=1 list=0
+[2025-12-24T23:43:34+0100] [Info] [Auth] pid=0 loaded armour=17.00 mirrored to spawn_armor=17.00
+[2025-12-24T23:43:34+0100] [Info] [Player_Spawn] Spawning player 0 at 1292.34, 2255.94, 10.79 skin=106
+[2025-12-24T23:43:34+0100] [Info] [Auth] Gracz Cristo_Mata (UID: 22, Account: 4) zalogowany pomyslnie
+[2025-12-24T23:43:34+0100] [Info] [Spawn] Gracz 0 spawned at 1292.34, 2255.94, 10.79 (VW:0, INT:0)
+[2025-12-24T23:43:34+0100] [Info] [Spawn] pid=0 applied saved armour=17.00 (cached=17.00)
+[2025-12-24T23:43:34+0100] [Info] [HUD] HUD_Show: clock_td=1 show_ok=1 for pid=0
+[2025-12-24T23:43:34+0100] [Info] [HUD_CREATE] pid=0 date create FAILED on-demand (td=0)
+[2025-12-24T23:43:34+0100] [Info] [HUD] HUD_Show: date textdraw INVALID (td=65535) for pid=0
+[2025-12-24T23:43:34+0100] [Info] [HUD] HUD_Show: hunger_td=4 ok=1, thirst_td=5 ok=1
+[2025-12-24T23:43:34+0100] [Info] [HUD_TIMER] pid=0 tick h=23 m=43 prev=43 td=1
+[2025-12-24T23:43:34+0100] [Info] [HUD_UPDATE] pid=0 clock set_ok=0 td=1 minute=43
+[2025-12-24T23:43:34+0100] [Info] [HUD_CREATE] pid=0 date created on-demand td=13
+[2025-12-24T23:43:34+0100] [Info] [HUD_UPDATE] pid=0 date='24.12.2025' set_ok=1 td=13
+[2025-12-24T23:43:34+0100] [Info] [HUD_UPDATE] pid=0 hunger='Glod: 0%' set_ok=1 td=4
+[2025-12-24T23:43:34+0100] [Info] [HUD_UPDATE] pid=0 thirst='Pragnienie: 0%' set_ok=1 td=5
+[2025-12-24T23:43:34+0100] [Info] [HUD] HUD_Show called for pid=0, flags=0
+[2025-12-24T23:43:34+0100] [Info] [Spawn] Gracz 0 spawned at 1292.34, 2255.94, 10.79 (VW:0, INT:0)
+[2025-12-24T23:43:34+0100] [Info] [Spawn] pid=0 applied saved armour=17.00 (cached=17.00)
+[2025-12-24T23:43:34+0100] [Info] [HUD] HUD_Show: clock_td=1 show_ok=1 for pid=0
+[2025-12-24T23:43:34+0100] [Info] [HUD] HUD_Show: date_td=13 show_ok=1 for pid=0
+[2025-12-24T23:43:34+0100] [Info] [HUD] HUD_Show: hunger_td=4 ok=1, thirst_td=5 ok=1
+[2025-12-24T23:43:34+0100] [Info] [HUD_TIMER] pid=0 tick h=23 m=43 prev=43 td=1
+[2025-12-24T23:43:34+0100] [Info] [HUD_UPDATE] pid=0 clock set_ok=0 td=1 minute=43
+[2025-12-24T23:43:34+0100] [Info] [HUD_UPDATE] pid=0 date='24.12.2025' set_ok=1 td=13
+[2025-12-24T23:43:34+0100] [Info] [HUD_UPDATE] pid=0 hunger='Glod: 0%' set_ok=1 td=4
+[2025-12-24T23:43:34+0100] [Info] [HUD_UPDATE] pid=0 thirst='Pragnienie: 0%' set_ok=1 td=5
+[2025-12-24T23:43:34+0100] [Info] [HUD] HUD_Show called for pid=0, flags=0
+[2025-12-24T23:43:34+0100] [Info] [Spawn] pid=0 verify ok cur=17.00 expected=17.00
+[2025-12-24T23:43:35+0100] [Info] [Spawn] pid=0 verify ok cur=17.00 expected=17.00
+[2025-12-24T23:43:39+0100] [Info] [PlayerSave] Skipping initial spawn save: pid=0 elapsed=9
+[2025-12-24T23:43:39+0100] [Info] [PlayerSave] Skipping initial spawn save: pid=0 elapsed=9
+[2025-12-24T23:43:40+0100] [Info] [DBG] CarShop_OnCategorySelected: pid=0 selection=0
+
+[2025-12-24T23:43:40+0100] [Info] [AUTH DEBUG] pid=0 dialog=360 state=9 resp=1 list=0
+[2025-12-24T23:43:41+0100] [Info] [DBG] OnModelSelectionResponse (CARSHOP_MODEL_MENU): pid=0 index=0 modelid=400 response=1
+
+[2025-12-24T23:43:41+0100] [Info] [DBG] Scheduling delayed confirm for pid=0 data='0;0'
+
+[2025-12-24T23:43:41+0100] [Info] [DBG] ShowConfirmDialogExDelayed: player=0 callback='carshop_buy' delay=250
+
+[2025-12-24T23:43:41+0100] [Info] [DBG] ShowConfirmDialogEx: player=0 callback='carshop_buy' data='0;0'
+
+[2025-12-24T23:43:42+0100] [Info] [DBG] Dialog_HandleConfirm invoked: player=0 callback='carshop_buy' data='0;0' mysql_errno=0
+
+[2025-12-24T23:43:42+0100] [Info] [DBG] Dialog_HandleConfirm: parsed carshop data cat=0 idx=0
+
+[2025-12-24T23:43:42+0100] [Info] [DBG] CarShop: valuesStr='400, 1900.000000, -1400.000000, 10.000000, 0.000000, -1, -1, 1, 22, 100.000000'
+
+[2025-12-24T23:43:42+0100] [Info] [AUTH DEBUG] pid=0 dialog=12 state=9 resp=1 list=-1
+[2025-12-24T23:43:42+0100] [Info] [PlayerSave] Saving: pid=0 name=Cristo_Mata armour=17.00
+[2025-12-24T23:43:42+0100] [Info] [PlayerSave] Zapisano dane gracza Cristo_Mata (UID: 22) - powod: purchase
+[2025-12-24T23:43:42+0100] [Info] [MySQL] B????d 1054: Unknown column 'vehicle_posx' in 'SET'
+[2025-12-24T23:43:42+0100] [Info] [MySQL] Query: UPDATE `vehicles` SET vehicle_posx = 1900.000000, vehicle_posy = -1400.000000, vehicle_posz = 10.000000, vehicle_posa = 0.000000 WHERE vehicle_uid = 4
+[2025-12-24T23:43:42+0100] [Info] [MySQL] Callback: 
+[2025-12-24T23:43:46+0100] [Info] [AUTH DEBUG] pid=0 dialog=207 state=9 resp=1 list=0
+[2025-12-24T23:43:47+0100] [Info] [AUTH DEBUG] pid=0 dialog=211 state=9 resp=1 list=0
+[2025-12-24T23:43:52+0100] [Info] [AUTH DEBUG] pid=0 dialog=207 state=9 resp=1 list=0
+[2025-12-24T23:43:53+0100] [Info] [AUTH DEBUG] pid=0 dialog=211 state=9 resp=1 list=1
+[2025-12-24T23:44:00+0100] [Info] [HUD_MINUTE] Repeating minute timer scheduled (60000ms)
+[2025-12-24T23:44:06+0100] [Info] [VDBG] /v engine request by 0 for vehicle=1 slot=1 nativeEngine=-1 vInfoEngine=0
+
+[2025-12-24T23:44:06+0100] [Info] [VDBG] Vehicle_SetEngine vehicle=1 slot=1 nativeEngine=-1 -> setEngine=1
+
+[2025-12-24T23:44:06+0100] [Info] [VDBG] Vehicle_SetEngine updated vInfo slot=1 veh_engine=1
+
+[2025-12-24T23:44:06+0100] [Info] [VDBG] /v engine completed for vehicle=1 requested=1 result=1 current=0
+
+[2025-12-24T23:44:38+0100] [Info] [AUTH DEBUG] pid=0 dialog=207 state=9 resp=1 list=0
+[2025-12-24T23:44:39+0100] [Info] [AUTH DEBUG] pid=0 dialog=211 state=9 resp=0 list=0
+[2025-12-24T23:44:40+0100] [Info] [AUTH DEBUG] pid=0 dialog=207 state=9 resp=0 list=0
+[2025-12-24T23:48:09+0100] [Info] [PlayerSave] Saving: pid=0 name=Cristo_Mata armour=17.00
+[2025-12-24T23:48:09+0100] [Info] [PlayerSave] Zapisano dane gracza Cristo_Mata (UID: 22) - powod: global-autosave
+[2025-12-24T23:48:09+0100] [Info] [AutoSave] Zapisano dane 1 graczy, pojazd??w i grup
+[2025-12-24T23:53:09+0100] [Info] [PlayerSave] Saving: pid=0 name=Cristo_Mata armour=17.00
+[2025-12-24T23:53:09+0100] [Info] [PlayerSave] Zapisano dane gracza Cristo_Mata (UID: 22) - powod: global-autosave
+[2025-12-24T23:53:09+0100] [Info] [AutoSave] Zapisano dane 1 graczy, pojazd??w i grup
+[2025-12-24T23:57:19+0100] [Info] [AUTH DEBUG] pid=0 dialog=207 state=9 resp=1 list=0
+[2025-12-24T23:57:20+0100] [Info] [AUTH DEBUG] pid=0 dialog=211 state=9 resp=1 list=0
+[2025-12-24T23:58:09+0100] [Info] [PlayerSave] Saving: pid=0 name=Cristo_Mata armour=17.00
+[2025-12-24T23:58:09+0100] [Info] [PlayerSave] Zapisano dane gracza Cristo_Mata (UID: 22) - powod: global-autosave
+[2025-12-24T23:58:09+0100] [Info] [AutoSave] Zapisano dane 1 graczy, pojazd??w i grup
+[2025-12-25T00:02:02+0100] [Info] [VDBG] Vehicle_SetEngine vehicle=1 slot=1 nativeEngine=1 -> setEngine=0
+
+[2025-12-25T00:02:02+0100] [Info] [VDBG] Vehicle_SetEngine updated vInfo slot=1 veh_engine=0
+
+[2025-12-25T00:02:18+0100] [Info] [VDBG] /v engine request by 0 for vehicle=1 slot=1 nativeEngine=0 vInfoEngine=0
+
+[2025-12-25T00:02:18+0100] [Info] [VDBG] Vehicle_SetEngine vehicle=1 slot=1 nativeEngine=0 -> setEngine=1
+
+[2025-12-25T00:02:18+0100] [Info] [VDBG] Vehicle_SetEngine updated vInfo slot=1 veh_engine=1
+
+[2025-12-25T00:02:18+0100] [Info] [VDBG] /v engine completed for vehicle=1 requested=1 result=1 current=0
+
+[2025-12-25T00:02:26+0100] [Info] [AUTH DEBUG] pid=0 dialog=700 state=9 resp=1 list=0
+[2025-12-25T00:02:30+0100] [Info] [AUTH DEBUG] pid=0 dialog=700 state=9 resp=1 list=3
+[2025-12-25T00:02:39+0100] [Info] [AUTH DEBUG] pid=0 dialog=703 state=9 resp=1 list=-1
+[2025-12-25T00:02:40+0100] [Info] [AUTH DEBUG] pid=0 dialog=700 state=9 resp=0 list=0
+[2025-12-25T00:03:09+0100] [Info] [PlayerSave] Saving: pid=0 name=Cristo_Mata armour=17.00
+[2025-12-25T00:03:09+0100] [Info] [PlayerSave] Zapisano dane gracza Cristo_Mata (UID: 22) - powod: global-autosave
+[2025-12-25T00:03:09+0100] [Info] [AutoSave] Zapisano dane 1 graczy, pojazd??w i grup
+[2025-12-25T00:04:58+0100] [Info] [VDBG] /v engine request by 0 for vehicle=2 slot=-1 nativeEngine=-1 vInfoEngine=-1
+
+[2025-12-25T00:04:58+0100] [Info] [VDBG] Vehicle_SetEngine vehicle=2 slot=-1 nativeEngine=-1 -> setEngine=1
+
+[2025-12-25T00:04:58+0100] [Info] [VDBG] /v engine completed for vehicle=2 requested=1 result=1 current=0
+
+[2025-12-25T00:05:02+0100] [Info] [VDBG] /v engine request by 0 for vehicle=2 slot=-1 nativeEngine=1 vInfoEngine=-1
+
+[2025-12-25T00:05:02+0100] [Info] [VDBG] Vehicle_SetEngine vehicle=2 slot=-1 nativeEngine=1 -> setEngine=0
+
+[2025-12-25T00:05:02+0100] [Info] [VDBG] /v engine completed for vehicle=2 requested=0 result=1 current=1
+
+[2025-12-25T00:05:03+0100] [Info] [VDBG] /v engine request by 0 for vehicle=2 slot=-1 nativeEngine=0 vInfoEngine=-1
+
+[2025-12-25T00:05:03+0100] [Info] [VDBG] Vehicle_SetEngine vehicle=2 slot=-1 nativeEngine=0 -> setEngine=1
+
+[2025-12-25T00:05:03+0100] [Info] [VDBG] /v engine completed for vehicle=2 requested=1 result=1 current=0
+
+[2025-12-25T00:08:09+0100] [Info] [PlayerSave] Saving: pid=0 name=Cristo_Mata armour=17.00
+[2025-12-25T00:08:09+0100] [Info] [PlayerSave] Zapisano dane gracza Cristo_Mata (UID: 22) - powod: global-autosave
+[2025-12-25T00:08:09+0100] [Info] [AutoSave] Zapisano dane 1 graczy, pojazd??w i grup
+[2025-12-25T00:09:22+0100] [Info] [VDBG] /v engine request by 0 for vehicle=3 slot=2 nativeEngine=-1 vInfoEngine=0
+
+[2025-12-25T00:09:22+0100] [Info] [VDBG] Vehicle_SetEngine vehicle=3 slot=2 nativeEngine=-1 -> setEngine=1
+
+[2025-12-25T00:09:22+0100] [Info] [VDBG] Vehicle_SetEngine updated vInfo slot=2 veh_engine=1
+
+[2025-12-25T00:09:22+0100] [Info] [VDBG] /v engine completed for vehicle=3 requested=1 result=1 current=0
+
+[2025-12-25T00:11:06+0100] [Info] [AUTH DEBUG] pid=0 dialog=3520 state=9 resp=1 list=0
+[2025-12-25T00:11:06+0100] [Info] [AUTH DEBUG] pid=0 dialog=3521 state=9 resp=0 list=-1
+[2025-12-25T00:12:28+0100] [Info] [PlayerSave] Saving: pid=0 name=Cristo_Mata armour=17.00
+[2025-12-25T00:12:28+0100] [Info] [PlayerSave] Zapisano dane gracza Cristo_Mata (UID: 22) - powod: disconnect
+[2025-12-25T00:12:28+0100] [Info] [part] tester5 has left the server (0:1)
+[2025-12-25T00:13:09+0100] [Info] [AutoSave] Zapisano dane 0 graczy, pojazd??w i grup
+[2025-12-25T00:15:00+0100] [Info] [Core] Zamykanie serwera...

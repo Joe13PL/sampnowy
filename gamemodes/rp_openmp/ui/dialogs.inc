@@ -2,7 +2,7 @@
  * =============================================================================
  *  DIALOGS - System dialog??w
  * =============================================================================
- *  
+ *
  *  Modu??: ui/dialogs.inc
  *  Opis: Dynamiczne dialogi z obs??ug?? stan??w i walidacji
  *
@@ -59,20 +59,20 @@ static g_DialogData[MAX_PLAYERS][256]; // Dodatkowe dane dialogu
  * @param confirmBtn Tekst przycisku potwierdzenia
  * @param cancelBtn Tekst przycisku anulowania
  */
-stock ShowConfirmDialog(playerid, dialogId, const title[], const message[], 
+stock ShowConfirmDialog(playerid, dialogId, const title[], const message[],
                         const confirmBtn[] = "Yes", const cancelBtn[] = "No")
 {
     if(!IsValidPlayerId(playerid))
     {
         return 0;
     }
-    
+
     g_CurrentDialog[playerid] = dialogId;
     g_DialogState[playerid] = DIALOG_STATE_WAITING;
-    
-    ShowPlayerDialog(playerid, dialogId, DIALOG_STYLE_MSGBOX, 
+
+    ShowPlayerDialog(playerid, dialogId, DIALOG_STYLE_MSGBOX,
         title, message, confirmBtn, cancelBtn);
-    
+
     return 1;
 }
 
@@ -90,15 +90,15 @@ stock ShowInputDialog(playerid, dialogId, const title[], const message[], bool:i
     {
         return 0;
     }
-    
+
     g_CurrentDialog[playerid] = dialogId;
     g_DialogState[playerid] = DIALOG_STATE_WAITING;
-    
+
     new style = isPassword ? DIALOG_STYLE_PASSWORD : DIALOG_STYLE_INPUT;
-    
-    ShowPlayerDialog(playerid, dialogId, style, 
+
+    ShowPlayerDialog(playerid, dialogId, style,
         title, message, "Confirm", "Cancel");
-    
+
     return 1;
 }
 
@@ -118,13 +118,13 @@ stock ShowListDialog(playerid, dialogId, const title[], const items[],
     {
         return 0;
     }
-    
+
     g_CurrentDialog[playerid] = dialogId;
     g_DialogState[playerid] = DIALOG_STATE_WAITING;
-    
-    ShowPlayerDialog(playerid, dialogId, DIALOG_STYLE_LIST, 
+
+    ShowPlayerDialog(playerid, dialogId, DIALOG_STYLE_LIST,
         title, items, selectBtn, cancelBtn);
-    
+
     return 1;
 }
 
@@ -143,16 +143,16 @@ stock ShowTablistDialog(playerid, dialogId, const title[], const headers[], cons
     {
         return 0;
     }
-    
+
     g_CurrentDialog[playerid] = dialogId;
     g_DialogState[playerid] = DIALOG_STATE_WAITING;
-    
+
     new content[2048];
     format(content, sizeof(content), "%s\n%s", headers, rows);
-    
-    ShowPlayerDialog(playerid, dialogId, DIALOG_STYLE_TABLIST_HEADERS, 
+
+    ShowPlayerDialog(playerid, dialogId, DIALOG_STYLE_TABLIST_HEADERS,
         title, content, selectBtn, cancelBtn);
-    
+
     return 1;
 }
 
@@ -170,44 +170,44 @@ stock Dialog_ShowInventory(playerid)
     {
         return 0;
     }
-    
+
     new content[2048];
     new itemCount = 0;
-    
-    // Nag????wki
-    strcopy(content, "Przedmiot\tTyp\tWarto????\n", sizeof(content));
-    
+
+    // Headers
+    strcopy(content, "Item\tType\tValue\n", sizeof(content));
+
     for(new i = 0; i < MAX_PLAYER_ITEMS; i++)
     {
         if(pItem[playerid][i][item_id] > 0)
         {
             new typeName[32];
             Item_GetDefaultName(E_ITEM_TYPE:pItem[playerid][i][item_type], typeName);
-            
+
             new line[128];
             format(line, sizeof(line), "%s\t%s\t%d\n",
                 pItem[playerid][i][item_name], typeName, pItem[playerid][i][item_value]);
-            
+
             strcat(content, line);
             itemCount++;
         }
     }
-    
+
     if(itemCount == 0)
     {
-        strcopy(content, "Tw??j ekwipunek jest pusty.", sizeof(content));
+        strcopy(content, "Your inventory is empty.", sizeof(content));
         ShowPlayerDialog(playerid, DIALOG_INVENTORY, DIALOG_STYLE_MSGBOX,
-            "Ekwipunek", content, "OK", "");
+            "Inventory", content, "OK", "");
     }
     else
     {
         new title[64];
-        format(title, sizeof(title), "Ekwipunek (%d/%d)", itemCount, MAX_PLAYER_ITEMS);
-        
+        format(title, sizeof(title), "Inventory (%d/%d)", itemCount, MAX_PLAYER_ITEMS);
+
         ShowPlayerDialog(playerid, DIALOG_INVENTORY, DIALOG_STYLE_TABLIST_HEADERS,
-            title, content, "U??yj", "Zamknij");
+            title, content, "Use", "Close");
     }
-    
+
     return 1;
 }
 
@@ -222,18 +222,18 @@ stock Dialog_ShowItemOptions(playerid, slot)
     {
         return 0;
     }
-    
+
     // Zapisz slot do danych dialogu
     format(g_DialogData[playerid], sizeof(g_DialogData[]), "%d", slot);
-    
+
     new title[64];
-    format(title, sizeof(title), "%s - Opcje", pItem[playerid][slot][item_name]);
-    
-    new content[256] = "U??yj\nOddaj graczowi\nPod??????\nWyrzu??";
-    
+    format(title, sizeof(title), "%s - Options", pItem[playerid][slot][item_name]);
+
+    new content[256] = "Use\nGive to player\nDrop\nThrow away";
+
     ShowPlayerDialog(playerid, DIALOG_ITEM_OPTIONS, DIALOG_STYLE_LIST,
-        title, content, "Wybierz", "Wr????");
-    
+        title, content, "Select", "Back");
+
     return 1;
 }
 
@@ -251,42 +251,42 @@ stock Dialog_ShowPlayerGroups(playerid)
     {
         return 0;
     }
-    
+
     new content[1024];
     new groupCount = 0;
-    
-    strcopy(content, "Nazwa grupy\tRanga\tPensja\n", sizeof(content));
-    
+
+    strcopy(content, "Group Name\tRank\tSalary\n", sizeof(content));
+
     for(new i = 0; i < MAX_PLAYER_GROUPS; i++)
     {
         new gid = pInfo[playerid][player_group][i];
-        
+
         if(gid > 0 && gid < MAX_GROUPS && gInfo[gid][group_created])
         {
             new rankName[32];
             Player_GetGroupRankName(playerid, gid, rankName);
-            
+
             new line[128];
             format(line, sizeof(line), "{%06x}%s\t%s\t%s$\n",
                 gInfo[gid][group_color] >>> 8,
                 gInfo[gid][group_name],
                 rankName,
                 FormatMoney(pInfo[playerid][player_group_salary][i]));
-            
+
             strcat(content, line);
             groupCount++;
         }
     }
-    
+
     if(groupCount == 0)
     {
-        SendGuiInformation(playerid, "Grupy", "Nie nale??ysz do ??adnej grupy.");
+        SendGuiInformation(playerid, "Groups", "You are not a member of any groups.");
         return 0;
     }
-    
+
     ShowPlayerDialog(playerid, DIALOG_GROUPS, DIALOG_STYLE_TABLIST_HEADERS,
-        "Twoje grupy", content, "Opcje", "Zamknij");
-    
+        "Your Groups", content, "Options", "Close");
+
     return 1;
 }
 
@@ -304,37 +304,37 @@ stock Dialog_ShowPlayerVehicles(playerid)
     {
         return 0;
     }
-    
+
     new vehicles[MAX_VEHICLES];
     new vehicleCount = Vehicle_GetPlayerVehicles(playerid, vehicles);
-    
+
     if(vehicleCount == 0)
     {
-        SendGuiInformation(playerid, "Pojazdy", "Nie posiadasz ??adnych pojazd??w.");
+        SendGuiInformation(playerid, "Vehicles", "You do not own any vehicles.");
         return 0;
     }
-    
+
     new content[2048];
-    strcopy(content, "Model\tPaliwo\tStan\n", sizeof(content));
-    
+    strcopy(content, "Model\tFuel\tCondition\n", sizeof(content));
+
     for(new i = 0; i < vehicleCount; i++)
     {
         new slot = vehicles[i];
         new modelName[32];
         GetVehicleModelName(vInfo[slot][veh_model], modelName);
-        
+
         new line[128];
         format(line, sizeof(line), "%s\t%d%%\t%.0f HP\n",
             modelName,
             vInfo[slot][veh_fuel],
             vInfo[slot][veh_health]);
-        
+
         strcat(content, line);
     }
-    
+
     ShowPlayerDialog(playerid, DIALOG_VEHICLES, DIALOG_STYLE_TABLIST_HEADERS,
-        "Twoje pojazdy", content, "Lokalizuj", "Zamknij");
-    
+        "Your Vehicles", content, "Locate", "Close");
+
     return 1;
 }
 
@@ -371,14 +371,14 @@ stock GetVehicleModelName(modelid, output[])
         "Police", "Police", "Police Ranger", "Picador", "S.W.A.T.", "Alpha", "Phoenix", "Glendale", "Sadler",
         "Luggage", "Luggage", "Stairs", "Boxville", "Tiller", "Utility Trailer"
     };
-    
+
     if(modelid >= 400 && modelid <= 611)
     {
         strcopy(output, vehicleNames[modelid - 400], 32);
     }
     else
     {
-        strcopy(output, "Nieznany", 32);
+        strcopy(output, "Unknown", 32);
     }
 }
 
@@ -397,7 +397,7 @@ stock Dialog_GetCurrent(playerid)
     {
         return DIALOG_NONE;
     }
-    
+
     return g_CurrentDialog[playerid];
 }
 
@@ -414,7 +414,7 @@ stock Dialog_GetData(playerid, output[], size = sizeof(output))
         output[0] = EOS;
         return 0;
     }
-    
+
     strcopy(output, g_DialogData[playerid], size);
     return 1;
 }
@@ -430,7 +430,7 @@ stock Dialog_SetData(playerid, const data[])
     {
         return 0;
     }
-    
+
     strcopy(g_DialogData[playerid], data, sizeof(g_DialogData[]));
     return 1;
 }
@@ -445,13 +445,13 @@ stock Dialog_Close(playerid)
     {
         return 0;
     }
-    
+
     ShowPlayerDialog(playerid, -1, DIALOG_STYLE_MSGBOX, " ", " ", " ", "");
-    
+
     g_CurrentDialog[playerid] = DIALOG_NONE;
     g_DialogState[playerid] = DIALOG_STATE_NONE;
     g_DialogData[playerid][0] = EOS;
-    
+
     return 1;
 }
 
@@ -464,7 +464,7 @@ hook OnPlayerConnect@Dialogs(playerid)
     g_CurrentDialog[playerid] = DIALOG_NONE;
     g_DialogState[playerid] = DIALOG_STATE_NONE;
     g_DialogData[playerid][0] = EOS;
-    
+
     return 1;
 }
 

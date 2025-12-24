@@ -63,7 +63,7 @@ YCMD:carshop(playerid, params[], help)
     // Build dialog body with categories (one per line)
     new body[128];
     format(body, sizeof(body), "SUVs\nSports Cars\nCasual Cars");
-    ShowPlayerDialog(playerid, DIALOG_CARSHOP_CATEGORIES, DIALOG_STYLE_LIST, title, body, "Wybierz", "Zamknij");
+    ShowPlayerDialog(playerid, DIALOG_CARSHOP_CATEGORIES, DIALOG_STYLE_LIST, title, body, "Select", "Close");
     return 1;
 }
 
@@ -246,14 +246,14 @@ public CarShop_OnVehicleSelected(playerid, selection)
     }
 
     new msg[128];
-    format(msg, sizeof(msg), "Czy chcesz kupic %s za $%d?", name, price);
+    format(msg, sizeof(msg), "Do you want to buy %s for $%d?", name, price);
 
     new data[32];
     format(data, sizeof(data), "%d;%d", cat, selection);
 
     // Use the central confirm dialog with a callback so Dialog_HandleConfirm can process purchase
     HideModelSelectionMenu(playerid);
-    ShowConfirmDialogExDelayed(playerid, "carshop_buy", "Potwierdz zakup", msg, data, 250);
+    ShowConfirmDialogExDelayed(playerid, "carshop_buy", "Confirm purchase", msg, data, 250);
 
     return 1;
 }

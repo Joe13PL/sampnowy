@@ -221,8 +221,8 @@ stock HUD_Create(playerid)
         PlayerTextDrawAlignment(playerid, g_PlayerHUD[playerid][HUD_HEALTH], 3);
     }
 
-    // === GŁÓD ===
-    new td_hunger = CreatePlayerTextDraw(playerid, 635.0, 92.0, "~y~Glod: 100%");
+    // === THIRST ===
+    new td_hunger = CreatePlayerTextDraw(playerid, 635.0, 92.0, "~y~Hunger: 100%");
     if(td_hunger == 0)
     {
         g_PlayerHUD[playerid][HUD_HUNGER] = PlayerText:INVALID_TEXT_DRAW;
@@ -238,8 +238,8 @@ stock HUD_Create(playerid)
         PlayerTextDrawAlignment(playerid, g_PlayerHUD[playerid][HUD_HUNGER], 3);
     }
 
-    // === PRAGNIENIE ===
-    new td_thirst = CreatePlayerTextDraw(playerid, 635.0, 104.0, "~b~Pragnienie: 100%");
+    // === THIRST ===
+    new td_thirst = CreatePlayerTextDraw(playerid, 635.0, 104.0, "~b~Thirst: 100%");
     if(td_thirst == 0)
     {
         g_PlayerHUD[playerid][HUD_THIRST] = PlayerText:INVALID_TEXT_DRAW;
@@ -256,7 +256,7 @@ stock HUD_Create(playerid)
     }
 
     // === BITMASK WOUND (BW) ===
-    g_PlayerHUD[playerid][HUD_BW] = CreatePlayerTextDraw(playerid, 320.0, 400.0, "~r~JESTES RANNY~n~~w~Poczekaj na pomoc medyczna");
+    g_PlayerHUD[playerid][HUD_BW] = CreatePlayerTextDraw(playerid, 320.0, 400.0, "~r~YOU ARE WOUNDED~n~~w~Wait for medical assistance");
     PlayerTextDrawFont(playerid, g_PlayerHUD[playerid][HUD_BW], 2);
     PlayerTextDrawLetterSize(playerid, g_PlayerHUD[playerid][HUD_BW], 0.35, 1.5);
     PlayerTextDrawColour(playerid, g_PlayerHUD[playerid][HUD_BW], 0xFFFFFFFF);
@@ -278,22 +278,22 @@ stock HUD_Create(playerid)
     PlayerTextDrawSetOutline(playerid, g_PlayerHUD[playerid][HUD_SPEEDO_SPEED], 1);
     PlayerTextDrawAlignment(playerid, g_PlayerHUD[playerid][HUD_SPEEDO_SPEED], 2);
 
-    // === PR??DKO??CIOMIERZ - PALIWO ===
-    g_PlayerHUD[playerid][HUD_SPEEDO_FUEL] = CreatePlayerTextDraw(playerid, 510.0, 375.0, "Paliwo: 100%");
+    // === PRĘDKOŚCIOMIERZ - PALIWO ===
+    g_PlayerHUD[playerid][HUD_SPEEDO_FUEL] = CreatePlayerTextDraw(playerid, 510.0, 375.0, "Fuel: 100%");
     PlayerTextDrawFont(playerid, g_PlayerHUD[playerid][HUD_SPEEDO_FUEL], 2);
     PlayerTextDrawLetterSize(playerid, g_PlayerHUD[playerid][HUD_SPEEDO_FUEL], 0.2, 0.8);
     PlayerTextDrawColour(playerid, g_PlayerHUD[playerid][HUD_SPEEDO_FUEL], 0xF39C12FF);
     PlayerTextDrawSetOutline(playerid, g_PlayerHUD[playerid][HUD_SPEEDO_FUEL], 1);
 
     // === PR??DKO??CIOMIERZ - SILNIK ===
-    g_PlayerHUD[playerid][HUD_SPEEDO_ENGINE] = CreatePlayerTextDraw(playerid, 510.0, 390.0, "Silnik: ~r~OFF");
+    g_PlayerHUD[playerid][HUD_SPEEDO_ENGINE] = CreatePlayerTextDraw(playerid, 510.0, 390.0, "Engine: ~r~OFF");
     PlayerTextDrawFont(playerid, g_PlayerHUD[playerid][HUD_SPEEDO_ENGINE], 2);
     PlayerTextDrawLetterSize(playerid, g_PlayerHUD[playerid][HUD_SPEEDO_ENGINE], 0.2, 0.8);
     PlayerTextDrawColour(playerid, g_PlayerHUD[playerid][HUD_SPEEDO_ENGINE], 0xFFFFFFFF);
     PlayerTextDrawSetOutline(playerid, g_PlayerHUD[playerid][HUD_SPEEDO_ENGINE], 1);
 
-    // === PR??DKO??CIOMIERZ - ??WIAT??A ===
-    g_PlayerHUD[playerid][HUD_SPEEDO_LIGHTS] = CreatePlayerTextDraw(playerid, 510.0, 405.0, "Światła: ~r~OFF");
+    // === PRĘDKOŚCIOMIERZ - ŚWIATŁA ===
+    g_PlayerHUD[playerid][HUD_SPEEDO_LIGHTS] = CreatePlayerTextDraw(playerid, 510.0, 405.0, "Lights: ~r~OFF");
     PlayerTextDrawFont(playerid, g_PlayerHUD[playerid][HUD_SPEEDO_LIGHTS], 2);
     PlayerTextDrawLetterSize(playerid, g_PlayerHUD[playerid][HUD_SPEEDO_LIGHTS], 0.2, 0.8);
     PlayerTextDrawColour(playerid, g_PlayerHUD[playerid][HUD_SPEEDO_LIGHTS], 0xFFFFFFFF);
@@ -634,8 +634,8 @@ stock HUD_Update(playerid)
     }
     printf("[HUD_UPDATE] pid=%d date='%s' set_ok=%d td=%d", playerid, text, set_ok_date, g_PlayerHUD[playerid][HUD_DATE]);
 
-    // Głód
-    format(text, sizeof(text), "Glod: %d%%", pInfo[playerid][player_hunger]);
+    // Hunger
+    format(text, sizeof(text), "Hunger: %d%%", pInfo[playerid][player_hunger]);
     new set_ok_hunger = 0;
     if(g_PlayerHUD[playerid][HUD_HUNGER] != PlayerText:INVALID_TEXT_DRAW && g_PlayerHUD[playerid][HUD_HUNGER] != 0)
     {
@@ -644,7 +644,7 @@ stock HUD_Update(playerid)
     printf("[HUD_UPDATE] pid=%d hunger='%s' set_ok=%d td=%d", playerid, text, set_ok_hunger, g_PlayerHUD[playerid][HUD_HUNGER]);
 
     // Pragnienie
-    format(text, sizeof(text), "Pragnienie: %d%%", pInfo[playerid][player_thirst]);
+    format(text, sizeof(text), "Thirst: %d%%", pInfo[playerid][player_thirst]);
     new set_ok_thirst = 0;
     if(g_PlayerHUD[playerid][HUD_THIRST] != PlayerText:INVALID_TEXT_DRAW && g_PlayerHUD[playerid][HUD_THIRST] != 0)
     {
@@ -762,11 +762,11 @@ stock Speedo_Update(playerid, vehicleid)
     if(slot != -1)
     {
         new fuel = Vehicle_GetFuel(vehicleid);
-        format(text, sizeof(text), "Paliwo: %d%%", fuel);
+        format(text, sizeof(text), "Fuel: %d%%", fuel);
     }
     else
     {
-        text = "Paliwo: ---";
+        text = "Fuel: ---";
     }
     PlayerTextDrawSetString(playerid, g_PlayerHUD[playerid][HUD_SPEEDO_FUEL], text);
 
@@ -786,11 +786,11 @@ stock Speedo_Update(playerid, vehicleid)
         engine = _engine; lights = _lights;
     }
 
-    format(text, sizeof(text), "Silnik: %s", engine ? "~g~ON" : "~r~OFF");
+    format(text, sizeof(text), "Engine: %s", engine ? "~g~ON" : "~r~OFF");
     Polish_EncodeForClient(text, text, sizeof(text));
     PlayerTextDrawSetString(playerid, g_PlayerHUD[playerid][HUD_SPEEDO_ENGINE], text);
 
-    format(text, sizeof(text), "Swiatla: %s", lights ? "~g~ON" : "~r~OFF");
+    format(text, sizeof(text), "Lights: %s", lights ? "~g~ON" : "~r~OFF");
     Polish_EncodeForClient(text, text, sizeof(text));
     PlayerTextDrawSetString(playerid, g_PlayerHUD[playerid][HUD_SPEEDO_LIGHTS], text);
 
@@ -822,7 +822,7 @@ stock BW_Show(playerid, seconds)
 
     new text[128];
     format(text, sizeof(text),
-        "~r~JESTES RANNY~n~~w~Pozostalo: %s~n~Poczekaj na pomoc medyczna",
+        "~r~YOU ARE INJURED~n~~w~Time left: %s~n~Wait for medical assistance",
         FormatDuration(seconds));
 
     PlayerTextDrawSetString(playerid, g_PlayerHUD[playerid][HUD_BW], text);
@@ -956,7 +956,7 @@ hook OnPlayerStateChange@Textdraws(playerid, newstate, oldstate)
         if(g_PlayerCruiseControl[playerid] > 0)
         {
             g_PlayerCruiseControl[playerid] = 0;
-            SendClientMessage(playerid, COLOR_WARNING, "Tempomat wyłączony.");
+            SendClientMessage(playerid, COLOR_WARNING, "Cruise control disabled.");
         }
     }
 

@@ -276,14 +276,14 @@ Dialog_HandleLogin(playerid, response, const inputtext[])
 {
     if(!response)
     {
-        // Gracz anulowa?? logowanie
-        Player_Kick(playerid, -1, "Anulowano logowanie");
+        // Player cancelled login
+        Player_Kick(playerid, -1, "Login cancelled");
         return 1;
     }
 
     if(strlen(inputtext) < 4)
     {
-        SendClientMessage(playerid, COLOR_ERROR, "Hasło musi mieć co najmniej 6 znaków!");
+        SendClientMessage(playerid, COLOR_ERROR, "Password must have at least 6 characters!");
         Auth_ShowRegisterDialog(playerid); // usuń zbędne argumenty
         return 1;
     }
@@ -297,20 +297,20 @@ Dialog_HandleRegister(playerid, response, const inputtext[])
 {
     if(!response)
     {
-        Player_Kick(playerid, -1, "Anulowano rejestracj??");
+        Player_Kick(playerid, -1, "Registration cancelled");
         return 1;
     }
 
     if(strlen(inputtext) < 6)
     {
-        SendClientMessage(playerid, COLOR_ERROR, "Has??o musi mie?? co najmniej 6 znak??w!");
+        SendClientMessage(playerid, COLOR_ERROR, "Password must have at least 6 characters!");
         Auth_ShowRegisterDialog(playerid);
         return 1;
     }
 
     if(strlen(inputtext) > 32)
     {
-        SendClientMessage(playerid, COLOR_ERROR, "Has??o mo??e mie?? maksymalnie 32 znaki!");
+        SendClientMessage(playerid, COLOR_ERROR, "Password can be at most 32 characters long!");
         Auth_ShowRegisterDialog(playerid);
         return 1;
     }
@@ -320,8 +320,8 @@ Dialog_HandleRegister(playerid, response, const inputtext[])
 
     // Popro?? o potwierdzenie
     ShowInputDialog(playerid, DIALOG_REGISTER_CONFIRM,
-        "Potwierdzenie has??a",
-        "Wpisz has??o ponownie w celu potwierdzenia:", true);
+        "Confirm password",
+        "Enter the password again to confirm:", true);
 
     return 1;
 }
@@ -340,7 +340,7 @@ Dialog_HandleRegisterConfirm(playerid, response, const inputtext[])
 
     if(strcmp(inputtext, savedPassword) != 0)
     {
-        SendClientMessage(playerid, COLOR_ERROR, "Has??a nie s?? identyczne!");
+        SendClientMessage(playerid, COLOR_ERROR, "Passwords do not match!");
         DeletePVar(playerid, "TempPassword");
         Auth_ShowRegisterDialog(playerid);
 
@@ -384,7 +384,7 @@ Dialog_HandleInventory(playerid, response, listitem)
 
     if(slot == -1)
     {
-        SendClientMessage(playerid, COLOR_ERROR, "Nieprawid??owy przedmiot.");
+        SendClientMessage(playerid, COLOR_ERROR, "Invalid item.");
         return 1;
     }
 
@@ -407,20 +407,20 @@ Dialog_HandleItemOptions(playerid, response, listitem)
 
     switch(listitem)
     {
-        case 0: // U??yj
+        case 0: // Use
         {
             Item_Use(playerid, slot);
         }
 
-        case 1: // Oddaj graczowi
+        case 1: // Give to player
         {
             ShowInputDialog(playerid, DIALOG_ITEM_GIVE,
-                "Oddaj przedmiot",
-                "Wpisz ID gracza, kt??remu chcesz odda?? przedmiot:");
+                "Give item",
+                "Enter the ID of the player you want to give the item to:");
             Dialog_SetData(playerid, data);
         }
 
-        case 2: // Pod??????
+        case 2: // Drop
         {
             Item_Drop(playerid, slot);
         }
@@ -428,7 +428,7 @@ Dialog_HandleItemOptions(playerid, response, listitem)
         case 3: // Wyrzu??
         {
             Item_Destroy(playerid, slot);
-            SendClientMessage(playerid, COLOR_INFO, "Wyrzuci??e?? przedmiot.");
+            SendClientMessage(playerid, COLOR_INFO, "You have dropped the item.");
         }
     }
 
@@ -451,7 +451,7 @@ Dialog_HandlePhoneDial(playerid, response, const inputtext[])
     if(isnull(inputtext))
     {
         printf("[DBG] Dialog_HandlePhoneDial: isnull input for player=%d\n", playerid);
-        SendClientMessage(playerid, COLOR_GRAY, "Użycie: wpisz ID gracza");
+        SendClientMessage(playerid, COLOR_GRAY, "Usage: enter player ID");
         return 1;
     }
 
@@ -459,14 +459,14 @@ Dialog_HandlePhoneDial(playerid, response, const inputtext[])
     if(!Phone_ParseNumberString(inputtext, num))
     {
         printf("[DBG] Dialog_HandlePhoneDial: parse failed for player=%d input='%s' len=%d\n", playerid, inputtext, strlen(inputtext));
-        SendClientMessage(playerid, COLOR_GRAY, "Użycie: wpisz numer telefonu (np. 12345 lub 012345)");
+        SendClientMessage(playerid, COLOR_GRAY, "Usage: enter phone number (e.g. 12345)");
         return 1;
     }
 
     // Accept 1-6 digit numbers (allow leading-zero numbers displayed as 6 digits)
         if(num < PHONE_MIN_NUMBER || num > PHONE_MAX_NUMBER)
     {
-        SendClientMessage(playerid, COLOR_RED, "Nieprawidlowy numer telefonu.");
+        SendClientMessage(playerid, COLOR_RED, "Invalid phone number.");
         return 1;
     }
 
@@ -550,7 +550,7 @@ Dialog_HandlePhoneHistoryDetail(playerid, response)
         }
     }
 
-    SendClientMessage(playerid, COLOR_ERROR, "Gracz nie jest online.");
+    SendClientMessage(playerid, COLOR_ERROR, "Player is not online.");
     return 1;
 }
 
@@ -658,7 +658,7 @@ Dialog_HandlePhoneContactEdit(playerid, response, const inputtext[])
         }
 
         new phone_number = pItem[playerid][slot][item_value2];
-        if(phone_number == 0) { SendClientMessage(playerid, COLOR_ERROR, "Ten telefon nie ma przypisanego numeru."); return 1; }
+        if(phone_number == 0) { SendClientMessage(playerid, COLOR_ERROR, "This phone has no assigned number."); return 1; }
 
         Phone_AddContactForNumber(playerid, targetNumber, inputtext);
         Dialog_ShowPhoneContacts(playerid);
@@ -685,7 +685,7 @@ Dialog_HandlePhoneContactEdit(playerid, response, const inputtext[])
     }
 
     printf("[DBG] Dialog_HandlePhoneContactEdit: failed to parse data='%s'\n", data);
-    SendClientMessage(playerid, COLOR_ERROR, "Blad wewnetrzny.");
+    SendClientMessage(playerid, COLOR_ERROR, "Internal error.");
     Dialog_ShowPhoneContacts(playerid);
     return 1;
 }
@@ -703,7 +703,7 @@ Dialog_HandlePhoneContactAdd(playerid, response, const inputtext[])
 
     // parse number
     new parsedNum = 0; for(new j = 0; j < len; j++) parsedNum = parsedNum * 10 + (inputtext[j] - '0');
-    if(parsedNum < PHONE_MIN_NUMBER || parsedNum > PHONE_MAX_NUMBER) { SendClientMessage(playerid, COLOR_ERROR, "Nieprawidlowy numer telefonu."); return 1; }
+    if(parsedNum < PHONE_MIN_NUMBER || parsedNum > PHONE_MAX_NUMBER) { SendClientMessage(playerid, COLOR_ERROR, "Invalid phone number."); return 1; }
 
     // store target number with ADD prefix and ask for display name
     new buf[32]; format(buf, sizeof(buf), "ADD %d", parsedNum);
@@ -747,7 +747,7 @@ Dialog_HandlePhoneSMSMenu(playerid, response, listitem)
     switch(listitem)
     {
         case 0: { Dialog_ShowPhoneSMS(playerid); return 1; }
-        case 1: { Dialog_SetData(playerid, ""); ShowInputDialog(playerid, DIALOG_PHONE_SMS_SEND, "Nowy SMS - odbiorca (numer)", "Wpisz numer odbiorcy:", false); return 1; }
+        case 1: { Dialog_SetData(playerid, ""); ShowInputDialog(playerid, DIALOG_PHONE_SMS_SEND, "New SMS - recipient (number)", "Enter recipient number:", false); return 1; }
         default: return 1;
     }
 }
@@ -799,7 +799,7 @@ Dialog_HandlePhoneSMSView(playerid, response)
             if(smsId == 0 || sender_number == 0) { printf("[DBG] Dialog_HandlePhoneSMSView: failed to parse data='%s' for delete\n", data); return 1; }
         }
         new buf[32]; format(buf, sizeof(buf), "%d", smsId);
-        ShowConfirmDialogEx(playerid, "phone_sms_delete", "Potwierdz", "Czy na pewno chcesz usunac wiadomosc?", buf);
+        ShowConfirmDialogEx(playerid, "phone_sms_delete", "Confirm", "Are you sure you want to delete the message?", buf);
         return 1;
     }
 
@@ -851,10 +851,10 @@ Dialog_HandlePhoneSMSSend(playerid, response, const inputtext[])
         // validate numeric phone number (digits only)
         new isNum = 1; new len = strlen(inputtext);
         for(new i = 0; i < len; i++) if(inputtext[i] < '0' || inputtext[i] > '9') { isNum = 0; break; }
-        if(!isNum) { SendClientMessage(playerid, COLOR_ERROR, "Wpisz poprawny numer odbiorcy."); return 1; }
+        if(!isNum) { SendClientMessage(playerid, COLOR_ERROR, "Enter a valid recipient number."); return 1; }
         // parse number
         new parsedNum = 0; for(new j = 0; j < len; j++) parsedNum = parsedNum * 10 + (inputtext[j] - '0');
-        if(parsedNum < PHONE_MIN_NUMBER || parsedNum > PHONE_MAX_NUMBER) { SendClientMessage(playerid, COLOR_ERROR, "Nieprawidlowy numer telefonu."); return 1; }
+        if(parsedNum < PHONE_MIN_NUMBER || parsedNum > PHONE_MAX_NUMBER) { SendClientMessage(playerid, COLOR_ERROR, "Invalid phone number."); return 1; }
         // store and ask for message body
         new buf[32]; format(buf, sizeof(buf), "%d", parsedNum);
         Dialog_SetData(playerid, buf);
@@ -863,10 +863,10 @@ Dialog_HandlePhoneSMSSend(playerid, response, const inputtext[])
     }
 
     // Compose step 2: sending message body
-    if(isnull(inputtext) || strlen(inputtext) == 0) { SendClientMessage(playerid, COLOR_ERROR, "Wiadomosc nie moze byc pusta."); return 1; }
+    if(isnull(inputtext) || strlen(inputtext) == 0) { SendClientMessage(playerid, COLOR_ERROR, "Message cannot be empty."); return 1; }
 
     new receiver_number;
-    if(sscanf(data, "%d", receiver_number) != 1) { SendClientMessage(playerid, COLOR_ERROR, "Nieprawidlowy odbiorca."); return 1; }
+    if(sscanf(data, "%d", receiver_number) != 1) { SendClientMessage(playerid, COLOR_ERROR, "Invalid recipient."); return 1; }
 
     // Send SMS by number
     Phone_SendSMSByNumber(playerid, receiver_number, inputtext);
@@ -891,12 +891,12 @@ Dialog_HandleItemGive(playerid, response, const inputtext[])
 
     if(!IsValidPlayerId(targetid) || !pInfo[targetid][player_logged])
     {
-        SendClientMessage(playerid, COLOR_ERROR, "Nieprawid??owy gracz.");
+        SendClientMessage(playerid, COLOR_ERROR, "Invalid player.");
         Dialog_ShowInventory(playerid);
         return 1;
     }
 
-    // Utw??rz ofert?? przedmiotu
+    // Create item offer
     Offer_Create(playerid, targetid, OFFER_ITEM, 0, slot, 0);
 
     return 1;
@@ -945,7 +945,7 @@ Dialog_HandleGroups(playerid, response, listitem)
     // Poka?? opcje grupy
     new content[256];
     format(content, sizeof(content),
-        "Czat grupy\nLista cz??onk??w\nMagazyn grupy\nOpu???? grup??");
+        "Group Chat\nMember List\nGroup Magazine\nLeave Group");
 
     ShowListDialog(playerid, DIALOG_GROUP_OPTIONS,
         gInfo[gid][group_name], content);
@@ -967,30 +967,30 @@ Dialog_HandleGroupOptions(playerid, response, listitem)
 
     switch(listitem)
     {
-        case 0: // Czat grupy
+        case 0: // Group Chat
         {
             // Otw??rz input czatu
             ShowInputDialog(playerid, DIALOG_GROUP_CHAT,
-                "Czat grupy",
-                "Wpisz wiadomo???? do cz??onk??w grupy:");
+                "Group Chat",
+                "Enter a message to group members:");
             Dialog_SetData(playerid, data);
         }
 
-        case 1: // Lista cz??onk??w
+        case 1: // Member List
         {
             Dialog_ShowGroupMembers(playerid, gid);
         }
 
         case 2: // Magazyn
         {
-            // Poka?? magazyn grupy
-            SendClientMessage(playerid, COLOR_INFO, "System magazynu w budowie.");
+            // Show group storage
+            SendClientMessage(playerid, COLOR_INFO, "Storage system under construction.");
         }
 
         case 3: // Opu???? grup??
         {
             Group_RemoveMember(gid, playerid);
-            SendClientMessage(playerid, COLOR_INFO, "Opu??ci??e?? grup??.");
+            SendClientMessage(playerid, COLOR_INFO, "You have left the group.");
         }
     }
 
@@ -1012,7 +1012,7 @@ Dialog_ShowGroupMembers(playerid, groupId)
     new content[2048];
     new count = 0;
 
-    strcopy(content, "Gracz\tRanga\tOnline\n", sizeof(content));
+    strcopy(content, "Player\tRank\tOnline\n", sizeof(content));
 
     foreach(new i : Player)
     {
@@ -1034,14 +1034,14 @@ Dialog_ShowGroupMembers(playerid, groupId)
 
     if(count == 0)
     {
-        strcopy(content, "Brak cz??onk??w online.", sizeof(content));
+        strcopy(content, "No members online.", sizeof(content));
     }
 
     new title[64];
-    format(title, sizeof(title), "Cz??onkowie: %s", gInfo[groupId][group_name]);
+    format(title, sizeof(title), "Members: %s", gInfo[groupId][group_name]);
 
     ShowPlayerDialog(playerid, DIALOG_GROUP_MEMBERS, DIALOG_STYLE_TABLIST_HEADERS,
-        title, content, "OK", "Wr????");
+        title, content, "OK", "Back");
 
     return 1;
 }
@@ -1073,12 +1073,12 @@ Dialog_HandleVehicles(playerid, response, listitem)
     Dialog_SetData(playerid, data);
 
     // Poka?? opcje
-    new content[256] = "Lokalizuj pojazd\nPrzywo??aj pojazd\nSprzedaj pojazd";
+    new content[256] = "Locate Vehicle\nRecall Vehicle\nSell Vehicle";
 
     new title[64];
     new modelName[32];
     GetVehicleModelName(vInfo[slot][veh_model], modelName);
-    format(title, sizeof(title), "Opcje: %s", modelName);
+    format(title, sizeof(title), "Options: %s", modelName);
 
     ShowListDialog(playerid, DIALOG_VEHICLE_OPTIONS, title, content);
 
@@ -1104,7 +1104,7 @@ Dialog_HandleVehicleOptions(playerid, response, listitem)
             new Float:x, Float:y, Float:z;
             GetVehiclePos(vInfo[slot][veh_gameid], x, y, z);
             SetPlayerCheckpoint(playerid, x, y, z, 3.0);
-            SendClientMessage(playerid, COLOR_INFO, "Pojazd zaznaczony na mapie.");
+            SendClientMessage(playerid, COLOR_INFO, "Vehicle marked on the map.");
         }
 
         case 1: // Przywo??aj
@@ -1112,12 +1112,12 @@ Dialog_HandleVehicleOptions(playerid, response, listitem)
             new Float:x, Float:y, Float:z;
             GetPlayerPos(playerid, x, y, z);
             SetVehiclePos(vInfo[slot][veh_gameid], x + 3.0, y, z);
-            SendClientMessage(playerid, COLOR_SUCCESS, "Pojazd przywo??any.");
+            SendClientMessage(playerid, COLOR_SUCCESS, "Vehicle summoned.");
         }
 
         case 2: // Sprzedaj
         {
-            SendClientMessage(playerid, COLOR_INFO, "Aby sprzeda?? pojazd, znajd?? kupca i u??yj /sprzedajpojazd.");
+            SendClientMessage(playerid, COLOR_INFO, "To sell a vehicle, find a buyer and use /sellvehicle.");
         }
     }
 
@@ -1172,15 +1172,15 @@ enum e_WalkStyle {
 
 // Style chodzenia
 static WalkingStyles[][e_WalkStyle] = {
-    {"Normalny", "PED", "WALK_player"},
+    {"Normal", "PED", "WALK_player"},
     {"Gangster", "PED", "WALK_gang1"},
     {"Gangster 2", "PED", "WALK_gang2"},
     {"Sexy", "PED", "WOMAN_walkshopm"},
-    {"Pijany", "PED", "WALK_drunk"},
-    {"Stary", "PED", "WALK_old"},
-    {"Gruby", "PED", "WALK_fat"},
+    {"Drunk", "PED", "WALK_drunk"},
+    {"Old", "PED", "WALK_old"},
+    {"Fat", "PED", "WALK_fat"},
     {"Blindman", "PED", "WALK_civi"},
-    {"Szybki", "PED", "sprint_panic"}
+    {"Fast", "PED", "sprint_panic"}
 };
 
 stock Player_ShowStatsMenu(playerid)
@@ -1191,23 +1191,23 @@ stock Player_ShowStatsMenu(playerid)
 
     if(canCreateGang)
     {
-        gangStatus = "{00FF00}[DOSTEPNE]";
+        gangStatus = "{00FF00}[AVAILABLE]";
     }
     else
     {
-        gangStatus = "{FF6600}[WYMAGANIA NIE SPELNIONE]";
+        gangStatus = "{FF6600}[REQUIREMENTS NOT MET]";
     }
 
     new content[512];
     content[0] = EOS;
 
-    strcat(content, "{FFFFFF}Statystyki postaci\n", sizeof(content));
-    strcat(content, "{FFFFFF}Sklep Premium\n", sizeof(content));
-    strcat(content, "{FFFFFF}Styl chodzenia (Alt)\n", sizeof(content));
-    format(content, sizeof(content), "%s{FFFFFF}Zaloz grupe przestepcza %s", content, gangStatus);
+    strcat(content, "{FFFFFF}Character Stats\n", sizeof(content));
+    strcat(content, "{FFFFFF}Premium Shop\n", sizeof(content));
+    strcat(content, "{FFFFFF}Walking Style (Alt)\n", sizeof(content));
+    format(content, sizeof(content), "%s{FFFFFF}Create a gang %s", content, gangStatus);
 
     ShowPlayerDialog(playerid, DIALOG_STATS_MENU, DIALOG_STYLE_LIST,
-        "Menu statystyk", content, "Wybierz", "Zamknij");
+        "Stats Menu", content, "Select", "Close");
 
     return 1;
 }
@@ -1250,20 +1250,20 @@ Dialog_HandleStatsMenu(playerid, response, listitem)
                 new housesOk[16], vehiclesOk[16];
 
                 if(houses >= 1) housesOk = "{00FF00}[OK]";
-                else housesOk = "{FF0000}[BRAK]";
+                else housesOk = "{FF0000}[MISSING]";
 
                 if(vehicles >= 1) vehiclesOk = "{00FF00}[OK]";
-                else vehiclesOk = "{FF0000}[BRAK]";
+                else vehiclesOk = "{FF0000}[MISSING]";
 
                 msg[0] = EOS;
-                strcat(msg, "{FF0000}Nie spelniasz wymagan!\n\n", sizeof(msg));
-                strcat(msg, "{FFFFFF}Wymagania:\n", sizeof(msg));
-                format(msg, sizeof(msg), "%s- Domki: %d/1 %s\n", msg, houses, housesOk);
-                format(msg, sizeof(msg), "%s- Pojazdy: %d/1 %s\n", msg, vehicles, vehiclesOk);
-                strcat(msg, "- Czlonkowie: 3/3 (znajomi)", sizeof(msg));
+                strcat(msg, "{FF0000}You do not meet the requirements!\n\n", sizeof(msg));
+                strcat(msg, "{FFFFFF}Requirements:\n", sizeof(msg));
+                format(msg, sizeof(msg), "%s- Houses: %d/1 %s\n", msg, houses, housesOk);
+                format(msg, sizeof(msg), "%s- Vehicles: %d/1 %s\n", msg, vehicles, vehiclesOk);
+                strcat(msg, "- Members: 3/3 (friends)", sizeof(msg));
 
                 ShowPlayerDialog(playerid, DIALOG_INFO, DIALOG_STYLE_MSGBOX,
-                    "Wymagania", msg, "OK", "");
+                    "Requirements", msg, "OK", "");
             }
         }
     }
@@ -1289,27 +1289,27 @@ stock Player_ShowPremiumShop(playerid)
     // Budowanie tekstu etapami
     content[0] = EOS;
 
-    strcat(content, "{F1C40F}=== SKLEP PREMIUM ===\n\n", sizeof(content));
+    strcat(content, "{F1C40F}=== PREMIUM SHOP ===\n\n", sizeof(content));
 
-    format(content, sizeof(content), "%s{FFFFFF}Twoj status: %s\n\n", content, vipStatus);
+    format(content, sizeof(content), "%s{FFFFFF}Your status: %s\n\n", content, vipStatus);
 
-    strcat(content, "{3498DB}Dostepne pakiety:\n", sizeof(content));
-    strcat(content, "{FFFFFF}1. VIP Bronze (30 dni) - 10 PLN\n", sizeof(content));
-    strcat(content, "   - 3 postacie\n", sizeof(content));
-    strcat(content, "   - Dodatkowe style chodzenia\n\n", sizeof(content));
+    strcat(content, "{3498DB}Available packages:\n", sizeof(content));
+    strcat(content, "{FFFFFF}1. VIP Bronze (30 days) - 10 PLN\n", sizeof(content));
+    strcat(content, "   - 3 characters\n", sizeof(content));
+    strcat(content, "   - Additional walking styles\n\n", sizeof(content));
 
-    strcat(content, "{FFFFFF}2. VIP Silver (30 dni) - 20 PLN\n", sizeof(content));
-    strcat(content, "   - Wszystko z Bronze\n", sizeof(content));
-    strcat(content, "   - Wiecej slotow na pojazdy\n\n", sizeof(content));
+    strcat(content, "{FFFFFF}2. VIP Silver (30 days) - 20 PLN\n", sizeof(content));
+    strcat(content, "   - Everything from Bronze\n", sizeof(content));
+    strcat(content, "   - More vehicle slots\n\n", sizeof(content));
 
-    strcat(content, "{FFFFFF}3. VIP Gold (30 dni) - 35 PLN\n", sizeof(content));
-    strcat(content, "   - Wszystko z Silver\n", sizeof(content));
-    strcat(content, "   - Priorytetowe wsparcie\n\n", sizeof(content));
+    strcat(content, "{FFFFFF}3. VIP Gold (30 days) - 35 PLN\n", sizeof(content));
+    strcat(content, "   - Everything from Silver\n", sizeof(content));
+    strcat(content, "   - Priority support\n\n", sizeof(content));
 
-    strcat(content, "{AAAAAA}Aby zakupic VIP, odwiedz nasz sklep\n", sizeof(content));
-    strcat(content, "lub skontaktuj sie z administracja.", sizeof(content));
+    strcat(content, "{AAAAAA}To purchase VIP, visit our store\n", sizeof(content));
+    strcat(content, "or contact the administration.", sizeof(content));
 
-    ShowPlayerDialog(playerid, DIALOG_PREMIUM_SHOP, DIALOG_STYLE_MSGBOX, "Sklep Premium", content, "Zamknij", "");
+    ShowPlayerDialog(playerid, DIALOG_PREMIUM_SHOP, DIALOG_STYLE_MSGBOX, "Premium Shop", content, "Close", "");
 
     return 1;
 }
@@ -1324,7 +1324,7 @@ stock Player_ShowWalkingStyles(playerid)
     {
         if(i == currentStyle)
         {
-            format(content, sizeof(content), "%s{00FF00}> %s [AKTYWNY]\n", content, WalkingStyles[i][walk_name]);
+            format(content, sizeof(content), "%s{00FF00}> %s [ACTIVE]\n", content, WalkingStyles[i][walk_name]);
         }
         else
         {
@@ -1332,7 +1332,7 @@ stock Player_ShowWalkingStyles(playerid)
         }
     }
 
-    ShowPlayerDialog(playerid, DIALOG_WALKING_STYLE, DIALOG_STYLE_LIST, "Styl chodzenia (Alt)", content, "Wybierz", "Anuluj");
+    ShowPlayerDialog(playerid, DIALOG_WALKING_STYLE, DIALOG_STYLE_LIST, "Walking Style (Alt)", content, "Select", "Cancel");
 
     return 1;
 }
@@ -1342,15 +1342,15 @@ stock Player_ShowCreateGang(playerid)
     new content[256];
     content[0] = EOS;
 
-    strcat(content, "{FFFFFF}Spelniasz wszystkie wymagania!\n\n", sizeof(content));
-    strcat(content, "{3498DB}Wymagania:\n", sizeof(content));
-    strcat(content, "{00FF00}[OK] {FFFFFF}1 domek\n", sizeof(content));
-    strcat(content, "{00FF00}[OK] {FFFFFF}3 czlonkow\n", sizeof(content));
-    strcat(content, "{00FF00}[OK] {FFFFFF}1 pojazd\n\n", sizeof(content));
-    strcat(content, "{FFFFFF}Podaj nazwe dla swojej grupy:", sizeof(content));
+    strcat(content, "{FFFFFF}You meet all the requirements!\n\n", sizeof(content));
+    strcat(content, "{3498DB}Requirements:\n", sizeof(content));
+    strcat(content, "{00FF00}[OK] {FFFFFF}1 house\n", sizeof(content));
+    strcat(content, "{00FF00}[OK] {FFFFFF}3 members\n", sizeof(content));
+    strcat(content, "{00FF00}[OK] {FFFFFF}1 vehicle\n\n", sizeof(content));
+    strcat(content, "{FFFFFF}Enter a name for your group:", sizeof(content));
 
     ShowPlayerDialog(playerid, DIALOG_CREATE_GANG, DIALOG_STYLE_INPUT,
-        "Zaloz grupe przestepcza", content, "Dalej", "Anuluj");
+        "Create a criminal group", content, "Next", "Cancel");
 
     return 1;
 }
@@ -1386,9 +1386,9 @@ Dialog_HandleWalkingStyle(playerid, response, listitem)
     strcopy(pInfo[playerid][player_walking_name], WalkingStyles[listitem][walk_anim], 24);
 
     new msg[128];
-    format(msg, sizeof(msg), "Ustawiono styl chodzenia: {00FF00}%s", WalkingStyles[listitem][walk_name]);
+    format(msg, sizeof(msg), "Walking style set to: {00FF00}%s", WalkingStyles[listitem][walk_name]);
     SendClientMessage(playerid, COLOR_INFO, msg);
-    SendClientMessage(playerid, COLOR_GRAY, "Przytrzymaj klawisz Alt aby chodzic w wybranym stylu.");
+    SendClientMessage(playerid, COLOR_GRAY, "Hold the Alt key to walk in the selected style.");
 
     return 1;
 }
@@ -1405,7 +1405,7 @@ Dialog_HandleCreateGang(playerid, response, listitem, const inputtext[])
 
     if(isnull(inputtext) || strlen(inputtext) < 3 || strlen(inputtext) > 32)
     {
-        SendClientMessage(playerid, COLOR_ERROR, "Nazwa grupy musi miec od 3 do 32 znakow!");
+        SendClientMessage(playerid, COLOR_ERROR, "Group name must be between 3 and 32 characters!");
         Player_ShowCreateGang(playerid);
         return 1;
     }
@@ -1418,13 +1418,13 @@ Dialog_HandleCreateGang(playerid, response, listitem, const inputtext[])
     new msg[256];
     msg[0] = EOS;
 
-    strcat(msg, "{FFFFFF}Czy na pewno chcesz zalozyc grupe?\n\n", sizeof(msg));
-    format(msg, sizeof(msg), "%s{3498DB}Nazwa: {FFFFFF}%s\n\n", msg, inputtext);
-    strcat(msg, "{AAAAAA}Zalozenie grupy jest nieodwracalne.\n", sizeof(msg));
-    strcat(msg, "Bedziesz liderem tej grupy.", sizeof(msg));
+    strcat(msg, "{FFFFFF}Are you sure you want to create a group?\n\n", sizeof(msg));
+    format(msg, sizeof(msg), "%s{3498DB}Name: {FFFFFF}%s\n\n", msg, inputtext);
+    strcat(msg, "{AAAAAA}Creating a group is irreversible.\n", sizeof(msg));
+    strcat(msg, "You will be the leader of this group.", sizeof(msg));
 
     ShowPlayerDialog(playerid, DIALOG_CREATE_GANG_CONFIRM, DIALOG_STYLE_MSGBOX,
-        "Potwierdz utworzenie grupy", msg, "Tak", "Nie");
+        "Confirm group creation", msg, "Yes", "No");
 
     return 1;
 }
@@ -1444,7 +1444,7 @@ Dialog_HandleCreateGangConfirm(playerid, response)
 
     if(isnull(gangName))
     {
-        SendClientMessage(playerid, COLOR_ERROR, "Wystapil blad. Sprobuj ponownie.");
+        SendClientMessage(playerid, COLOR_ERROR, "An error occurred. Please try again.");
         return 1;
     }
 
@@ -1452,7 +1452,7 @@ Dialog_HandleCreateGangConfirm(playerid, response)
     new groupId = Group_FindFreeSlot();
     if(groupId == -1)
     {
-        SendClientMessage(playerid, COLOR_ERROR, "Nie mozna utworzyc wiecej grup. Skontaktuj sie z administracja.");
+        SendClientMessage(playerid, COLOR_ERROR, "Cannot create more groups. Contact administration.");
         return 1;
     }
 
@@ -1481,9 +1481,9 @@ Dialog_HandleCreateGangConfirm(playerid, response)
     Group_Save(groupId);
 
     new msg[128];
-    format(msg, sizeof(msg), "Utworzono grupe przestepcza: {F1C40F}%s", gangName);
+    format(msg, sizeof(msg), "Create Mafia/Gang {F1C40F}%s", gangName);
     SendClientMessage(playerid, COLOR_GREEN, msg);
-    SendClientMessage(playerid, COLOR_INFO, "Jestes liderem tej grupy. Uzyj /g aby zarzadzac grupa.");
+    SendClientMessage(playerid, COLOR_INFO, "You are the leader of this group. Use /g to manage the group.");
 
     return 1;
 }
